@@ -183,7 +183,10 @@
     .thumb.con-texto img { border: 2px solid var(--color-wa); }
 
     .taza-tipos { display: grid; grid-template-columns: repeat(3,1fr); gap: 9px; margin-bottom: 8px; }
-    .lienzo-taza { position: relative; width: 100%; height: 240px; margin: 12px 0; border-radius: 8px;
+    /* La proporción es la del molde de impresión real (3150x1470 px @381dpi =
+       21x9,8 cm). Antes era height fija, asi que en el celular el cliente
+       diseñaba en un rectangulo mas cuadrado que la zona que se imprime. */
+    .lienzo-taza { position: relative; width: 100%; aspect-ratio: 15 / 7; margin: 12px 0; border-radius: 8px;
         border: 2px solid #cbd5e1; background: #fff; background-size: cover; background-position: center;
         overflow: hidden; touch-action: none; isolation: isolate; }
     .lienzo-taza::after { content: "Zona de impresión de la taza"; position: absolute; top: 6px; left: 8px;
@@ -4540,15 +4543,22 @@ function snapshotCollage() {
     try { return cv.toDataURL("image/jpeg", 0.85); } catch (e) { return null; }
 }
 
+/* Molde de impresión de la taza que se usa en el taller: 3150x1470 px a 381 dpi
+   (21 x 9,8 cm). El diseño se exporta SIEMPRE a esa medida, no al tamaño que
+   tenga el lienzo en pantalla, para que llegue listo para imprimir.
+   Si cambia el molde, se cambia acá y la proporcion del lienzo en el CSS
+   (.lienzo-taza, aspect-ratio). */
+const TAZA_PRINT = { w: 3150, h: 1470 };
+
 function snapshotTaza() {
     const lienzo = document.getElementById("lienzo-taza");
     const hijos = [...lienzo.querySelectorAll(".foto-taza, .texto-taza")];
     if (lienzo.classList.contains("oculto") || !hijos.length) return null;
     const rc = lienzo.getBoundingClientRect();
     if (!rc.width || !rc.height) return null;
-    const esc = 2;
+    const esc = TAZA_PRINT.w / rc.width;
     const cv = document.createElement("canvas");
-    cv.width = Math.round(rc.width * esc); cv.height = Math.round(rc.height * esc);
+    cv.width = TAZA_PRINT.w; cv.height = TAZA_PRINT.h;
     const ctx = cv.getContext("2d");
     const bg = lienzo.style.backgroundColor;
     ctx.fillStyle = (bg && bg !== "") ? bg : "#ffffff";
