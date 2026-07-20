@@ -2455,9 +2455,9 @@ z"></path></g>
 
 <!-- DATOS DEL CLIENTE -->
 <div id="p-cliente" class="pantalla oculto">
-    <div class="barra-sup"><button class="btn-volver" onclick="mostrar(&#39;p-bienvenida&#39;)">⬅ Volver</button></div>
+    <div class="barra-sup"><button class="btn-volver" onclick="volverDeDatos()">⬅ Volver</button></div>
     <h2>Tus datos</h2>
-    <p>Para poder contactarte y coordinar tu pedido o consulta.</p>
+    <p>Solo te los pedimos una vez, para poder contactarte y coordinar tu pedido.</p>
     <div class="campo"><label>Nombre y apellido *</label><input id="in-nombre" type="text" placeholder="Ej: Marcelo Pérez"></div>
     <div class="campo"><label>WhatsApp / Teléfono *</label><input id="in-telefono" type="tel" placeholder="Ej: 2804 12-3456"></div>
     <div class="campo"><label>Email (opcional)</label><input id="in-email" type="email" placeholder="Ej: nombre@correo.com"></div>
@@ -2468,7 +2468,7 @@ z"></path></g>
 <!-- MENÚ PRINCIPAL -->
 <div id="p-menu" class="pantalla oculto">
     <div class="barra-sup">
-        <button class="btn-volver" onclick="mostrar(&#39;p-cliente&#39;)">⬅ Volver</button>
+        <button class="btn-volver" onclick="mostrar(&#39;p-bienvenida&#39;)">⬅ Volver</button>
         <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-menu">0</span>)</button>
     </div>
     <h2>¿Qué querés pedir?</h2>
@@ -3775,13 +3775,38 @@ function mostrar(id) {
     window.scrollTo(0, 0);
     if (id === "p-carrito") renderCarrito();
 }
-function irAPedido() { flujo = "pedido"; mostrar("p-cliente"); }
+/* El pedido arranca directo en el menú: los datos del cliente se piden recién
+   al agregar el primer ítem al carrito (menos fricción, menos rebote).
+   El flujo de eventos sí los pide de entrada, porque no hay carrito: el mensaje
+   de WhatsApp se arma con esos datos y es lo único que se envía. */
+function irAPedido() { flujo = "pedido"; mostrar("p-menu"); }
 function irAEventos() { flujo = "eventos"; mostrar("p-cliente"); }
 
-/* Intención elegida en el catálogo: se aplica después de cargar los datos
-   del cliente, para dejarlo directamente en el producto que tocó "Pedir". */
+/* ── Puerta de datos del cliente ──
+   Devuelve true si ya están cargados. Si no, guarda la acción pendiente,
+   muestra el formulario y la retoma al guardar. */
+let pendienteTrasDatos = null;
+let pantallaPrevia = null;
+function datosClienteListos() { return !!(cliente.nombre && cliente.telefono); }
+function conDatosCliente(accion) {
+    if (datosClienteListos()) return true;
+    pendienteTrasDatos = accion;
+    const actual = document.querySelector(".pantalla:not(.oculto)");
+    pantallaPrevia = actual ? actual.id : "p-menu";
+    mostrar("p-cliente");
+    return false;
+}
+function volverDeDatos() {
+    pendienteTrasDatos = null;
+    const destino = pantallaPrevia || "p-bienvenida";
+    pantallaPrevia = null;
+    mostrar(destino);
+}
+
+/* Intención elegida en el catálogo: lleva directo al producto que tocó "Pedir".
+   Ya no espera a los datos del cliente (se piden al agregar al carrito). */
 let intencionCatalogo = null;
-function pedirDeCatalogo(tipo, arg) { intencionCatalogo = { tipo, arg }; irAPedido(); }
+function pedirDeCatalogo(tipo, arg) { flujo = "pedido"; aplicarIntencionCatalogo({ tipo, arg }); }
 function aplicarIntencionCatalogo(ic) {
     if (ic.tipo === "foto") { cargarSimulador(ic.arg); }
     else if (ic.tipo === "ficha") { abrirFicha(ic.arg); }
@@ -3943,6 +3968,7 @@ function recalcularFicha() {
 }
 function agregarFichaAlCarrito() {
     if (!fichaSel) return;
+    if (!conDatosCliente(agregarFichaAlCarrito)) return;
     const cant = Math.max(1, parseInt(document.getElementById("ficha-cant").value) || 1);
     const retoqueOn = document.getElementById("ficha-retoque").checked;
     const marcoNombre = (FICHA_MARCOS.find(m => m.clase === fichaMarco) || FICHA_MARCOS[0]).nombre;
@@ -3977,6 +4003,16 @@ function guardarCliente() {
     if (!nombre || !telefono) { document.getElementById("error-cliente").classList.remove("oculto"); return; }
     document.getElementById("error-cliente").classList.add("oculto");
     cliente = { nombre, telefono, email };
+    /* Si vino interrumpido por un "agregar al carrito", se vuelve primero a la
+       pantalla donde estaba y recién ahí se retoma la acción: así el aviso de
+       "agregado" aparece en contexto. Si la acción navega sola (ficha), gana ella. */
+    if (pendienteTrasDatos) {
+        const f = pendienteTrasDatos, volver = pantallaPrevia;
+        pendienteTrasDatos = null; pantallaPrevia = null;
+        if (volver) mostrar(volver);
+        f();
+        return;
+    }
     if (flujo === "eventos") { mostrar("p-eventos"); }
     else if (intencionCatalogo) { const ic = intencionCatalogo; intencionCatalogo = null; aplicarIntencionCatalogo(ic); }
     else { mostrar("p-menu"); }
@@ -4208,6 +4244,7 @@ function modsFotoItem(it) {
 }
 
 function agregarFotoAlCarrito() {
+    if (!conDatosCliente(agregarFotoAlCarrito)) return;
     const cant = Math.max(1, parseInt(document.getElementById("in-cantidad").value) || 1);
     const retoque = document.getElementById("chk-retoque").checked;
     const esCollage = grupoActual && grupoActual.esCollage;
@@ -4569,6 +4606,7 @@ function precioSouvActual() {
 }
 function recalcularSouv() { document.getElementById("precio-souv").innerText = formatear(precioSouvActual()); }
 function agregarSouvAlCarrito() {
+    if (!conDatosCliente(agregarSouvAlCarrito)) return;
     const cant = Math.max(1, parseInt(document.getElementById("in-cant-souv").value) || 1);
     const partes = [];
     if (adjuntosSouv.length) partes.push(adjuntosSouv.length + " img adjuntas");
@@ -4768,6 +4806,7 @@ function precioTazaActual() {
 }
 function recalcularTaza() { document.getElementById("precio-taza").innerText = formatear(precioTazaActual()); }
 function agregarTazaAlCarrito() {
+    if (!conDatosCliente(agregarTazaAlCarrito)) return;
     const cant = Math.max(1, parseInt(document.getElementById("in-cant-taza").value) || 1);
     const texto = document.getElementById("taza-texto").value.trim();
     const fotos = [...document.querySelectorAll(".foto-taza:not(.es-fondo)")].map(img => ({ name: "foto-taza", url: img.src }));
@@ -4924,8 +4963,11 @@ let thumbsAbiertos = new Set();
 function toggleThumbs(id) { thumbsAbiertos.has(id) ? thumbsAbiertos.delete(id) : thumbsAbiertos.add(id); renderCarrito(); }
 
 function renderCarrito() {
-    document.getElementById("datos-cliente-mini").innerHTML =
-        "<strong>Cliente:</strong> " + cliente.nombre + " · " + cliente.telefono + (cliente.email ? " · " + cliente.email : "");
+    /* El carrito se puede abrir vacío antes de cargar los datos: en ese caso no
+       se muestra la línea de cliente en lugar de "Cliente:  ·  ". */
+    document.getElementById("datos-cliente-mini").innerHTML = datosClienteListos()
+        ? "<strong>Cliente:</strong> " + cliente.nombre + " · " + cliente.telefono + (cliente.email ? " · " + cliente.email : "")
+        : "";
 
     const lista = document.getElementById("lista-carrito");
     const hayCotizar = carrito.some(it => it.aCotizar);
