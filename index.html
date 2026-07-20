@@ -221,6 +221,8 @@
     .carrito-vacio { color: #94a3b8; padding: 30px 0; }
     .datos-cliente-mini { text-align: left; font-size: 13px; color: #475569; background: var(--gris-suave);
         padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; }
+    .btn-editar-datos { margin-left: 8px; padding: 2px 8px; border-radius: 6px; border: 1px solid #cbd5e1;
+        background: #fff; color: #475569; font-size: 12px; cursor: pointer; }
 
     #toast-carrito { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(90px);
         background: #1e293b; color: #fff; padding: 9px 10px 9px 16px; border-radius: 24px; font-size: 14px;
@@ -4003,6 +4005,7 @@ function guardarCliente() {
     if (!nombre || !telefono) { document.getElementById("error-cliente").classList.remove("oculto"); return; }
     document.getElementById("error-cliente").classList.add("oculto");
     cliente = { nombre, telefono, email };
+    recordarCliente();
     /* Si vino interrumpido por un "agregar al carrito", se vuelve primero a la
        pantalla donde estaba y recién ahí se retoma la acción: así el aviso de
        "agregado" aparece en contexto. Si la acción navega sola (ficha), gana ella. */
@@ -4017,6 +4020,37 @@ function guardarCliente() {
     else if (intencionCatalogo) { const ic = intencionCatalogo; intencionCatalogo = null; aplicarIntencionCatalogo(ic); }
     else { mostrar("p-menu"); }
 }
+
+/* ── Datos recordados entre visitas ──
+   Quedan guardados en el navegador del propio cliente (localStorage). No se
+   envían a ningún lado por su cuenta: solo evitan volver a tipearlos. Si el
+   navegador los bloquea (modo incógnito, cookies deshabilitadas), todo sigue
+   funcionando: simplemente se piden de nuevo. */
+const CLIENTE_LS = "ftf_cliente_v1";
+function recordarCliente() {
+    try { localStorage.setItem(CLIENTE_LS, JSON.stringify(cliente)); } catch (e) {}
+}
+function precargarFormCliente() {
+    const v = { "in-nombre": cliente.nombre, "in-telefono": cliente.telefono, "in-email": cliente.email };
+    Object.keys(v).forEach(id => { const el = document.getElementById(id); if (el) el.value = v[id] || ""; });
+}
+/* Botón "Editar" del carrito: por si el navegador es compartido o cambió el teléfono. */
+function editarDatosCliente() {
+    precargarFormCliente();
+    document.getElementById("error-cliente").classList.add("oculto");
+    pendienteTrasDatos = function () { mostrar("p-carrito"); };
+    pantallaPrevia = "p-carrito";
+    mostrar("p-cliente");
+}
+(function restaurarCliente() {
+    try {
+        const g = JSON.parse(localStorage.getItem(CLIENTE_LS) || "null");
+        if (g && g.nombre && g.telefono) {
+            cliente = { nombre: String(g.nombre), telefono: String(g.telefono), email: String(g.email || "") };
+            precargarFormCliente();
+        }
+    } catch (e) {}
+})();
 
 /* =========================================================
    3) SIMULADOR DE FOTOS
@@ -4966,7 +5000,9 @@ function renderCarrito() {
     /* El carrito se puede abrir vacío antes de cargar los datos: en ese caso no
        se muestra la línea de cliente en lugar de "Cliente:  ·  ". */
     document.getElementById("datos-cliente-mini").innerHTML = datosClienteListos()
-        ? "<strong>Cliente:</strong> " + cliente.nombre + " · " + cliente.telefono + (cliente.email ? " · " + cliente.email : "")
+        ? "<strong>Cliente:</strong> " + escHtml(cliente.nombre) + " · " + escHtml(cliente.telefono) +
+          (cliente.email ? " · " + escHtml(cliente.email) : "") +
+          "<button type=\"button\" class=\"btn-editar-datos\" onclick=\"editarDatosCliente()\">✏️ Editar</button>"
         : "";
 
     const lista = document.getElementById("lista-carrito");
