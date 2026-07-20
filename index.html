@@ -219,6 +219,12 @@
     .item-carrito .precio { font-weight: bold; color: #0f172a; white-space: nowrap; margin-left: 10px; text-align:right; }
     .item-carrito .mini-thumbs { display:flex; gap:4px; margin-top:6px; flex-wrap:wrap; }
     .item-carrito .mini-thumbs img { width:34px; height:34px; object-fit:cover; border-radius:5px; border:1px solid #cbd5e1; }
+    .item-carrito .editar-item { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; font-size: 13px; color: #475569; }
+    .btn-cant { width: 26px; height: 26px; line-height: 1; border-radius: 6px; border: 1px solid #cbd5e1;
+        background: #fff; color: #0f172a; font-size: 16px; font-weight: bold; cursor: pointer; padding: 0; }
+    .btn-cant:disabled { opacity: .4; cursor: default; }
+    .item-carrito .cant-num { min-width: 20px; text-align: center; font-weight: bold; color: #0f172a; }
+    .item-carrito .chk-item { display: flex; align-items: center; gap: 4px; margin-left: 4px; cursor: pointer; }
     .btn-quitar { background: none; border: none; color: #dc2626; font-size: 13px; cursor: pointer; padding: 0; margin-top: 6px; }
     .total-carrito { font-size: 22px; font-weight: bold; color: #0f172a; margin: 16px 0; }
     .carrito-vacio { color: #94a3b8; padding: 30px 0; }
@@ -5002,6 +5008,42 @@ function actualizarBadges() {
 }
 function totalCarrito() { return carrito.reduce((s, it) => s + it.subtotal, 0); }
 function quitarItem(id) { carrito = carrito.filter(it => it.id !== id); thumbsAbiertos.delete(id); actualizarBadges(); renderCarrito(); }
+
+/* Recalcula un ítem ya agregado tras editarlo desde el carrito.
+   El revelado tiene helpers propios (modsFotoItem/detalleFotoItem) que ya usa
+   el agrupado al agregar; para el resto solo hay que reajustar el retoque, que
+   según el ámbito del catálogo puede depender de la cantidad de copias. */
+function recalcularItemCarrito(it) {
+    if (it.tipo === "Revelado de foto") {
+        it.mods = modsFotoItem(it);
+        it.detalle = detalleFotoItem(it);
+    } else {
+        const r = (it.mods || []).find(m => m.id === "retoque");
+        if (r) {
+            const nFotos = (it.fotos || []).filter(f => !/^diseño-/.test(f.name || "")).length;
+            r.cantidad = retoquesFacturables(it.cant, nFotos, !!it.esCollage);
+            r.monto = r.cantidad * r.valor_unit;
+        }
+    }
+    it.desc = String(it.desc).replace(/×\s*\d+\s*$/, "× " + it.cant);
+    it.subtotal = it.precioUnit * it.cant + montoMods(it.mods);
+}
+function cambiarCant(id, delta) {
+    const it = carrito.find(i => i.id === id);
+    if (!it) return;
+    const nueva = Math.max(1, (it.cant || 1) + delta);
+    if (nueva === it.cant) return;
+    it.cant = nueva;
+    recalcularItemCarrito(it);
+    renderCarrito();
+}
+function toggleRetoqueItem(id) {
+    const it = carrito.find(i => i.id === id);
+    if (!it || it.tipo !== "Revelado de foto") return;
+    it.retoque = !it.retoque;
+    recalcularItemCarrito(it);
+    renderCarrito();
+}
 const MAX_MINI_THUMBS = 6;
 let thumbsAbiertos = new Set();
 function toggleThumbs(id) { thumbsAbiertos.has(id) ? thumbsAbiertos.delete(id) : thumbsAbiertos.add(id); renderCarrito(); }
@@ -5041,6 +5083,14 @@ function renderCarrito() {
                    '<div class="desc">' + it.desc + '</div>' +
                    '<div class="sub">' + it.tipo + " · " + it.detalle + '</div>' +
                    thumbs +
+                   '<div class="editar-item">Cantidad' +
+                   '<button type="button" class="btn-cant" onclick="cambiarCant(' + it.id + ',-1)" aria-label="Uno menos"' + (it.cant <= 1 ? ' disabled' : '') + '>−</button>' +
+                   '<span class="cant-num">' + it.cant + '</span>' +
+                   '<button type="button" class="btn-cant" onclick="cambiarCant(' + it.id + ',1)" aria-label="Uno más">+</button>' +
+                   (it.tipo === "Revelado de foto"
+                       ? '<label class="chk-item"><input type="checkbox" onchange="toggleRetoqueItem(' + it.id + ')"' + (it.retoque ? " checked" : "") + '> retoque</label>'
+                       : "") +
+                   '</div>' +
                    '<button class="btn-quitar" onclick="quitarItem(' + it.id + ')">Quitar</button>' +
                    '</div><div class="precio">' + precioTxt + '</div></div>';
         }).join("");
