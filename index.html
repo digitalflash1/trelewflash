@@ -102,37 +102,25 @@
        antes que deformar la escena (max-width anulaba el aspect-ratio). */
     .demo-vista .dv-view { position: relative; height: 100%; flex: 0 0 auto;
         background-size: cover; background-position: center; box-shadow: 0 0 22px rgba(0,0,0,.45); }
-    .demo-vista .dv-marco { position: absolute; box-sizing: border-box;
+    /* Una sola foto viaja por toda la tarjeta: por eso vive en coordenadas de
+       la tarjeta (no dentro de un visor) y sus posiciones se calculan en JS. */
+    /* opacity:0 de base: evita un parpadeo del borde en la esquina antes de que
+       la animación le asigne su primera posición. */
+    .demo-vista .dv-foto { position: absolute; z-index: 3; box-sizing: border-box; opacity: 0;
         border: 2px solid #111; box-shadow: 0 6px 16px rgba(0,0,0,.45);
         background: linear-gradient(135deg,#93c5fd,#c4b5fd,#fca5a5); background-size: cover;
-        transform: translateX(-50%); transform-origin: center; }
+        transform-origin: center; will-change: left, top, width, height; }
     .demo-vista .dv-chips { position: absolute; top: 8px; left: 8px; z-index: 3; display: flex; gap: 5px; }
     .demo-vista .dv-chip { font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 999px;
         background: rgba(255,255,255,.82); color: #475569; border: 2px solid transparent; white-space: nowrap; }
     .demo-vista .nov-cap { z-index: 4; }
 
-    /* La fase entera (escena + cuadro) se funde junta; el cuadro además entra
-       con un pequeño zoom al arrancar su fase. */
-    .demo-vista .dv-living { animation: dvFaseA 9s ease-in-out infinite; }
-    .demo-vista .dv-celu   { animation: dvFaseB 9s ease-in-out infinite; }
-    .demo-vista .dv-chip-living { animation: dvChipA 9s ease-in-out infinite; }
-    .demo-vista .dv-chip-celu   { animation: dvChipB 9s ease-in-out infinite; }
-    .demo-vista .dv-marco-living { animation: dvEntra 9s ease-out infinite; }
-    .demo-vista .dv-marco-celu   { animation: dvEntraB 9s ease-out infinite; }
-
-    @keyframes dvFaseA { 0%,44% { opacity: 1; } 50%,94% { opacity: 0; } 100% { opacity: 1; } }
-    @keyframes dvFaseB { 0%,44% { opacity: 0; } 50%,94% { opacity: 1; } 100% { opacity: 0; } }
-    @keyframes dvChipA { 0%,44% { border-color:#4a4a00; color:#4a4a00; background:#fff; } 50%,100% { border-color:transparent; color:#475569; background:rgba(255,255,255,.82); } }
-    @keyframes dvChipB { 0%,44% { border-color:transparent; color:#475569; background:rgba(255,255,255,.82); } 50%,100% { border-color:#4a4a00; color:#4a4a00; background:#fff; } }
-    @keyframes dvEntra  { 0% { transform: translateX(-50%) scale(.86); } 8%,100% { transform: translateX(-50%) scale(1); } }
-    @keyframes dvEntraB { 0%,50% { transform: translateX(-50%) scale(.86); } 58%,100% { transform: translateX(-50%) scale(1); } }
-
-    @media (prefers-reduced-motion: reduce) {
-        .demo-vista .dv-living, .demo-vista .dv-chip-living { animation: none; opacity: 1; }
-        .demo-vista .dv-celu { animation: none; opacity: 0; }
-        .demo-vista .dv-chip-celu { animation: none; }
-        .demo-vista .dv-marco { animation: none !important; transform: translateX(-50%); }
-    }
+    /* El recorrido de la foto (pared → 15x21 → polaroid sobre el celular) se
+       anima desde JS con la Web Animations API: las posiciones dependen del
+       tamaño de la tarjeta y de dos escenas con proporciones distintas, así que
+       no se pueden expresar con @keyframes en porcentajes fijos.
+       Ver animarDemoVista(). El estado inicial de acá es el de reposo. */
+    .demo-vista .dv-celu { opacity: 0; }
 
     .carrusel-dots { position: absolute; bottom: 8px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; }
     .carrusel-dots button { width: 8px; height: 8px; padding: 0; border-radius: 50%; border: none; background: rgba(255,255,255,.55); cursor: pointer; }
@@ -5451,19 +5439,121 @@ const NOVEDADES = [
     { demo: "vista", titulo: "Mirá cómo queda antes de pedir", texto: "Probá la medida en la pared o en tu celular.", color: "#1f2937" }
 ];
 
-/* Tarjeta demo de la previsualización Living/Celular.
-   Usa las escenas reales de ESCENA[] y la MISMA fórmula que renderCuadro(),
-   para que la proporción del cuadro sea la verdadera y no una ilustración.
-   La animación es CSS: no consume timers ni pesa como un video. */
+/* ===== Tarjeta demo: la foto viaja de la pared al celular =====
+   Recorrido: colgada en la pared del living → se desprende y crece hasta el
+   tamaño real de una 15x21 al lado del celular → se vuelve polaroid, se achica
+   y se apoya sobre el teléfono.
+   Todas las posiciones salen de ESCENA[] con la MISMA fórmula que renderCuadro(),
+   así los tamaños relativos son los verdaderos y no una ilustración. */
 const DEMO_VISTA_CM = { w: 15, h: 21 };
-function estiloMarcoDemo(escKey) {
-    const cfg = ESCENA[escKey];
-    const wFrac = DEMO_VISTA_CM.w * cfg.pxcm / cfg.cropW;
-    const hFrac = DEMO_VISTA_CM.h * cfg.pxcm / cfg.cropH;
-    const top = cfg.anchor === "bottom" ? (cfg.baseFracY - hFrac) : (cfg.baseFracY - hFrac / 2);
-    return "left:" + (cfg.baseFracX * 100) + "%;top:" + (top * 100) + "%;" +
-           "width:" + (wFrac * 100) + "%;height:" + (hFrac * 100) + "%";
+/* Cuerpo del teléfono dentro del SVG de la escena 'celularLado' (viewBox 1200x960). */
+const DEMO_TEL = { x: 70, y: 186, w: 286, h: 587 };
+const DEMO_DUR = 10000;
+
+/* Las tres paradas del recorrido, en píxeles de la tarjeta.
+   Cada escena se dibuja en un visor centrado con SU proporción, por eso hay que
+   convertir de coordenadas de escena a coordenadas de tarjeta. */
+function paradasDemoVista(W, H) {
+    const L = ESCENA.pared, C = ESCENA.celularLado, cm = DEMO_VISTA_CM;
+    const wL = H * (L.cropW / L.cropH), xL = (W - wL) / 2;
+    const wC = H * (C.cropW / C.cropH), xC = (W - wC) / 2;
+
+    // 1) colgada en la pared
+    const p1w = cm.w * L.pxcm / L.cropW * wL, p1h = cm.h * L.pxcm / L.cropH * H;
+    const p1 = { left: xL + L.baseFracX * wL - p1w / 2, top: L.baseFracY * H - p1h / 2, w: p1w, h: p1h };
+
+    // 2) 15x21 al lado del celular (misma posición que usa el simulador)
+    const p2w = cm.w * C.pxcm / C.cropW * wC, p2h = cm.h * C.pxcm / C.cropH * H;
+    const p2 = { left: xC + C.baseFracX * wC - p2w / 2, top: C.baseFracY * H - p2h / 2, w: p2w, h: p2h };
+
+    // 3) polaroid apoyada sobre el teléfono
+    const telCx = xC + (DEMO_TEL.x + DEMO_TEL.w / 2) / C.cropW * wC;
+    const telCy = (DEMO_TEL.y + DEMO_TEL.h / 2) / C.cropH * H;
+    const p3w = DEMO_TEL.w * 0.78 / C.cropW * wC, p3h = p3w * 1.2;
+    const p3 = { left: telCx - p3w / 2, top: telCy - p3h / 2, w: p3w, h: p3h };
+
+    return { p1: p1, p2: p2, p3: p3 };
 }
+
+/* Un fotograma del recorrido: posición + estilo de marco (fino negro o polaroid). */
+function cuadroDemo(p, polaroid, giro, opacidad) {
+    const b = polaroid ? Math.max(3, p.w * 0.095) : 2;
+    return {
+        left: p.left + "px", top: p.top + "px", width: p.w + "px", height: p.h + "px",
+        borderTopWidth: b + "px", borderRightWidth: b + "px", borderLeftWidth: b + "px",
+        borderBottomWidth: (polaroid ? b * 2.6 : b) + "px",
+        borderColor: polaroid ? "#ffffff" : "#111111",
+        transform: "rotate(" + (giro || 0) + "deg)",
+        opacity: opacidad == null ? 1 : opacidad
+    };
+}
+
+function animarDemoVista(s) {
+    const foto = s.querySelector(".dv-foto");
+    const living = s.querySelector(".dv-living"), celu = s.querySelector(".dv-celu");
+    const chipL = s.querySelector(".dv-chip-living"), chipC = s.querySelector(".dv-chip-celu");
+    const r = s.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const P = paradasDemoVista(r.width, r.height);
+
+    const quieto = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+    (s.__anims || []).forEach(a => a.cancel());
+    if (quieto) {                       // sin movimiento: la foto queda en la pared
+        Object.assign(foto.style, cuadroDemo(P.p1, false, 0));
+        living.style.opacity = 1; celu.style.opacity = 0;
+        s.__anims = [];
+        return;
+    }
+
+    const APAGADO = { background: "rgba(255,255,255,.82)", color: "#475569", borderColor: "transparent" };
+    const ENCENDIDO = { background: "#ffffff", color: "#4a4a00", borderColor: "#4a4a00" };
+    const op = (o) => ({ opacity: o });
+
+    /* OJO: el easing va POR FOTOGRAMA (aplica al tramo que arranca en él).
+       Puesto en las opciones deforma toda la línea de tiempo y desincroniza
+       las paradas con el fundido de las escenas. */
+    const SUAVE = "cubic-bezier(.4,0,.2,1)";
+    const opts = { duration: DEMO_DUR, iterations: Infinity, easing: "linear" };
+
+    const anims = [
+        foto.animate([
+            { offset: 0.00, ...cuadroDemo(P.p1, false, 0), easing: "linear" },       // colgada en la pared
+            { offset: 0.16, ...cuadroDemo(P.p1, false, 0), easing: "ease-in" },
+            { offset: 0.21, ...cuadroDemo(P.p1, false, -3), easing: SUAVE },         // se despega
+            { offset: 0.44, ...cuadroDemo(P.p2, false, 0), easing: "linear" },       // ya es la 15x21
+            { offset: 0.56, ...cuadroDemo(P.p2, false, 0), easing: SUAVE },
+            { offset: 0.78, ...cuadroDemo(P.p3, true, -5), easing: "linear" },       // polaroid sobre el celular
+            { offset: 0.92, ...cuadroDemo(P.p3, true, -5), easing: "linear" },
+            { offset: 0.96, ...cuadroDemo(P.p3, true, -5, 0), easing: "linear" },
+            { offset: 0.97, ...cuadroDemo(P.p1, false, 0, 0), easing: "linear" },    // vuelve invisible al inicio
+            { offset: 1.00, ...cuadroDemo(P.p1, false, 0, 1) }
+        ], opts),
+
+        living.animate([
+            { offset: 0, ...op(1), easing: "linear" }, { offset: 0.22, ...op(1), easing: "ease-in-out" },
+            { offset: 0.36, ...op(0), easing: "linear" }, { offset: 0.95, ...op(0), easing: "ease-in-out" },
+            { offset: 0.99, ...op(1), easing: "linear" }, { offset: 1, ...op(1) }
+        ], opts),
+
+        celu.animate([
+            { offset: 0, ...op(0), easing: "linear" }, { offset: 0.22, ...op(0), easing: "ease-in-out" },
+            { offset: 0.36, ...op(1), easing: "linear" }, { offset: 0.95, ...op(1), easing: "ease-in-out" },
+            { offset: 0.99, ...op(0), easing: "linear" }, { offset: 1, ...op(0) }
+        ], opts),
+
+        chipL.animate([
+            { offset: 0, ...ENCENDIDO }, { offset: 0.24, ...ENCENDIDO }, { offset: 0.34, ...APAGADO },
+            { offset: 0.96, ...APAGADO }, { offset: 1, ...ENCENDIDO }
+        ], opts),
+
+        chipC.animate([
+            { offset: 0, ...APAGADO }, { offset: 0.24, ...APAGADO }, { offset: 0.34, ...ENCENDIDO },
+            { offset: 0.96, ...ENCENDIDO }, { offset: 1, ...APAGADO }
+        ], opts)
+    ];
+    s.__anims = anims;
+}
+
 function armarSlideVista(s, n) {
     s.classList.add("con-img", "demo-vista");
     s.style.background = n.color || "#1f2937";
@@ -5475,16 +5565,24 @@ function armarSlideVista(s, n) {
         view.className = "dv-view";
         view.style.aspectRatio = cfg.cropW + " / " + cfg.cropH;
         view.style.backgroundImage = "url('" + cfg.img + "')";
-        const marco = document.createElement("div");
-        marco.className = "dv-marco dv-marco-" + suf;
-        marco.style.cssText = estiloMarcoDemo(escKey);
-        view.appendChild(marco); fase.appendChild(view); s.appendChild(fase);
+        fase.appendChild(view); s.appendChild(fase);
     });
+    const foto = document.createElement("div");
+    foto.className = "dv-foto";
+    s.appendChild(foto);
     const chips = document.createElement("div");
     chips.className = "dv-chips";
     chips.innerHTML = '<span class="dv-chip dv-chip-living">🛋 Living</span>' +
                       '<span class="dv-chip dv-chip-celu">📱 Celular</span>';
     s.appendChild(chips);
+    /* Las paradas dependen del tamaño de la tarjeta: hay que rearmarlas al
+       cambiar de tamaño, conservando el punto del recorrido. */
+    requestAnimationFrame(() => animarDemoVista(s));
+    window.addEventListener("resize", () => {
+        const t = (s.__anims && s.__anims[0]) ? s.__anims[0].currentTime : 0;
+        animarDemoVista(s);
+        (s.__anims || []).forEach(a => { a.currentTime = t; });
+    });
 }
 let novIdx = 0, novTimer = null;
 function renderNovedades() {
