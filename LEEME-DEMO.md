@@ -12,7 +12,8 @@ que estén terminadas.
 |---|---|
 | `index.html` | **La tienda pública** (antes `foto-trelew-flash-v4.3.html`). Es la portada del demo: el cliente entra directo a armar su pedido. |
 | `galeria-evento.html` | Prototipo de galería de fotos de eventos sociales (demo aparte, no enlazado desde la portada). |
-| `assets/` | Estilos, datos y recursos (`theme.css`, `data.js`, `catalogo_precios.json`, `taza-magica.gif`). |
+| `assets/` | Recursos de la tienda. Imágenes del carrusel (cada una en `.webp` liviana + `.jpg` de respaldo): `bienvenida`, `set-jardin`, `taza-caja`, `remera`. Animación `taza-magica.webp` (+ `taza-magica.gif` original de respaldo). Más: `og-image.jpg` (vista previa al compartir el link), `favicon.ico` y `apple-touch-icon.png`. |
+| `assets/_sin-uso/` | `theme.css`, `data.js` y `catalogo_precios.json`: **no los usa `index.html`** (son de los paneles y la galería, y traen el catálogo v1 desactualizado). Ver el LEEME de esa subcarpeta. |
 | `apps-script-pedidos-v2.gs` | Backend para Google Apps Script (registra pedidos, guarda imágenes en Drive y sirve el catálogo). **Se despliega en la cuenta Google de la empresa.** |
 | `README-despliegue-v4_3.md` | Guía técnica de despliegue del backend y estructura de la hoja de cálculo. |
 | `CONECTAR-HOJA.md` | Guía paso a paso para conectar la app con la hoja de Google. |
@@ -47,12 +48,83 @@ quitar el comentario. Buscá la palabra `DEMO:` en `index.html`.
    Se controla en la función `mensajePedido()` de `index.html` (buscá el comentario
    `DEMO:` sobre la carpeta de Drive).
 
+   Como el cliente no ve ese link, las carpetas de Drive se crean **privadas**
+   (solo las abrís vos con la cuenta de la empresa). Si algún día volvés a mostrarle
+   la carpeta al cliente, hay que reactivar la línea `setSharing(...)` que quedó
+   comentada en `apps-script-pedidos-v2.gs`, o el link no le va a abrir.
+
 3. **Aviso del comprobante de transferencia.** Antes de tocar el botón que abre
    WhatsApp, el cliente ve un recuadro que le indica que debe **enviar el comprobante
    de la transferencia** por WhatsApp para que el pedido **pase a revelar / hacer**;
    sin comprobante, el pedido queda pendiente. El mismo recordatorio va incluido en el
    texto del mensaje. Se controla en el modal `#modal-pedido` (recuadro naranja) y en
    `mensajePedido()`.
+
+---
+
+## Imágenes del carrusel de inicio
+
+El carrusel usa proporción **16:9** (`aspect-ratio` en `.carrusel`), así que las
+imágenes se muestran **completas, sin recortar**. Para que entren bien:
+
+- **Proporción ~16:9** (más anchas que altas). Las actuales son 800–900 px de ancho.
+- **Ancho recomendado: 800–1000 px** (no hace falta más; solo pesaría de más).
+- **Formato: `.webp` de calidad 82** como principal + **`.jpg`** del mismo tamaño
+  como respaldo para navegadores viejos. Un PNG de celular de ~2 MB queda en ~40–100 KB.
+
+Cada tarjeta se define en el arreglo `NOVEDADES` (buscá `const NOVEDADES` en
+`index.html`). Si la imagen **ya trae texto adentro** (los banners promocionales),
+la tarjeta va **sin** `titulo`/`texto` para no encimar texto sobre texto. Si es una
+foto **sin** texto (como `bienvenida`), sí lleva `titulo`/`texto`, que aparecen sobre
+un **recuadro de color** (`.nov-cap`) para que se lean bien.
+
+## Fotos que adjunta el cliente
+
+Las fotos se **achican antes de enviarse** al backend: una foto de celular pesa
+4–8 MB y en base64 un 33% más, así que con 4 o 5 el envío fallaba y el pedido
+quedaba sin registrar (en silencio). Constantes al inicio de la sección
+"7) ADJUNTOS" de `index.html`:
+
+| Constante | Valor | Qué hace |
+|---|---|---|
+| `MAX_LADO_FOTO` | `2000` | Piso de resolución (lado mayor en píxeles). |
+| `DPI_OBJETIVO` | `240` | Calidad de impresión buscada para calcular el lado según la medida. |
+| `MAX_LADO_FOTO_TOPE` | `4000` | Techo: ni las medidas enormes piden más que esto. |
+| `CALIDAD_FOTO` | `0.85` | Calidad del JPEG. |
+| `MAX_FOTOS_ITEM` | `20` | Tope de fotos por producto (avisa al cliente). |
+| `MAX_POST_MB` | `18` | Si el pedido supera esto, se registra **sin imágenes** antes que perderse. |
+
+**La resolución se adapta a la medida pedida.** Al adjuntar, la foto se prepara en
+2000 px (rápido). Cuando el cliente agrega el ítem al carrito, `ladoParaMedida()`
+calcula los píxeles que necesita esa medida a 240 dpi y, si hace falta más, la foto
+**se rehace desde el archivo original**. Los centímetros salen del nombre de la
+variante ("20x30 cm"), así que si agregás medidas al catálogo se ajusta sola:
+
+| Medida | Píxeles enviados | Calidad |
+|---|---|---|
+| 10x15 | 2000 | 338 dpi |
+| 13x18 | 2000 | 282 dpi |
+| 15x21 | 2000 | 242 dpi |
+| 20x30 | 2835 | 240 dpi |
+| 30x40 | 3780 | 240 dpi |
+
+Una foto que el cliente **recortó a mano** no se rehace (perdería el recorte): queda
+con la resolución que tenía.
+
+## Qué se le pide al cliente por WhatsApp
+
+Las fotos **ya viajan solas a tu Drive** con el pedido, así que el mensaje solo se
+las pide cuando de verdad hacen falta:
+
+| Situación | Texto del mensaje |
+|---|---|
+| Pedido registrado con sus fotos | "Ya subí N imágenes junto con el pedido." |
+| Falló el registro, o el pedido era muy pesado, o no hay backend | "Te mando N imágenes por este chat." |
+
+**Si el registro falla**, además, el cliente ve un recuadro naranja avisándole que el
+pedido no se guardó pero que el detalle viaja completo en el mensaje, y el texto lleva
+la marca `⚠️ (Este pedido no se pudo registrar solo en el sistema)` para que sepas que
+hay que cargarlo a mano. Antes, un backend caído se veía igual que un envío exitoso.
 
 ---
 

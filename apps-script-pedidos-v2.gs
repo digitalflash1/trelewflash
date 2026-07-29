@@ -61,8 +61,21 @@ function doPost(e) {
           } catch (err) { /* seguir con las demás */ }
         });
       });
-      sub.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      /* La carpeta queda PRIVADA: solo la abre quien esté logueado con la cuenta
+         de la empresa (que es como se la usa, desde el link de la hoja). Antes se
+         publicaba como "cualquiera con el enlace", y esas carpetas guardan fotos
+         de clientes: si el link se filtraba, quedaban accesibles para cualquiera.
+         Si algún día el mensaje de WhatsApp vuelve a mostrarle la carpeta al
+         cliente, hay que reactivar esta línea (sin ella, el cliente no puede abrirla):
+         sub.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); */
       urlCarpeta = sub.getUrl();
+    }
+
+    /* La app manda este flag cuando el pedido era demasiado pesado para subir las
+       fotos: el pedido se registra igual y el cliente las manda por WhatsApp.
+       Sin esta marca, en la hoja parecería un pedido sin fotos. */
+    if (!urlCarpeta && datos.imagenes_omitidas) {
+      urlCarpeta = '⚠️ Fotos muy pesadas: las envía por WhatsApp';
     }
 
     // ── Cabecera en "Pedidos" (formato v1 + Estado) ──
@@ -75,7 +88,8 @@ function doPost(e) {
       fecha,
       numero,
       cliente.nombre || '',
-      cliente.whatsapp || '',
+      // La app v4.3 manda el campo como "telefono"; v4.2 lo mandaba como "whatsapp".
+      cliente.whatsapp || cliente.telefono || '',
       cliente.email || '',
       detalleTexto,
       datos.total != null ? datos.total : '',
