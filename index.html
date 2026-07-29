@@ -2,6 +2,32 @@
 <!-- Foto Trelew Flash v4.3 -->
 <html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
+<!-- Consentimiento de cookies (Consent Mode v2).
+     IMPORTANTE: este bloque va ANTES de GTM. Arranca todo en "denied", así
+     GTM no escribe cookies de estadística hasta que el cliente acepta.
+     Si ya aceptó en una visita anterior, se restaura su elección. -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){ dataLayer.push(arguments); }
+gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'denied',
+    functionality_storage: 'granted',
+    security_storage: 'granted',
+    wait_for_update: 500
+});
+try {
+    if (localStorage.getItem('tf_cookies') === 'ok') {
+        gtag('consent', 'update', {
+            ad_storage: 'granted', ad_user_data: 'granted',
+            ad_personalization: 'granted', analytics_storage: 'granted'
+        });
+    }
+} catch (e) { /* navegación privada: se queda en denied */ }
+</script>
+
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -56,6 +82,25 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .pie-pagina .cred-mr { font-weight: bold; color: var(--color-principal); }
     .pie-pagina a.cred-mr { text-decoration: none; }
     .pie-pagina a.cred-mr:hover { text-decoration: underline; }
+    /* ===== Aviso de cookies =====
+       Barra discreta abajo. No tapa los botones porque el body tiene padding
+       extra mientras está visible (clase .con-cookies). */
+    .aviso-cookies { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9999;
+        background: #4a4a00; color: #fff; padding: 12px 14px; box-shadow: 0 -3px 14px rgba(0,0,0,.25);
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px;
+        font-size: 13px; line-height: 1.4; animation: cookies-sube .35s ease-out; }
+    @keyframes cookies-sube { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    @media (prefers-reduced-motion: reduce) { .aviso-cookies { animation: none; } }
+    .aviso-cookies p { margin: 0; color: #fff; font-size: 13px; max-width: 460px; text-align: left; }
+    .aviso-cookies .ck-btns { display: flex; gap: 8px; flex-shrink: 0; }
+    .aviso-cookies button { border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px;
+        font-weight: bold; cursor: pointer; transition: filter .2s; }
+    .aviso-cookies button:hover { filter: brightness(1.1); }
+    .aviso-cookies .ck-si { background: var(--color-boton); color: var(--color-boton-texto); }
+    .aviso-cookies .ck-no { background: rgba(255,255,255,.18); color: #fff; }
+    /* Respaldo por si el JS que mide el alto no llegó a correr. */
+    body.con-cookies { padding-bottom: 120px; }
+
     /* ===== Redes sociales (pie de página) =====
        Los íconos son SVG embebidos: no dependen de ninguna librería externa,
        así que cargan al instante y funcionan sin internet. */
@@ -2848,6 +2893,42 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxxkTt_esCqor3id4ZT
 const APP_VERSION = "4.3";
 
 /* =========================================================
+   MEDICIÓN (Google Tag Manager)
+   La tienda es UNA sola página: las pantallas son <div> que se muestran y
+   ocultan, así que GTM por sí solo contaría una única visita por cliente.
+   Estos eventos son los que permiten ver el embudo: cuántos entran, cuántos
+   agregan al carrito y cuántos terminan abriendo WhatsApp.
+
+   Cómo usarlos en GTM: Activador → "Evento personalizado" → nombre del evento
+   (por ej. pedido_enviado). Los datos extra quedan como variables de capa de datos.
+
+   No se envía NINGÚN dato personal: ni nombre, ni teléfono, ni email, ni fotos.
+   ========================================================= */
+function medir(evento, datos) {
+    try {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push(Object.assign({ event: evento }, datos || {}));
+    } catch (e) { /* la medición nunca debe romper la tienda */ }
+}
+
+/* Nombres legibles para los informes (en vez de "p-menu", "p-carrito"). */
+const NOMBRE_PANTALLA = {
+    "p-bienvenida":  "Inicio",
+    "p-menu":        "Qué querés pedir",
+    "p-categorias":  "Elegir el tamaño",
+    "p-simulador":   "Armar revelado",
+    "p-souvenirs":   "Souvenirs",
+    "p-souv-modelo": "Elegir souvenir",
+    "p-taza":        "Armar taza",
+    "p-catalogo":    "Catálogo de cuadros",
+    "p-ficha":       "Ficha de producto",
+    "p-cliente":     "Datos del cliente",
+    "p-eventos":     "Fotos de eventos",
+    "p-evento-form": "Consulta de evento",
+    "p-carrito":     "Carrito"
+};
+
+/* =========================================================
    CATÁLOGO ÚNICO v2 (v4.3)
    - Misma estructura que catalogo_precios_v2.json (fuente única).
    - Al iniciar, la app intenta refrescarlo desde la hoja vía
@@ -3865,6 +3946,18 @@ function mostrar(id) {
     document.getElementById(id).classList.remove("oculto");
     window.scrollTo(0, 0);
     if (id === "p-carrito") renderCarrito();
+    /* Pageview virtual: sin esto GTM contaría una sola visita por cliente,
+       porque nunca se recarga la página. */
+    medir("pantalla_vista", {
+        pantalla_id: id,
+        pantalla: NOMBRE_PANTALLA[id] || id,
+        items_carrito: carrito.length
+    });
+    /* El carrito con ítems es el paso previo a enviar: sirve para medir
+       cuántos llegan hasta acá y no terminan enviando. */
+    if (id === "p-carrito" && carrito.length) {
+        medir("iniciar_checkout", { valor: totalCarrito(), items: carrito.length, moneda: "ARS" });
+    }
 }
 /* El pedido arranca directo en el menú: los datos del cliente se piden recién
    al agregar el primer ítem al carrito (menos fricción, menos rebote).
@@ -4085,6 +4178,14 @@ async function agregarFichaAlCarrito() {
         subtotal: fichaSel.precio * cant + montoMods(mods),
         aCotizar: false,
         fotos: adjuntosFicha.slice()
+    });
+    medir("agregar_al_carrito", {
+        producto: fichaSel.tipoLabel,
+        variante: fichaSel.nombre + " · marco " + marcoNombre,
+        cantidad: cant,
+        fotos_adjuntas: adjuntosFicha.length,
+        valor: totalCarrito(),
+        moneda: "ARS"
     });
     adjuntosFicha = [];
     actualizarBadges();
@@ -4455,6 +4556,15 @@ async function agregarFotoAlCarrito() {
         }
     }
 
+    medir("agregar_al_carrito", {
+        producto: esCollage ? "Foto collage" : "Revelado de fotos",
+        variante: nombreItem,
+        cantidad: cant,
+        fotos_adjuntas: fotosItem.length,
+        valor: totalCarrito(),
+        moneda: "ARS"
+    });
+
     // Limpiar el formulario para seguir agregando sin salir de la página
     adjuntosSim = [];
     renderThumbs("thumbs-sim", adjuntosSim, "sim");
@@ -4762,6 +4872,14 @@ function agregarSouvAlCarrito() {
         aCotizar: false,
         fotos: adjuntosSouv.slice()
     });
+    medir("agregar_al_carrito", {
+        producto: selSouv.subtitulo,
+        variante: selSouv.nombre,
+        cantidad: cant,
+        fotos_adjuntas: adjuntosSouv.length,
+        valor: totalCarrito(),
+        moneda: "ARS"
+    });
     adjuntosSouv = [];
     renderThumbs("thumbs-souv", adjuntosSouv, "souv");
     document.getElementById("in-cant-souv").value = 1;
@@ -4966,6 +5084,14 @@ function agregarTazaAlCarrito() {
         subtotal: precioTazaActual(),
         aCotizar: false,
         fotos: fotos
+    });
+    medir("agregar_al_carrito", {
+        producto: "Taza sublimada",
+        variante: "Taza " + taza.tipo.nombre,
+        cantidad: cant,
+        fotos_adjuntas: fotos.length,
+        valor: totalCarrito(),
+        moneda: "ARS"
     });
     actualizarBadges();
     avisoAgregado();
@@ -5393,6 +5519,18 @@ async function enviarPedido() {
     const subieron = (estado === "ok" && !sinImagenes);
     const wa = "https://wa.me/" + TELEFONO_WA + "?text=" +
                encodeURIComponent(mensajePedido(numero, carpeta, estado, subieron));
+
+    /* "estado" distingue un pedido guardado en la hoja de uno que falló: si en los
+       informes aparecen muchos "error", el problema es el backend, no la tienda. */
+    medir("pedido_enviado", {
+        valor: totalCarrito(),
+        items: carrito.length,
+        fotos: carrito.reduce((s, it) => s + ((it.fotos || []).length), 0),
+        estado: estado,
+        imagenes_omitidas: sinImagenes,
+        moneda: "ARS"
+    });
+
     mostrarResultadoPedido(numero, carpeta, wa, estado, sinImagenes);
 }
 
@@ -5456,6 +5594,11 @@ function mostrarResultadoPedido(numero, carpeta, wa, estado, sinImagenes) {
         det.innerHTML = "Tocá el botón para abrir WhatsApp con tu pedido cargado. Acordate de adjuntar tus fotos en el chat.";
     }
     waBtn.href = wa; waBtn.classList.remove("oculto");
+    /* Conversión final: que el pedido se registre no significa que el cliente
+       haya escrito. Esto mide el clic real que abre WhatsApp. */
+    waBtn.onclick = function () {
+        medir("clic_whatsapp", { valor: totalCarrito(), items: carrito.length, estado: estado, moneda: "ARS" });
+    };
     document.getElementById("modal-pedido").classList.remove("oculto");
 }
 
@@ -5943,4 +6086,49 @@ function reiniciarAutoNov() { clearInterval(novTimer); autoNov(); }
         </div>
     </div>
 </div>
+
+<!-- ===== Aviso de cookies =====
+     Se muestra solo si el cliente todavía no eligió. Su decisión se guarda en
+     localStorage y se aplica a GTM con Consent Mode (ver el bloque del <head>). -->
+<div id="aviso-cookies" class="aviso-cookies oculto">
+    <p>Usamos cookies para ver cómo se usa la página y mejorarla. No las necesitás para hacer tu pedido.</p>
+    <div class="ck-btns">
+        <button type="button" class="ck-no" onclick="decidirCookies(false)">Rechazar</button>
+        <button type="button" class="ck-si" onclick="decidirCookies(true)">Aceptar</button>
+    </div>
+</div>
+
+<script>
+/* Guarda la elección y se la avisa a GTM. Sin "aceptar" no se escriben
+   cookies de estadística: el consentimiento arranca en "denied" en el <head>. */
+function decidirCookies(acepta) {
+    try { localStorage.setItem('tf_cookies', acepta ? 'ok' : 'no'); } catch (e) { /* navegación privada */ }
+    if (acepta && typeof gtag === 'function') {
+        gtag('consent', 'update', {
+            ad_storage: 'granted', ad_user_data: 'granted',
+            ad_personalization: 'granted', analytics_storage: 'granted'
+        });
+    }
+    medir('consentimiento_cookies', { decision: acepta ? 'aceptado' : 'rechazado' });
+    document.getElementById('aviso-cookies').classList.add('oculto');
+    document.body.classList.remove('con-cookies');
+    document.body.style.paddingBottom = "";
+}
+/* El alto del cartel depende del ancho de pantalla (el texto se parte en más
+   líneas en celulares angostos), así que el espacio se calcula, no se fija. */
+function espacioCookies() {
+    const b = document.getElementById('aviso-cookies');
+    if (!b || b.classList.contains('oculto')) return;
+    document.body.style.paddingBottom = (b.offsetHeight + 12) + "px";
+}
+(function initCookies() {
+    let elegido = null;
+    try { elegido = localStorage.getItem('tf_cookies'); } catch (e) { /* navegación privada */ }
+    if (elegido) return;               // ya decidió en otra visita
+    document.getElementById('aviso-cookies').classList.remove('oculto');
+    document.body.classList.add('con-cookies');
+    espacioCookies();
+    window.addEventListener('resize', espacioCookies);
+})();
+</script>
 </body></html>

@@ -68,14 +68,46 @@ Contenedor **`GTM-K9M24PKG`** instalado en `index.html`: el `<script>` va arriba
 todo en el `<head>` y el `<noscript>` justo después de `<body>`, como pide Google.
 Para cambiar el contenedor, reemplazá ese ID en **los dos** lugares.
 
-**Ojo con las estadísticas:** la tienda es una **sola página** (las pantallas son
-`<div>` que se muestran y ocultan, no páginas distintas). GTM cuenta **una sola
-visita** por cliente, aunque recorra todo el pedido. Si querés medir el embudo
-—cuántos llegan al carrito, cuántos terminan enviando— hay que mandar eventos al
-`dataLayer` en cada paso. No está hecho todavía; se agrega así:
+### Eventos que ya se envían
+
+La tienda es una **sola página** (las pantallas son `<div>` que se muestran y
+ocultan), así que GTM por sí solo contaría **una visita** por cliente. Por eso la
+app avisa cada paso con la función `medir()` (buscá `function medir` en `index.html`):
+
+| Evento | Cuándo | Datos que trae |
+|---|---|---|
+| `pantalla_vista` | Cada cambio de pantalla | `pantalla` (nombre legible), `pantalla_id`, `items_carrito` |
+| `agregar_al_carrito` | Al agregar cualquier producto | `producto`, `variante`, `cantidad`, `fotos_adjuntas`, `valor` |
+| `iniciar_checkout` | Al entrar al carrito con ítems | `valor`, `items` |
+| `pedido_enviado` | Al registrar el pedido | `valor`, `items`, `fotos`, `estado`, `imagenes_omitidas` |
+| `clic_whatsapp` | Al tocar "Abrir WhatsApp" | `valor`, `items`, `estado` |
+| `consentimiento_cookies` | Al elegir en el cartel | `decision` |
+
+**Para usarlos en GTM:** Activador → *Evento personalizado* → nombre del evento.
+Los datos extra quedan disponibles como *Variables de capa de datos*.
+
+Dos detalles que valen la pena:
+
+- **`clic_whatsapp` es la conversión de verdad.** Que un pedido se registre no
+  significa que el cliente haya escrito: puede cerrar la pantalla sin tocar el
+  botón. La diferencia entre `pedido_enviado` y `clic_whatsapp` son pedidos perdidos.
+- **`estado`** distingue un pedido guardado en la hoja (`ok`) de uno que falló
+  (`error`). Si ves muchos `error`, el problema es el backend, no la tienda.
+
+**No se envía ningún dato personal:** ni nombre, ni teléfono, ni email, ni fotos.
+
+### Aviso de cookies
+
+Cartel abajo de todo con **Aceptar / Rechazar**. Usa **Consent Mode v2**: el
+consentimiento arranca en `denied` en el `<head>` (antes de que cargue GTM), así
+que **no se escriben cookies de estadística hasta que el cliente acepta**.
+Rechazar no otorga ningún permiso. La elección se guarda en `localStorage`
+(`tf_cookies`) y el cartel no vuelve a aparecer.
+
+Para que el cliente pueda cambiar de opinión, alcanza con borrar esa clave:
 
 ```js
-dataLayer.push({ event: 'pedido_enviado', total: 12500 });
+localStorage.removeItem('tf_cookies');
 ```
 
 ## Redes sociales
