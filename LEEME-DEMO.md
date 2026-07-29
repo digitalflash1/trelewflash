@@ -62,6 +62,21 @@ quitar el comentario. Buscá la palabra `DEMO:` en `index.html`.
 
 ---
 
+## Redes sociales
+
+En el pie de página (visible en **todas** las pantallas) están los botones de
+Instagram y Facebook:
+
+| Red | Cuenta |
+|---|---|
+| Instagram | [@fotoflashtw](https://www.instagram.com/fotoflashtw/) |
+| Facebook | [FOTO FLASH TW](https://www.facebook.com/people/FOTO-FLASH-TW/61571162657400/) |
+
+Para cambiar un link, editá el `href` dentro de `<div class="pie-redes">` en el
+`<footer>` de `index.html`. Los íconos son **SVG embebidos** (no se descargan de
+ningún lado), así que cargan al instante. Si más adelante sumás otra red, copiá
+uno de los `<a>` y agregá su color en la clase `.pie-redes .red-XX` del CSS.
+
 ## Imágenes del carrusel de inicio
 
 El carrusel usa proporción **16:9** (`aspect-ratio` en `.carrusel`), así que las
