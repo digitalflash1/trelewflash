@@ -62,6 +62,22 @@ quitar el comentario. Buscá la palabra `DEMO:` en `index.html`.
 
 ---
 
+## Google Tag Manager
+
+Contenedor **`GTM-K9M24PKG`** instalado en `index.html`: el `<script>` va arriba de
+todo en el `<head>` y el `<noscript>` justo después de `<body>`, como pide Google.
+Para cambiar el contenedor, reemplazá ese ID en **los dos** lugares.
+
+**Ojo con las estadísticas:** la tienda es una **sola página** (las pantallas son
+`<div>` que se muestran y ocultan, no páginas distintas). GTM cuenta **una sola
+visita** por cliente, aunque recorra todo el pedido. Si querés medir el embudo
+—cuántos llegan al carrito, cuántos terminan enviando— hay que mandar eventos al
+`dataLayer` en cada paso. No está hecho todavía; se agrega así:
+
+```js
+dataLayer.push({ event: 'pedido_enviado', total: 12500 });
+```
+
 ## Redes sociales
 
 En el pie de página (visible en **todas** las pantallas) están los botones de
