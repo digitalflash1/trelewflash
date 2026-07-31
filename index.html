@@ -2618,7 +2618,7 @@ z"></path></g>
         <input id="ficha-cant" type="number" min="1" value="1" onchange="recalcularFicha()">
     </div>
 
-    <p class="nota-info">El precio corresponde a la impresión en gran formato. El armado del marco se coordina y cotiza aparte con el local.</p>
+    <p class="nota-info">El precio corresponde al cuadro. Si le vinculás una foto, coordinamos con vos la impresión y el armado final.</p>
 
     <div class="caja-precio" style="margin-top:14px;">
         <div class="monto">Subtotal de este ítem: <strong id="ficha-precio">$ 0</strong></div>
@@ -3857,7 +3857,7 @@ const PLANTILLAS_COLLAGE = {
    Collage: el precio de la variante es SOLO impresión por copia; el armado,
    las fotos extra y el retoque se cobran como modificadores (una vez por
    diseño, ver precioConocidoFoto). */
-let CATALOGO_FOTOS = {}, CATALOGO_SOUVENIRS = {}, TIPOS_TAZA = [];
+let CATALOGO_FOTOS = {}, CATALOGO_SOUVENIRS = {}, TIPOS_TAZA = [], CATALOGO_CUADROS = [];
 
 function construirCatalogosUI() {
     sincronizarMontos();
@@ -3909,6 +3909,34 @@ function construirCatalogosUI() {
     // --- Tazas ---
     const taz = producto("tazas");
     TIPOS_TAZA = taz ? taz.variantes.filter(v => v.activo !== false).map(v => ({ sku: v.sku, nombre: v.nombre, precio: v.precio, fotos: fotosDe(v) })) : [];
+
+    /* --- Cuadros ---
+       Producto aparte del revelado y del collage: el cuadro se vende solo y
+       después se le vincula (opcional) una foto o un collage del cliente.
+       Entra acá cualquier producto cuya CATEGORÍA empiece con "cuadro", que es
+       lo que se carga desde la app de administración. No necesita la columna
+       "render": las medidas salen del nombre de la variante (ej. "20x30 cm"). */
+    const cuadrosArr = [];
+    (CAT.productos || []).forEach(p => {
+        if (p.visible_web === false) return;
+        if (!/^cuadro/i.test(String(p.categoria || "").trim())) return;
+        (p.variantes || []).forEach(v => {
+            if (v.activo === false || v.visible_web === false) return;
+            if (v.precio == null && !v.a_cotizar) return;
+            const cm = medidasCm(String(v.nombre || ""));
+            cuadrosArr.push({
+                sku: v.sku,
+                nombre: String(v.nombre || "").trim(),   // la medida; puede venir vacía
+                producto: p.nombre,
+                precio: v.precio,
+                aCotizar: !!v.a_cotizar,
+                w: (v.render && v.render.w) || cm.w,
+                h: (v.render && v.render.h) || cm.h,
+                fotos: fotosDe(v)
+            });
+        });
+    });
+    CATALOGO_CUADROS = cuadrosArr;
 }
 construirCatalogosUI();
 
@@ -4102,19 +4130,23 @@ function swapCatFoto(idm, url, el) {
     cont.querySelectorAll("img").forEach(t => t.classList.toggle("activa", t === el));
 }
 
+/* "Portarretrato de madera" + "20x30 cm". La medida puede faltar: sin esto
+   quedaría un espacio colgando al final del título. */
+function tituloCuadro(etiqueta, nombre) { return (etiqueta + " " + (nombre || "")).trim(); }
+
 function tarjetaCuadro(item, etiqueta, sub, marcoClass, gradIndex) {
     FICHAS[item.sku] = { sku: item.sku, nombre: item.nombre, precio: item.precio,
         w: item.w, h: item.h, tipoLabel: etiqueta, esCollage: item.grupo === "collage",
-        fotos: (item.fotos || []).filter(Boolean) };
+        aCotizar: !!item.aCotizar, fotos: (item.fotos || []).filter(Boolean) };
     const preview = (item.fotos && item.fotos.filter(Boolean).length)
         ? previewFotos(item)
         : previewCuadro(item.w, item.h, marcoClass, gradIndex);
     return '<div class="cat-card">' +
         preview +
         '<div class="cat-cuerpo">' +
-            '<div class="cat-titulo">' + etiqueta + ' ' + item.nombre + '</div>' +
+            '<div class="cat-titulo">' + tituloCuadro(etiqueta, item.nombre) + '</div>' +
             '<div class="cat-sub">' + sub + '</div>' +
-            '<div class="cat-precio">' + formatear(item.precio) + '</div>' +
+            '<div class="cat-precio">' + (item.aCotizar ? "A cotizar" : formatear(item.precio)) + '</div>' +
             '<button class="cat-pedir" onclick="pedirDeCatalogo(\'ficha\',\'' + item.sku + '\')">Ver / pedir →</button>' +
         '</div></div>';
 }
@@ -4129,17 +4161,14 @@ function tarjetaMini(emoji, titulo, precioMin, intento, arg) {
         '</div></div>';
 }
 function renderCatalogo() {
-    // --- Cuadros: grandes (revelado) + collage grande ---
+    /* --- Cuadros ---
+       Son un producto propio (categoría "cuadros" del catálogo), no las medidas
+       grandes del revelado ni los collage: esos se piden desde su propio flujo.
+       El cuadro se compra solo y la foto se le vincula después, si el cliente quiere. */
     let g = 0, cuadros = "";
-    const grandes = (CATALOGO_FOTOS.grandes && CATALOGO_FOTOS.grandes.items) || [];
-    grandes.filter(it => !it.especial && it.precio != null).forEach(it => {
-        cuadros += tarjetaCuadro({ ...it, grupo: "grandes" }, "Cuadro", "Tu foto en gran formato, lista para colgar.",
+    CATALOGO_CUADROS.forEach(it => {
+        cuadros += tarjetaCuadro(it, it.producto, "Elegilo solo o con una foto tuya.",
             CAT_MARCOS[g % CAT_MARCOS.length], g); g++;
-    });
-    const collage = (CATALOGO_FOTOS.collage && CATALOGO_FOTOS.collage.items) || [];
-    collage.filter(it => { if (it.especial || it.precio == null) return false; const cm = medidasCm(it.nombre); return Math.max(cm.w, cm.h) >= 30; }).forEach(it => {
-        cuadros += tarjetaCuadro({ ...it, grupo: "collage" }, "Cuadro collage", "Varias fotos en un solo diseño.",
-            "negro", g); g++;
     });
     document.getElementById("cat-cuadros").innerHTML = cuadros ||
         '<p class="cat-sub">Pronto vas a ver acá nuestros cuadros.</p>';
@@ -4177,10 +4206,9 @@ function abrirFicha(sku) {
     const it = FICHAS[sku];
     if (!it) { mostrar("p-catalogo"); return; }
     fichaSel = it; fichaMarco = ""; adjuntosFicha = [];
-    document.getElementById("ficha-titulo").innerText = it.tipoLabel + " " + it.nombre;
-    document.getElementById("ficha-desc").innerText = it.esCollage
-        ? "Varias fotos en un solo diseño, impreso en gran formato para decorar."
-        : "Tu foto favorita impresa en gran formato, lista para enmarcar y colgar.";
+    document.getElementById("ficha-titulo").innerText = tituloCuadro(it.tipoLabel, it.nombre);
+    document.getElementById("ficha-desc").innerText =
+        "Podés llevarlo solo o vincularle una foto tuya para que vaya puesta.";
     const cont = document.getElementById("ficha-marcos");
     cont.innerHTML = "";
     FICHA_MARCOS.forEach((m, idx) => {
@@ -4302,7 +4330,7 @@ function verCuadrosParaFoto() {
 function precioFicha() {
     const cant = Math.max(1, parseInt(document.getElementById("ficha-cant").value) || 1);
     const retoqueOn = document.getElementById("ficha-retoque").checked;
-    const base = fichaSel ? fichaSel.precio : 0;
+    const base = (fichaSel && fichaSel.precio) || 0;   // los "a cotizar" van en 0
     const retoque = retoqueOn
         ? COSTO_RETOQUE * retoquesFacturables(cant, adjuntosFicha.length, !!(fichaSel && fichaSel.esCollage)) : 0;
     return base * cant + retoque;
@@ -4325,23 +4353,25 @@ async function agregarFichaAlCarrito() {
         const n = retoquesFacturables(cant, adjuntosFicha.length, !!fichaSel.esCollage);
         mods.push({ id: "retoque", nombre: "Retoque digital", cantidad: n, valor_unit: COSTO_RETOQUE, monto: n * COSTO_RETOQUE });
     }
+    const unit = fichaSel.precio || 0;
+    const varianteTxt = (fichaSel.nombre ? fichaSel.nombre + " · " : "") + "marco " + marcoNombre;
     const partes = ["Marco " + marcoNombre];
     partes.push(adjuntosFicha.length ? adjuntosFicha.length + " img adjuntas" : "sin foto (la definimos juntos)");
     if (retoqueOn) partes.push("retoque digital");
     carrito.push({
         id: Date.now() + Math.random(),
         tipo: "Cuadro",
-        sku: fichaSel.sku || "", producto: fichaSel.tipoLabel, variante: fichaSel.nombre + " · marco " + marcoNombre,
-        cant: cant, precioUnit: fichaSel.precio, mods: mods,
-        desc: fichaSel.tipoLabel + " " + fichaSel.nombre + " × " + cant,
+        sku: fichaSel.sku || "", producto: fichaSel.tipoLabel, variante: varianteTxt,
+        cant: cant, precioUnit: unit, mods: mods,
+        desc: tituloCuadro(fichaSel.tipoLabel, fichaSel.nombre) + " × " + cant,
         detalle: partes.join(" · "),
-        subtotal: fichaSel.precio * cant + montoMods(mods),
-        aCotizar: false,
+        subtotal: unit * cant + montoMods(mods),
+        aCotizar: !!fichaSel.aCotizar,
         fotos: adjuntosFicha.slice()
     });
     medir("agregar_al_carrito", {
         producto: fichaSel.tipoLabel,
-        variante: fichaSel.nombre + " · marco " + marcoNombre,
+        variante: varianteTxt,
         cantidad: cant,
         fotos_adjuntas: adjuntosFicha.length,
         valor: totalCarrito(),
