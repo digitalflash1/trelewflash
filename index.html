@@ -28,6 +28,17 @@ try {
 } catch (e) { /* navegación privada: se queda en denied */ }
 </script>
 
+<!-- Google tag (gtag.js) · GA4 G-7ZGZ6GP56R
+     Va DESPUÉS del bloque de consentimiento de arriba: así respeta el "denied"
+     inicial y no escribe cookies hasta que el cliente acepta.
+     La función gtag() ya quedó definida arriba, por eso acá no se repite. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7ZGZ6GP56R"></script>
+<script>
+gtag('js', new Date());
+gtag('config', 'G-7ZGZ6GP56R');
+</script>
+<!-- End Google tag -->
+
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -294,6 +305,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .modal-flotante.oculto { display: none; }
     .caja-modal { background: #fff; border-radius: 12px; padding: 16px; width: 100%; max-width: 480px; text-align: center; }
     .caja-modal h4 { margin: 0 0 10px; color: var(--color-principal); font-size: 16px; }
+    /* Cartel de versión demo (aparece al entrar). */
+    .caja-demo { max-width: 420px; padding: 24px 20px; border-top: 6px solid var(--color-boton); }
+    .caja-demo .demo-texto { margin: 4px 0 18px; color: #475569; font-size: 15px; line-height: 1.55; }
+    .caja-demo .demo-ok { display: inline-block; min-width: 170px; background: var(--color-boton);
+        color: var(--color-boton-texto); border: none; border-radius: 10px; padding: 13px 24px;
+        font-size: 16px; font-weight: bold; cursor: pointer; }
+    .caja-demo .demo-ok:hover { filter: brightness(1.05); }
     #crop-area { position: relative; display: inline-block; max-width: 100%; overflow: hidden; touch-action: none; margin-bottom: 12px; }
     #crop-img { display: block; max-width: 100%; max-height: 55vh; user-select: none; -webkit-user-drag: none; }
     #crop-rect { position: absolute; border: 2px dashed var(--color-boton); box-sizing: border-box; cursor: move;
@@ -442,6 +460,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .cat-marco.claro { background: #c9a36a; } .cat-marco.negro { background: #2b2b2b; }
     .cat-marco.blanco { background: #f5f5f0; box-shadow: 0 6px 12px rgba(0,0,0,.18); }
     .cat-lienzo { width: 100%; height: 100%; min-width: 44px; }
+    /* Tarjeta con foto real del producto (cargada desde el panel de administración) */
+    .cat-preview.foto-real { padding: 0; align-items: stretch; background: #f1f1e6; }
+    .cat-preview.foto-real::after { display: none; }
+    .cat-foto-main { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cat-thumbs { position: absolute; left: 6px; bottom: 6px; z-index: 2; display: flex; gap: 4px; }
+    .cat-thumbs img { width: 34px; height: 34px; object-fit: cover; border-radius: 6px; border: 2px solid #fff;
+        cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.35); }
+    .cat-thumbs img.activa { border-color: var(--color-boton); }
     .cat-card .cat-cuerpo { padding: 11px 13px 13px; display: flex; flex-direction: column; flex: 1; }
     .cat-card .cat-titulo { font-weight: bold; color: var(--color-principal); font-size: 15px; line-height: 1.2; }
     .cat-card .cat-sub { font-size: 12.5px; color: #7a7a52; margin: 3px 0 0; flex: 1; }
@@ -2520,9 +2546,7 @@ z"></path></g>
 <div class="caja-inicio">
         <p class="caja-titulo">¿Qué querés hacer?</p>
 <button class="btn-menu" onclick="irAPedido()">🛒 Empezar mi pedido</button>
-    <!-- DEMO: catálogo de cuadros deshabilitado hasta que esté terminado. Reactivar quitando el comentario.
     <button class="btn-menu" onclick="abrirCatalogo()">🖼️ Ver catálogo de cuadros</button>
-    -->
     <button class="btn-menu" onclick="window.location.href='https://digitalflashtw.wordpress.com/eventos/'">🥳 Ver fotos de eventos sociales</button>
     </div>
 </div>
@@ -3817,14 +3841,20 @@ function construirCatalogosUI() {
         const g = gruposDef[k];
         fotos[k] = { titulo: g.titulo, escena: g.escena, esPolaroid: !!g.esPolaroid, esCollage: !!g.esCollage, items: [] };
     });
+    const fotosDe = (v) => {
+        const arr = [];
+        if (v.imagen) arr.push(v.imagen);
+        (v.imagenes_extra || []).forEach(u => { if (u) arr.push(u); });
+        return arr;
+    };
     const meterVariante = (v) => {
         const g = v.render && v.render.grupo;
         if (!g || !fotos[g] || v.activo === false) return;
         if (v.especial) {
-            fotos[g].items.push({ sku: v.sku, nombre: v.nombre, precio: 0, especial: true, estilo: "sin-borde" });
+            fotos[g].items.push({ sku: v.sku, nombre: v.nombre, precio: 0, especial: true, estilo: "sin-borde", fotos: fotosDe(v) });
         } else {
             const estilo = (v.atributos && v.atributos.estilo === "polaroid") ? "polaroid" : "sin-borde";
-            fotos[g].items.push({ sku: v.sku, nombre: v.nombre, precio: v.precio, w: v.render.w, h: v.render.h, estilo: estilo });
+            fotos[g].items.push({ sku: v.sku, nombre: v.nombre, precio: v.precio, w: v.render.w, h: v.render.h, estilo: estilo, fotos: fotosDe(v) });
         }
     };
     const rev = producto("revelado");
@@ -3843,14 +3873,14 @@ function construirCatalogosUI() {
         if (!p || p.visible_web === false) return;
         const items = p.variantes
             .filter(v => v.activo !== false && v.precio != null)
-            .map(v => ({ sku: v.sku, nombre: v.nombre, precio: v.precio }));
+            .map(v => ({ sku: v.sku, nombre: v.nombre, precio: v.precio, fotos: fotosDe(v) }));
         if (items.length) souv[par[1]] = { titulo: p.nombre, items: items };
     });
     CATALOGO_SOUVENIRS = souv;
 
     // --- Tazas ---
     const taz = producto("tazas");
-    TIPOS_TAZA = taz ? taz.variantes.filter(v => v.activo !== false).map(v => ({ sku: v.sku, nombre: v.nombre, precio: v.precio })) : [];
+    TIPOS_TAZA = taz ? taz.variantes.filter(v => v.activo !== false).map(v => ({ sku: v.sku, nombre: v.nombre, precio: v.precio, fotos: fotosDe(v) })) : [];
 }
 construirCatalogosUI();
 
@@ -4022,11 +4052,37 @@ function previewCuadro(w, h, marcoClass, gradIndex) {
         '<div class="cat-lienzo" style="background:' + grad + '"></div></div></div>';
 }
 const FICHAS = {}; // registro de cuadros que abren una ficha de producto (por SKU)
+/* Preview con las fotos reales del producto (principal + resto). Los thumbs
+   cambian la foto grande al tocarlos. Se usa cuando el artículo tiene fotos
+   cargadas desde el panel de administración; si no, se cae al dibujo. */
+function previewFotos(item) {
+    const fotos = (item.fotos || []).filter(Boolean);
+    const idm = "catf-" + item.sku;
+    let html = '<div class="cat-preview foto-real">' +
+        '<img id="' + idm + '" class="cat-foto-main" src="' + fotos[0] + '" alt="Foto del producto" loading="lazy">';
+    if (fotos.length > 1) {
+        html += '<div class="cat-thumbs">' + fotos.map((f, i) =>
+            '<img src="' + f + '" class="' + (i === 0 ? "activa" : "") +
+            '" onclick="swapCatFoto(\'' + idm + '\',\'' + f + '\',this)" alt="">').join("") + "</div>";
+    }
+    return html + "</div>";
+}
+function swapCatFoto(idm, url, el) {
+    const img = document.getElementById(idm);
+    if (img) img.src = url;
+    const cont = el.parentElement;
+    cont.querySelectorAll("img").forEach(t => t.classList.toggle("activa", t === el));
+}
+
 function tarjetaCuadro(item, etiqueta, sub, marcoClass, gradIndex) {
     FICHAS[item.sku] = { sku: item.sku, nombre: item.nombre, precio: item.precio,
-        w: item.w, h: item.h, tipoLabel: etiqueta, esCollage: item.grupo === "collage" };
+        w: item.w, h: item.h, tipoLabel: etiqueta, esCollage: item.grupo === "collage",
+        fotos: (item.fotos || []).filter(Boolean) };
+    const preview = (item.fotos && item.fotos.filter(Boolean).length)
+        ? previewFotos(item)
+        : previewCuadro(item.w, item.h, marcoClass, gradIndex);
     return '<div class="cat-card">' +
-        previewCuadro(item.w, item.h, marcoClass, gradIndex) +
+        preview +
         '<div class="cat-cuerpo">' +
             '<div class="cat-titulo">' + etiqueta + ' ' + item.nombre + '</div>' +
             '<div class="cat-sub">' + sub + '</div>' +
@@ -5577,7 +5633,7 @@ function mostrarResultadoPedido(numero, carpeta, wa, estado, sinImagenes) {
     const det = document.getElementById("pedido-num-detalle");
     const waBtn = document.getElementById("pedido-wa-btn");
     if (estado === "ok" && numero) {
-        tit.innerHTML = "✅ Pedido registrado<br><span style='color:var(--color-boton);'>N° " + numero + "</span>";
+        tit.innerHTML = "✅ Pedido registrado<br><span style='color:var(--color-principal);font-weight:bold;'>N° " + numero + "</span>";
         det.innerHTML = "Guardamos tu pedido" + (carpeta && !sinImagenes ? " y tus imágenes" : "") +
                         ". Ahora tocá el botón para enviarlo por WhatsApp y coordinar el pago." +
                         (sinImagenes
@@ -6086,6 +6142,37 @@ function reiniciarAutoNov() { clearInterval(novTimer); autoNov(); }
         </div>
     </div>
 </div>
+
+<!-- ===== Cartel de versión DEMO =====
+     Se muestra al entrar, una vez por visita (sessionStorage). Avisa que la
+     página es una demostración y que puede tener errores. El cliente lo cierra
+     con "Entendido". -->
+<div id="modal-demo" class="modal-flotante oculto" role="dialog" aria-modal="true" aria-label="Aviso de versión demo">
+    <div class="caja-modal caja-demo">
+        <p class="demo-texto">
+            Estás viendo una <b>versión demo</b> de la página. Es posible que
+            encuentres <b>errores</b> o cosas que todavía estamos ajustando.
+            ¡Gracias por tu paciencia! 🙌
+        </p>
+        <button type="button" class="demo-ok" onclick="cerrarDemo()">Entendido</button>
+    </div>
+</div>
+
+<script>
+/* Muestra el cartel de demo al entrar. Se usa sessionStorage para no repetirlo
+   en cada recarga dentro de la misma visita; en una visita nueva vuelve a salir. */
+function cerrarDemo() {
+    document.getElementById('modal-demo').classList.add('oculto');
+    try { sessionStorage.setItem('tf_demo_visto', '1'); } catch (e) { /* navegación privada */ }
+}
+(function initDemo() {
+    let visto = null;
+    try { visto = sessionStorage.getItem('tf_demo_visto'); } catch (e) { /* navegación privada */ }
+    if (visto) return;
+    document.getElementById('modal-demo').classList.remove('oculto');
+    if (typeof medir === 'function') medir('aviso_demo_visto');
+})();
+</script>
 
 <!-- ===== Aviso de cookies =====
      Se muestra solo si el cliente todavía no eligió. Su decisión se guarda en

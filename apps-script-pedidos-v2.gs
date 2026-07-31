@@ -182,6 +182,12 @@ function catalogoDesdeHojas_() {
     };
     const render = parseJson_(f[11]);
     if (render) v.render = render;
+    // Fotos del producto (las carga el panel de administración): col 14 principal,
+    // col 15 el resto de la galería (una URL por línea).
+    const img = String(f[14] || '').trim();
+    if (img) v.imagen = img;
+    const extra = String(f[15] || '').split('\n').map(s => s.trim()).filter(Boolean);
+    if (extra.length) v.imagenes_extra = extra;
     productosMap[pid].variantes.push(v);
   });
   if (!orden.length) return null;

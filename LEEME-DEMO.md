@@ -26,9 +26,8 @@ que estén terminadas.
 Todo se deshabilitó **comentando** el código (no se borró), así que reactivar es
 quitar el comentario. Buscá la palabra `DEMO:` en `index.html`.
 
-1. **Catálogo de cuadros** — botón "🖼️ Ver catálogo de cuadros" de la pantalla de inicio.
-2. **Zona administrativa** — link del pie de página que llevaba al panel de precios (`precios-admin.html`, no incluido en el demo).
-3. **Paneles de administradores y fotógrafos** — no se incluyeron en esta carpeta
+1. **Zona administrativa** — link del pie de página que llevaba al panel de precios (`precios-admin.html`, no incluido en el demo).
+2. **Paneles de administradores y fotógrafos** — no se incluyeron en esta carpeta
    (`admin.html`, `fotografos.html`, `precios-admin.html` siguen en la carpeta original
    del proyecto para seguir trabajándolos).
 
@@ -59,6 +58,21 @@ quitar el comentario. Buscá la palabra `DEMO:` en `index.html`.
    sin comprobante, el pedido queda pendiente. El mismo recordatorio va incluido en el
    texto del mensaje. Se controla en el modal `#modal-pedido` (recuadro naranja) y en
    `mensajePedido()`.
+
+4. **Catálogo de cuadros activo.** El botón "🖼️ Ver catálogo de cuadros" de la portada
+   abre la pantalla `#p-catalogo`, que se arma sola con `renderCatalogo()` a partir del
+   catálogo de precios (`CATALOGO_V2` embebido, o el remoto si `PEDIDOS_URL` está
+   configurada). No hay listas de productos duplicadas: si cambiás un precio o agregás
+   una medida en el catálogo, el market se actualiza solo.
+
+   - **Cuadros**: las medidas `grandes` de revelado y los collage de 30 cm o más.
+     Cada uno abre su **ficha** (`#p-ficha`), donde el cliente elige marco (referencial),
+     puede adjuntar la foto y sumar retoque digital antes de agregar al carrito.
+   - **Más productos**: accesos directos a Revelado, Taza y Souvenirs, con el precio
+     "desde" calculado del propio catálogo.
+
+   Los datos del cliente **no** se piden al entrar al catálogo: se piden recién al
+   agregar el primer ítem al carrito (`conDatosCliente()`).
 
 ---
 
