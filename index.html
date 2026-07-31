@@ -319,6 +319,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     #crop-handle { position: absolute; right: -10px; bottom: -10px; width: 20px; height: 20px; border-radius: 50%;
         background: var(--color-boton); border: 2px solid #333; cursor: nwse-resize; touch-action: none; }
     .thumb.con-texto img { border: 2px solid var(--color-wa); }
+    /* Selector de foto del modal "¿querés enmarcar?" */
+    #enm-thumbs img { width: 64px; height: 64px; cursor: pointer; }
+    #enm-thumbs img.elegida { outline: 3px solid var(--color-wa); outline-offset: 1px; }
 
     .taza-tipos { display: grid; grid-template-columns: repeat(3,1fr); gap: 9px; margin-bottom: 8px; }
     /* La proporción es la del molde de impresión real (3150x1470 px @381dpi =
@@ -2588,16 +2591,26 @@ z"></path></g>
     <p class="instruccion">1. Elegí el marco (referencial):</p>
     <div id="ficha-marcos" class="grid-botones"></div>
 
-    <p class="instruccion">2. Subí tu foto (opcional):</p>
-    <label class="btn-tool">📷 Adjuntar foto<input type="file" accept="image/*" multiple="" style="display:none" onchange="adjuntarFicha(event)"></label>
-    <div id="thumbs-ficha" class="thumbs"></div>
+    <p class="instruccion">2. ¿Querés ponerle una foto ahora?</p>
+    <div class="grid-botones">
+        <button type="button" id="btn-ficha-sinfoto" class="btn-medida activo" onclick="setFichaConFoto(false)">🖼 Solo el cuadro</button>
+        <button type="button" id="btn-ficha-confoto" class="btn-medida" onclick="setFichaConFoto(true)">📷 Sí, adjuntar mi foto</button>
+    </div>
+    <p class="nota-info" id="ficha-nota-sinfoto">Lo encargás ahora y la foto la definimos después: te escribimos por WhatsApp para elegirla juntos.</p>
 
-    <div class="panel-retoque" style="margin-top:12px;">
-        <label style="display:flex;align-items:center;cursor:pointer;text-align:left;">
-            <input type="checkbox" id="ficha-retoque" onchange="recalcularFicha()">
-            <span><h4>Retoque digital <span id="ficha-retoque-precio" style="color:var(--color-wa-hover);"></span></h4>
-            <small style="color:#64748b;">Mejoramos color, luz y detalles de tu foto.</small></span>
-        </label>
+    <!-- Todo lo que depende de tener una foto vive acá adentro: si el cliente
+         compra el cuadro solo, no ve nada de esto. -->
+    <div id="ficha-bloque-foto" class="oculto">
+        <label class="btn-tool">📷 Adjuntar foto<input type="file" accept="image/*" multiple="" style="display:none" onchange="adjuntarFicha(event)"></label>
+        <div id="thumbs-ficha" class="thumbs"></div>
+
+        <div class="panel-retoque" style="margin-top:12px;">
+            <label style="display:flex;align-items:center;cursor:pointer;text-align:left;">
+                <input type="checkbox" id="ficha-retoque" onchange="recalcularFicha()">
+                <span><h4>Retoque digital <span id="ficha-retoque-precio" style="color:var(--color-wa-hover);"></span></h4>
+                <small style="color:#64748b;">Mejoramos color, luz y detalles de tu foto.</small></span>
+            </label>
+        </div>
     </div>
 
     <div class="fila-cantidad">
@@ -2605,7 +2618,7 @@ z"></path></g>
         <input id="ficha-cant" type="number" min="1" value="1" onchange="recalcularFicha()">
     </div>
 
-    <p class="nota-info">El precio corresponde a la impresión en gran formato. El armado del marco se coordina y cotiza con el local.</p>
+    <p class="nota-info">El precio corresponde a la impresión en gran formato. El armado del marco se coordina y cotiza aparte con el local.</p>
 
     <div class="caja-precio" style="margin-top:14px;">
         <div class="monto">Subtotal de este ítem: <strong id="ficha-precio">$ 0</strong></div>
@@ -2884,6 +2897,21 @@ z"></path></g>
             <button class="btn-tool" onclick="textoFotoAplicar()">✔ Aplicar</button>
             <button class="btn-tool peligro" onclick="textoFotoQuitar()">🗑 Quitar texto</button>
             <button class="btn-tool" onclick="cerrarModalTexto()">✖ Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: OFRECER ENMARCAR UNA FOTO RECIÉN AGREGADA -->
+<div id="modal-enmarcar" class="modal-flotante oculto" role="dialog" aria-modal="true" aria-labelledby="enm-titulo">
+    <div class="caja-modal">
+        <h4 id="enm-titulo">🖼 ¿Querés enmarcar alguna de estas fotos?</h4>
+        <p style="font-size:13.5px;color:#475569;margin:0 0 10px;line-height:1.45;">
+            Elegí una y te llevamos al catálogo de cuadros con esa foto ya puesta.
+        </p>
+        <div id="enm-thumbs" class="thumbs" style="justify-content:center;"></div>
+        <div class="herramientas" style="margin-top:14px;justify-content:center;">
+            <button class="btn-tool" onclick="cerrarEnmarcar(true)">Ahora no</button>
+            <button class="btn-tool" id="enm-btn-ver" onclick="verCuadrosParaFoto()">🖼 Ver cuadros →</button>
         </div>
     </div>
 </div>
@@ -4140,7 +4168,10 @@ const FICHA_MARCOS = [
     { clase: "", nombre: "Madera" }, { clase: "claro", nombre: "Roble claro" },
     { clase: "negro", nombre: "Negro" }, { clase: "blanco", nombre: "Blanco" }
 ];
-let fichaSel = null, fichaMarco = "", adjuntosFicha = [];
+let fichaSel = null, fichaMarco = "", adjuntosFicha = [], fichaConFoto = false;
+/* Foto que el cliente eligió enmarcar desde el flujo de revelado: al abrir la
+   ficha de un cuadro se adjunta sola (ver ofrecerEnmarcar). */
+let fotoParaEnmarcar = null;
 function abrirFicha(sku) {
     if (!FICHAS[sku]) renderCatalogo(); // asegura el registro si aún no se pobló
     const it = FICHAS[sku];
@@ -4169,6 +4200,15 @@ function abrirFicha(sku) {
     document.getElementById("ficha-retoque").checked = false;
     document.getElementById("ficha-retoque-precio").innerText = "+" + formatear(COSTO_RETOQUE);
     document.getElementById("ficha-cant").value = 1;
+    /* Por defecto el cuadro va solo. La excepción es cuando el cliente vino de
+       "enmarcar esta foto": ahí ya llega con la foto elegida puesta. */
+    setFichaConFoto(false);
+    if (fotoParaEnmarcar) {
+        adjuntosFicha = [fotoParaEnmarcar];
+        fotoParaEnmarcar = null;
+        setFichaConFoto(true);
+        renderThumbs("thumbs-ficha", adjuntosFicha, "ficha");
+    }
     pintarFicha();
     recalcularFicha();
     mostrar("p-ficha");
@@ -4194,6 +4234,70 @@ function pintarFicha() {
 }
 function adjuntarFicha(ev) {
     leerAdjuntos(ev, adjuntosFicha, "thumbs-ficha", "ficha", () => { pintarFicha(); recalcularFicha(); });
+}
+
+/* El cuadro se puede comprar solo: la foto es una decisión aparte. Recién
+   cuando el cliente dice que sí aparecen el adjunto y el retoque (que sin
+   foto no tendría sentido cobrar). */
+function setFichaConFoto(on) {
+    fichaConFoto = !!on;
+    document.getElementById("btn-ficha-confoto").classList.toggle("activo", fichaConFoto);
+    document.getElementById("btn-ficha-sinfoto").classList.toggle("activo", !fichaConFoto);
+    document.getElementById("ficha-bloque-foto").classList.toggle("oculto", !fichaConFoto);
+    document.getElementById("ficha-nota-sinfoto").classList.toggle("oculto", fichaConFoto);
+    if (!fichaConFoto) {
+        // Volver a "solo el cuadro" descarta lo que se haya adjuntado.
+        adjuntosFicha = [];
+        renderThumbs("thumbs-ficha", adjuntosFicha, "ficha");
+        document.getElementById("ficha-retoque").checked = false;
+    }
+    pintarFicha();
+    recalcularFicha();
+}
+
+/* ---- Ofrecer enmarcar una foto recién pedida ----
+   Después de agregar fotos al carrito le preguntamos si quiere alguna en
+   cuadro. Si dice que no, no se vuelve a insistir en toda la visita. */
+let enmOpciones = [], enmSel = 0, enmRechazado = false;
+
+function ofrecerEnmarcar(fotos) {
+    if (enmRechazado) return;
+    const validas = (fotos || []).filter(f => f && f.url);
+    if (!validas.length) return;
+    // Sin cuadros en el catálogo no hay nada que ofrecer.
+    if (!Object.keys(FICHAS).length) renderCatalogo();
+    if (!Object.keys(FICHAS).length) return;
+
+    enmOpciones = validas.slice(0, 8);
+    enmSel = 0;
+    pintarEnmThumbs();
+    document.getElementById("modal-enmarcar").classList.remove("oculto");
+    medir("oferta_enmarcar_vista", { fotos: enmOpciones.length });
+}
+
+function pintarEnmThumbs() {
+    document.getElementById("enm-thumbs").innerHTML = enmOpciones.map((f, i) =>
+        '<div class="thumb"><img src="' + f.url + '" class="' + (i === enmSel ? "elegida" : "") +
+        '" onclick="enmElegir(' + i + ')" alt="Foto ' + (i + 1) + '"></div>').join("");
+}
+function enmElegir(i) { enmSel = i; pintarEnmThumbs(); }
+
+function cerrarEnmarcar(rechazo) {
+    document.getElementById("modal-enmarcar").classList.add("oculto");
+    if (rechazo) { enmRechazado = true; medir("oferta_enmarcar_rechazada", {}); }
+}
+
+function verCuadrosParaFoto() {
+    const f = enmOpciones[enmSel];
+    cerrarEnmarcar(false);
+    if (!f) return;
+    /* Copia sin el texto impreso: eso es del revelado, el cuadro no lo cobra.
+       Se conserva "file" para poder rehacerla en alta si el cuadro es grande. */
+    fotoParaEnmarcar = Object.assign({}, f);
+    delete fotoParaEnmarcar.texto;
+    delete fotoParaEnmarcar.fuenteIdx;
+    medir("enmarcar_ver_cuadros", {});
+    abrirCatalogo();
 }
 function precioFicha() {
     const cant = Math.max(1, parseInt(document.getElementById("ficha-cant").value) || 1);
@@ -4621,6 +4725,9 @@ async function agregarFotoAlCarrito() {
         moneda: "ARS"
     });
 
+    /* Se guardan antes de limpiar: son las que se le ofrecen para enmarcar. */
+    const fotosRecienPedidas = adjuntosSim.slice();
+
     // Limpiar el formulario para seguir agregando sin salir de la página
     adjuntosSim = [];
     renderThumbs("thumbs-sim", adjuntosSim, "sim");
@@ -4631,6 +4738,7 @@ async function agregarFotoAlCarrito() {
     recalcularSim();
     actualizarBadges();
     avisoAgregado();
+    ofrecerEnmarcar(fotosRecienPedidas);
 }
 
 /* --- Diseñador de collage --- */
