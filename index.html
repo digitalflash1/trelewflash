@@ -2623,6 +2623,9 @@ z"></path></g>
         <div id="ficha-tags" class="ficha-tags"></div>
         <div id="ficha-precio-top" class="ficha-precio-top"></div>
         <p id="ficha-desc" class="ficha-desc"></p>
+        <!-- El enlace lleva a ESTE cuadro con esta terminación y medida. -->
+        <button type="button" class="btn-tool" id="btn-compartir-ficha" onclick="compartirFicha()"
+                style="margin-top:10px;">📲 Compartir este cuadro</button>
     </div>
 
     <!-- Selectores de variante (terminación, medida, …). Se arman solos con los
@@ -4056,6 +4059,7 @@ function cargarCatalogoRemoto(reintento) {
                 actualizarEtiquetasPrecios();
                 estadoCatalogo = "listo";
                 refrescarCatalogoAbierto();
+                aplicarEnlaceInicial();   // el cuadro compartido recién ahora existe
                 console.log("Catálogo remoto cargado (v" + ((data.meta && data.meta.version) || "?") + ").");
             } else {
                 throw new Error("respuesta sin catálogo");
@@ -4145,6 +4149,12 @@ function mostrar(id) {
     document.querySelectorAll(".pantalla").forEach(p => p.classList.add("oculto"));
     document.getElementById(id).classList.remove("oculto");
     window.scrollTo(0, 0);
+    /* Fuera de la ficha la URL vuelve a ser la de la tienda: si no, el cliente
+       compartiría desde el carrito un enlace a un cuadro que ya no está viendo. */
+    if (id !== "p-ficha" && window.history && history.replaceState &&
+        location.search.indexOf("cuadro=") >= 0) {
+        history.replaceState(null, "", urlBase());
+    }
     if (id === "p-carrito") renderCarrito();
     /* Pageview virtual: sin esto GTM contaría una sola visita por cliente,
        porque nunca se recarga la página. */
@@ -4484,9 +4494,61 @@ function familiaDeFicha(clave) {
     }
     return null;
 }
+/* ── Enlace propio de cada cuadro ──
+   La tienda es una sola página, así que la URL la manejamos a mano: sin esto,
+   compartir un cuadro por WhatsApp mandaba a la portada y el que abría el
+   enlace tenía que ir a buscarlo. */
+function urlDeFicha(fam, medida) {
+    const u = new URL(location.href);
+    u.hash = "";
+    u.search = "";
+    u.searchParams.set("cuadro", fam.id);
+    if (medida) u.searchParams.set("medida", medida);
+    return u.toString();
+}
+function urlBase() {
+    const u = new URL(location.href);
+    u.hash = ""; u.search = "";
+    return u.toString();
+}
+/* Medida de lo que está elegido ahora, normalizada ("20x30"). */
+function medidaDeFicha() {
+    return (fichaSel && fichaSel.medida) || "";
+}
+
+/* Enlace que llegó en la URL. Los cuadros viven solo en la hoja, así que al
+   abrir la página todavía no están: se guarda y se aplica cuando llega. */
+let fichaPendienteUrl = null;
+function leerEnlaceInicial() {
+    const p = new URLSearchParams(location.search);
+    const cuadro = p.get("cuadro");
+    if (!cuadro) return;
+    fichaPendienteUrl = { clave: cuadro, medida: p.get("medida") || "" };
+    aplicarEnlaceInicial();
+}
+function aplicarEnlaceInicial() {
+    if (!fichaPendienteUrl || !CATALOGO_CUADROS.length) return;
+    const d = fichaPendienteUrl;
+    fichaPendienteUrl = null;
+    flujo = "pedido";
+    renderCatalogo();               // deja el registro de fichas armado
+    abrirFicha(d.clave, d.medida, true);   // true = no volver a apilar historial
+    medir("abrir_cuadro_compartido", { cuadro: d.clave, medida: d.medida || "" });
+}
+
+/* Atrás del navegador: vuelve al catálogo en vez de sacar al cliente del sitio. */
+window.addEventListener("popstate", ev => {
+    const st = ev.state;
+    if (st && st.cuadro) { abrirFicha(st.cuadro, st.medida || "", true); return; }
+    const ficha = document.getElementById("p-ficha");
+    if (ficha && !ficha.classList.contains("oculto")) mostrar("p-catalogo");
+});
+
 /* medidaPedida = la medida que venía filtrada en el catálogo ("20x30"), para
-   abrir la ficha ya parada en ella. */
-function abrirFicha(clave, medidaPedida) {
+   abrir la ficha ya parada en ella.
+   sinHistorial = se está abriendo desde la URL o desde el botón Atrás, así que
+   no hay que apilar una entrada nueva. */
+function abrirFicha(clave, medidaPedida, sinHistorial) {
     if (!familiaDeFicha(clave)) renderCatalogo(); // asegura el registro si aún no se pobló
     const enc = familiaDeFicha(clave);
     if (!enc) { mostrar("p-catalogo"); return; }
@@ -4519,6 +4581,39 @@ function abrirFicha(clave, medidaPedida) {
     }
     aplicarOpcionFicha();
     mostrar("p-ficha");
+    /* La URL pasa a ser la de ESTE cuadro: es lo que se comparte y lo que hace
+       que el botón Atrás vuelva al catálogo. */
+    if (!sinHistorial && window.history && history.pushState) {
+        const med = medidaDeFicha();
+        history.pushState({ cuadro: fichaFamilia.id, medida: med }, "",
+            urlDeFicha(fichaFamilia, med));
+    }
+}
+
+/* Compartir el cuadro que se está mirando. En el celular abre el menú del
+   sistema (ahí está WhatsApp); en la compu copia el enlace. */
+async function compartirFicha() {
+    if (!fichaFamilia) return;
+    const url = urlDeFicha(fichaFamilia, medidaDeFicha());
+    const titulo = tituloCuadro(fichaFamilia.producto, fichaSel ? fichaSel.nombre : "");
+    const texto = titulo + " — Trelewflash";
+    medir("compartir_cuadro", {
+        producto: fichaFamilia.producto,
+        sku: (fichaSel && fichaSel.sku) || "",
+        via: navigator.share ? "nativo" : "copiar"
+    });
+    if (navigator.share) {
+        /* Cancelar el menú de compartir tira AbortError: no es un error nuestro
+           y no hay que avisarle nada al cliente. */
+        try { await navigator.share({ title: titulo, text: texto, url: url }); return; }
+        catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    try {
+        await navigator.clipboard.writeText(texto + "\n" + url);
+        avisoToast("🔗 Enlace copiado. Pegalo en WhatsApp.");
+    } catch (e) {
+        window.prompt("Copiá el enlace de este cuadro:", url);
+    }
 }
 
 /* --- Selectores de la ficha (terminación, medida, …) --- */
@@ -4561,6 +4656,18 @@ function aplicarOpcionFicha() {
     pintarEjesFicha();
     pintarGaleriaFicha();
     recalcularFicha();
+    /* Si el cliente cambia de terminación o de medida, el enlace tiene que
+       seguirlo: compartir mientras mira el 20x30 no puede mandar al 15x21.
+       Va con replaceState (no push) para no llenarle el botón Atrás.
+       Solo cuando la ficha ya está en pantalla: durante abrirFicha todavía
+       estamos parados en la entrada del catálogo y la pisaríamos. */
+    const p = document.getElementById("p-ficha");
+    if (p && !p.classList.contains("oculto") && window.history && history.replaceState &&
+        location.search.indexOf("cuadro=") >= 0) {
+        const med = medidaDeFicha();
+        history.replaceState({ cuadro: fichaFamilia.id, medida: med }, "",
+            urlDeFicha(fichaFamilia, med));
+    }
 }
 /* Material y medida de lo que está elegido, más el precio arriba de todo: son
    los tres datos que el cliente busca apenas entra. */
@@ -6288,14 +6395,19 @@ function cropAplicar() {
     handle.addEventListener("pointercancel", () => modo = null);
 })();
 function escHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
-function avisoAgregado() {
+/* Cartelito de abajo. Se reusa para todo lo que hay que avisar sin cortarle el
+   paso al cliente (agregado al carrito, enlace copiado). */
+function avisoToast(html, segundos) {
     let t = document.getElementById("toast-carrito");
     if (!t) { t = document.createElement("div"); t.id = "toast-carrito"; document.body.appendChild(t); }
-    t.innerHTML = '✅ Agregado · ' + carrito.length + ' ítem(s) en el carrito' +
-                  '<button onclick="mostrar(\'p-carrito\')">🛒 Ver carrito</button>';
+    t.innerHTML = html;
     t.classList.add("visible");
     clearTimeout(t._timer);
-    t._timer = setTimeout(() => t.classList.remove("visible"), 4000);
+    t._timer = setTimeout(() => t.classList.remove("visible"), (segundos || 4) * 1000);
+}
+function avisoAgregado() {
+    avisoToast('✅ Agregado · ' + carrito.length + ' ítem(s) en el carrito' +
+               '<button onclick="mostrar(\'p-carrito\')">🛒 Ver carrito</button>');
 }
 
 /* ── v4.3: arranque ──
@@ -6303,6 +6415,9 @@ function avisoAgregado() {
    2) intenta refrescar el catálogo desde la hoja (Apps Script) */
 actualizarEtiquetasPrecios();
 cargarCatalogoRemoto();
+/* 3) si entró por un enlace compartido (?cuadro=…), lo abre. Los cuadros solo
+      están en la hoja, así que casi siempre se aplica cuando llega el remoto. */
+leerEnlaceInicial();
 
 /* ===== STICKERS Y EMOJIS (OpenMoji 618px, CC BY-SA 4.0) =====
    crossOrigin="anonymous" es obligatorio: sin eso el canvas de snapshotTaza/

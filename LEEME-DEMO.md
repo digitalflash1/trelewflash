@@ -87,6 +87,22 @@ quitar el comentario. Buscá la palabra `DEMO:` en `index.html`.
    Los datos del cliente **no** se piden al entrar al catálogo: se piden recién al
    agregar el primer ítem al carrito (`conDatosCliente()`).
 
+5. **Cada cuadro tiene su enlace.** La tienda es una sola página, así que la URL se
+   maneja a mano: al abrir una ficha se apila `?cuadro=<producto_id>&medida=<20x30>`
+   (`urlDeFicha()`), y el enlace sigue a lo que el cliente elige adentro. Al salir de
+   la ficha vuelve a la URL limpia. El botón **📲 Compartir este cuadro** usa el menú
+   del sistema en el celular (`navigator.share`) y copia al portapapeles en la compu.
+
+   Quien abre el enlace cae directo en esa ficha (`leerEnlaceInicial()`). Como los
+   cuadros viven **solo en la hoja**, el enlace queda pendiente hasta que llega el
+   catálogo remoto y recién ahí se aplica (`aplicarEnlaceInicial()`). Si el producto
+   ya no existe, se cae al catálogo con la URL limpia en vez de romper.
+
+   > ⚠️ La **vista previa** de WhatsApp (miniatura y título) sigue siendo la del
+   > sitio: las etiquetas `og:` son fijas en el `<head>` y GitHub Pages es estático,
+   > así que no se pueden armar por producto. Por eso el texto que se comparte lleva
+   > el nombre del cuadro adelante: el mensaje se entiende igual.
+
 ---
 
 ## Google Tag Manager
@@ -110,6 +126,8 @@ app avisa cada paso con la función `medir()` (buscá `function medir` en `index
 | `clic_whatsapp` | Al tocar "Abrir WhatsApp" | `valor`, `items`, `estado` |
 | `consentimiento_cookies` | Al elegir en el cartel | `decision` |
 | `filtrar_cuadros` | Al tocar un chip de Tipo o Tamaño | `material`, `medida` (`todos`/`todas` si está sin filtrar) |
+| `compartir_cuadro` | Al tocar "Compartir este cuadro" | `producto`, `sku`, `via` (`nativo`/`copiar`) |
+| `abrir_cuadro_compartido` | Cuando alguien entra por un enlace de cuadro | `cuadro`, `medida` |
 
 **Para usarlos en GTM:** Activador → *Evento personalizado* → nombre del evento.
 Los datos extra quedan disponibles como *Variables de capa de datos*.
