@@ -4006,13 +4006,32 @@ function construirCatalogosUI() {
 construirCatalogosUI();
 
 /* Refresco remoto del catálogo (pestaña "Catalogo" de la hoja, vía Apps Script).
-   Si falla o no valida, se sigue usando el embebido sin molestar al usuario. */
+   Si falla o no valida, se sigue usando el embebido sin molestar al usuario.
+
+   OJO: el catálogo embebido NO trae los cuadros, que viven solo en la hoja. Si
+   esto no llega, la sección de cuadros queda vacía y parece que no hay nada
+   para vender. Por eso acá se avisa en qué estado está y se reintenta. */
 let ultimoRefrescoCat = 0;
-function cargarCatalogoRemoto() {
-    if (!PEDIDOS_URL) return;
+let estadoCatalogo = "cargando";   // cargando | listo | error
+
+/* La tienda es una sola página: si el catálogo llega DESPUÉS de que el cliente
+   abrió la pantalla, hay que repintarla o se queda mirando el vacío. */
+function refrescarCatalogoAbierto() {
+    const p = document.getElementById("p-catalogo");
+    if (p && !p.classList.contains("oculto")) renderCatalogo();
+}
+function reintentarCatalogo() {
+    estadoCatalogo = "cargando";
+    refrescarCatalogoAbierto();
+    cargarCatalogoRemoto();
+}
+function cargarCatalogoRemoto(reintento) {
+    if (!PEDIDOS_URL) { estadoCatalogo = "listo"; return; }
     ultimoRefrescoCat = Date.now();
     const ctrl = ("AbortController" in window) ? new AbortController() : null;
-    const timer = ctrl ? setTimeout(() => ctrl.abort(), 5000) : null;
+    /* Apps Script tarda varios segundos cuando está frío, y en un celular con
+       señal floja 5 s se cortaban antes de tiempo. */
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), 15000) : null;
     /* El "?t=" cambia en cada pedido: sin eso el navegador puede servir la
        respuesta guardada y un producto recién cargado en administración no
        aparecería hasta que al cliente se le venza la caché. */
@@ -4035,10 +4054,21 @@ function cargarCatalogoRemoto() {
                    catálogo embebido cobraría un precio que ya no existe. */
                 if (typeof taza !== "undefined" && taza) taza.tipo = TIPOS_TAZA[1] || TIPOS_TAZA[0] || null;
                 actualizarEtiquetasPrecios();
+                estadoCatalogo = "listo";
+                refrescarCatalogoAbierto();
                 console.log("Catálogo remoto cargado (v" + ((data.meta && data.meta.version) || "?") + ").");
+            } else {
+                throw new Error("respuesta sin catálogo");
             }
         })
-        .catch(() => console.log("Catálogo remoto no disponible; se usa el embebido v" + ((CATALOGO_V2.meta && CATALOGO_V2.meta.version) || "?") + "."))
+        .catch(() => {
+            /* Un solo reintento: levanta el caso típico (Apps Script frío) sin
+               castigar con esperas al que de verdad no tiene señal. */
+            if (!reintento) { setTimeout(() => cargarCatalogoRemoto(true), 2500); return; }
+            estadoCatalogo = "error";
+            refrescarCatalogoAbierto();
+            console.log("Catálogo remoto no disponible; se usa el embebido v" + ((CATALOGO_V2.meta && CATALOGO_V2.meta.version) || "?") + ".");
+        })
         .finally(() => { if (timer) clearTimeout(timer); });
 }
 
@@ -4387,6 +4417,21 @@ function renderFiltrosCuadros() {
         filaFiltro("Tipo", "material", materiales) +
         filaFiltro("Tamaño", "medida", medidas, v => v + " cm");
 }
+/* Qué decir cuando no hay ninguna tarjeta para mostrar. Son tres situaciones
+   distintas y confundirlas hace que el cliente crea que no vendemos cuadros:
+   filtró de más, el catálogo todavía viene en camino, o no se pudo traer. */
+function mensajeSinCuadros() {
+    if (CATALOGO_CUADROS.length) {
+        return '<p class="cat-vacio">No tenemos cuadros con esa combinación. ' +
+            'Probá con otro tipo o medida, o escribinos y lo buscamos.</p>';
+    }
+    if (estadoCatalogo === "cargando") return '<p class="cat-vacio">Buscando los cuadros…</p>';
+    if (estadoCatalogo === "error") {
+        return '<p class="cat-vacio">No pudimos traer los cuadros en este momento. ' +
+            '<button type="button" class="chip-filtro" onclick="reintentarCatalogo()">Reintentar</button></p>';
+    }
+    return '<p class="cat-sub">Pronto vas a ver acá nuestros cuadros.</p>';
+}
 function renderCatalogo() {
     /* --- Cuadros ---
        Son un producto propio (categoría "cuadros" del catálogo), no las medidas
@@ -4396,10 +4441,7 @@ function renderCatalogo() {
     renderFiltrosCuadros();
     const visibles = cuadrosFiltrados();
     const cuadros = visibles.map(fam => tarjetaCuadro(fam, filtroCuadros.medida)).join("");
-    document.getElementById("cat-cuadros").innerHTML = cuadros ||
-        (CATALOGO_CUADROS.length
-            ? '<p class="cat-vacio">No tenemos cuadros con esa combinación. Probá con otro tipo o medida, o escribinos y lo buscamos.</p>'
-            : '<p class="cat-sub">Pronto vas a ver acá nuestros cuadros.</p>');
+    document.getElementById("cat-cuadros").innerHTML = cuadros || mensajeSinCuadros();
 
     // --- Más productos ---
     let reveladoMin = null;
