@@ -4149,12 +4149,10 @@ function mostrar(id) {
     document.querySelectorAll(".pantalla").forEach(p => p.classList.add("oculto"));
     document.getElementById(id).classList.remove("oculto");
     window.scrollTo(0, 0);
-    /* Fuera de la ficha la URL vuelve a ser la de la tienda: si no, el cliente
-       compartiría desde el carrito un enlace a un cuadro que ya no está viendo. */
-    if (id !== "p-ficha" && window.history && history.replaceState &&
-        location.search.indexOf("cuadro=") >= 0) {
-        history.replaceState(null, "", urlBase());
-    }
+    /* La URL acompaña a la pantalla: el catálogo lleva sus filtros y el resto
+       queda pelado. Si no, el cliente compartiría desde el carrito un enlace a
+       un cuadro que ya no está mirando. */
+    sincronizarUrl(id);
     if (id === "p-carrito") renderCarrito();
     /* Pageview virtual: sin esto GTM contaría una sola visita por cliente,
        porque nunca se recarga la página. */
@@ -4396,7 +4394,31 @@ let filtroCuadros = { material: "", medida: "" };
 function setFiltroCuadro(clave, valor) {
     filtroCuadros[clave] = (filtroCuadros[clave] === valor) ? "" : valor;
     renderCatalogo();
+    // El enlace queda listo para compartir sin tocar nada más.
+    sincronizarUrl("p-catalogo");
     medir("filtrar_cuadros", { material: filtroCuadros.material || "todos", medida: filtroCuadros.medida || "todas" });
+}
+
+/* Compartir la selección tal como está: "todos los 20x30", "los de madera". */
+async function compartirCatalogo() {
+    const url = urlDelCatalogo();
+    const titulo = tituloSeleccion();
+    const texto = titulo + " — Trelewflash";
+    medir("compartir_cuadros_filtrados", {
+        material: filtroCuadros.material || "todos",
+        medida: filtroCuadros.medida || "todas",
+        via: navigator.share ? "nativo" : "copiar"
+    });
+    if (navigator.share) {
+        try { await navigator.share({ title: titulo, text: texto, url: url }); return; }
+        catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    try {
+        await navigator.clipboard.writeText(texto + "\n" + url);
+        avisoToast("🔗 Enlace copiado. Pegalo en WhatsApp.");
+    } catch (e) {
+        window.prompt("Copiá el enlace de estos cuadros:", url);
+    }
 }
 function cuadrosFiltrados() {
     return CATALOGO_CUADROS.filter(fam => {
@@ -4423,9 +4445,17 @@ function renderFiltrosCuadros() {
     });
     materiales.sort((a, b) => a.localeCompare(b, "es"));
     medidas.sort((a, b) => areaMedida(a) - areaMedida(b));
-    document.getElementById("cat-filtros").innerHTML =
-        filaFiltro("Tipo", "material", materiales) +
-        filaFiltro("Tamaño", "medida", medidas, v => v + " cm");
+    const filas = filaFiltro("Tipo", "material", materiales) +
+                  filaFiltro("Tamaño", "medida", medidas, v => v + " cm");
+    /* Compartir lo que se está viendo. Solo tiene sentido si hay filtros para
+       tocar: sin ellos, el enlace es el de la tienda y ya está en la barra. */
+    const compartir = filas
+        ? '<div class="cat-filtro-fila"><button type="button" class="chip-filtro" ' +
+          'onclick="compartirCatalogo()">📲 ' +
+          ((filtroCuadros.material || filtroCuadros.medida)
+              ? "Compartir estos cuadros" : "Compartir el catálogo") + "</button></div>"
+        : "";
+    document.getElementById("cat-filtros").innerHTML = filas + compartir;
 }
 /* Qué decir cuando no hay ninguna tarjeta para mostrar. Son tres situaciones
    distintas y confundirlas hace que el cliente crea que no vendemos cuadros:
@@ -4511,6 +4541,29 @@ function urlBase() {
     u.hash = ""; u.search = "";
     return u.toString();
 }
+/* El catálogo con los filtros puestos: "…?tipo=Madera&tamano=20x30". Sin
+   filtros queda la URL pelada, que es la de la tienda entera. */
+function urlDelCatalogo() {
+    const u = new URL(urlBase());
+    if (filtroCuadros.material) u.searchParams.set("tipo", filtroCuadros.material);
+    if (filtroCuadros.medida) u.searchParams.set("tamano", filtroCuadros.medida);
+    return u.toString();
+}
+/* Cómo se lee la selección actual, para el texto que se comparte. */
+function tituloSeleccion() {
+    const partes = [];
+    if (filtroCuadros.material) partes.push("de " + filtroCuadros.material.toLowerCase());
+    if (filtroCuadros.medida) partes.push("de " + filtroCuadros.medida + " cm");
+    return partes.length ? "Cuadros " + partes.join(" ") : "Nuestros cuadros";
+}
+/* La URL siempre describe lo que se está mirando. La ficha la maneja aparte
+   (apila historial); acá van el catálogo y el resto de las pantallas. */
+function sincronizarUrl(idPantalla) {
+    if (!window.history || !history.replaceState) return;
+    if (idPantalla === "p-ficha") return;
+    const destino = (idPantalla === "p-catalogo") ? urlDelCatalogo() : urlBase();
+    if (location.href !== destino) history.replaceState(null, "", destino);
+}
 /* Medida de lo que está elegido ahora, normalizada ("20x30"). */
 function medidaDeFicha() {
     return (fichaSel && fichaSel.medida) || "";
@@ -4518,22 +4571,41 @@ function medidaDeFicha() {
 
 /* Enlace que llegó en la URL. Los cuadros viven solo en la hoja, así que al
    abrir la página todavía no están: se guarda y se aplica cuando llega. */
-let fichaPendienteUrl = null;
+let fichaPendienteUrl = null, catalogoPendienteUrl = false;
 function leerEnlaceInicial() {
     const p = new URLSearchParams(location.search);
     const cuadro = p.get("cuadro");
-    if (!cuadro) return;
-    fichaPendienteUrl = { clave: cuadro, medida: p.get("medida") || "" };
+    const tipo = p.get("tipo") || "", tamano = p.get("tamano") || "";
+    if (tipo || tamano) filtroCuadros = { material: tipo, medida: tamano };
+    if (cuadro) fichaPendienteUrl = { clave: cuadro, medida: p.get("medida") || "" };
+    else if (tipo || tamano) catalogoPendienteUrl = true;
     aplicarEnlaceInicial();
 }
 function aplicarEnlaceInicial() {
-    if (!fichaPendienteUrl || !CATALOGO_CUADROS.length) return;
-    const d = fichaPendienteUrl;
-    fichaPendienteUrl = null;
+    if (!CATALOGO_CUADROS.length) return;     // los cuadros llegan con la hoja
+    if (!fichaPendienteUrl && !catalogoPendienteUrl) return;
     flujo = "pedido";
+    /* El enlace pudo escribirse a mano o con otra capitalización ("madera"):
+       se empareja con el valor real del catálogo para que filtre igual. */
+    if (filtroCuadros.material) {
+        const real = CATALOGO_CUADROS.map(f => f.material)
+            .find(m => m && normalizarTexto(m) === normalizarTexto(filtroCuadros.material));
+        if (real) filtroCuadros.material = real;
+    }
     renderCatalogo();               // deja el registro de fichas armado
-    abrirFicha(d.clave, d.medida, true);   // true = no volver a apilar historial
-    medir("abrir_cuadro_compartido", { cuadro: d.clave, medida: d.medida || "" });
+    if (fichaPendienteUrl) {
+        const d = fichaPendienteUrl;
+        fichaPendienteUrl = null; catalogoPendienteUrl = false;
+        abrirFicha(d.clave, d.medida, true);   // true = no volver a apilar historial
+        medir("abrir_cuadro_compartido", { cuadro: d.clave, medida: d.medida || "" });
+        return;
+    }
+    catalogoPendienteUrl = false;
+    mostrar("p-catalogo");
+    medir("abrir_cuadros_filtrados", {
+        material: filtroCuadros.material || "todos",
+        medida: filtroCuadros.medida || "todas"
+    });
 }
 
 /* Atrás del navegador: vuelve al catálogo en vez de sacar al cliente del sitio. */
