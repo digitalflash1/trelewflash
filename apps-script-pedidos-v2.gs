@@ -20,6 +20,7 @@ const CONFIG = {
   HOJA_MODIFICADORES: 'Modificadores',
   HOJA_USUARIOS: 'Usuarios',
   HOJA_AUDITORIA: 'AuditoriaPrecios',
+  HOJA_CLIENTES: 'Clientes',
   PREFIJO: 'A-',
   DIGITOS: 4,
   CARPETA_RAIZ: 'Pedidos Trelewflash - imágenes'
@@ -32,9 +33,17 @@ function doPost(e) {
   try {
     const datos = JSON.parse(e.postData.contents);
 
-    // Enrutado por accion (login / edicion de precios)
-    if (datos.accion === 'login')          return respuestaJson_(loginAdmin_(datos));
-    if (datos.accion === 'guardarPrecios') return respuestaJson_(guardarPreciosAdmin_(datos));
+    /* El panel de precios viejo (login + guardarPrecios contra esta misma URL)
+       quedó fuera de servicio: las contraseñas de la pestaña Usuarios ahora se
+       guardan como hash con salt, así que verificarUsuario_ —que compara texto
+       plano— no puede dar verdadero nunca. Dejarlo enganchado era una puerta
+       pública a la edición de precios cuyo único cerrojo ya no cierra.
+       Precios y catálogo se administran desde la app de administración, que
+       tiene su propio Apps Script con sesiones firmadas. */
+    if (datos.accion === 'login' || datos.accion === 'guardarPrecios') {
+      return respuestaJson_({ ok: false,
+        error: 'Los precios se editan desde la app de administración de Trelewflash.' });
+    }
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const hojaPedidos = obtenerHoja_(ss, CONFIG.HOJA_PEDIDOS);
     const hojaItems = obtenerHoja_(ss, CONFIG.HOJA_ITEMS);
@@ -78,6 +87,19 @@ function doPost(e) {
       urlCarpeta = '⚠️ Fotos muy pesadas: las envía por WhatsApp';
     }
 
+    /* El cliente va a la pestaña Clientes, la misma que usa la app de
+       administración: si ya compró en el local, este pedido se le suma a esa
+       ficha en vez de crear una nueva.
+       Va dentro de try/catch a propósito: un problema dando de alta al cliente
+       no puede hacer que se pierda el pedido, que es lo importante. */
+    const fechaCliente = Utilities.formatDate(new Date(), Session.getScriptTimeZone(),
+      'dd/MM/yyyy HH:mm:ss');
+    let clienteId = '';
+    try {
+      clienteId = guardarClientePedido_(ss, cliente, fechaCliente,
+        datos.total != null ? Number(datos.total) || 0 : 0);
+    } catch (err) { /* el pedido sigue igual */ }
+
     // ── Cabecera en "Pedidos" (formato v1 + Estado) ──
     const detalleTexto = items.map((it, i) =>
       (i + 1) + ') ' + (it.desc || it.producto || it.tipo || '') +
@@ -95,7 +117,8 @@ function doPost(e) {
       datos.total != null ? datos.total : '',
       datos.aCotizar ? 'Sí' : 'No',
       urlCarpeta,
-      'Nuevo'
+      'Nuevo',
+      clienteId
     ]);
 
     // ── Una fila por ítem en "Items" ──
@@ -125,6 +148,110 @@ function doPost(e) {
     lock.releaseLock();
   }
 }
+
+/* ══════════════ CLIENTES ══════════════
+ * La pestaña Clientes es COMPARTIDA con la app de administración: el mismo
+ * cliente compre por la web o por el mostrador, es una sola fila.
+ *
+ * ⚠️ ESTA LÓGICA ESTÁ DUPLICADA en apps-script-admin.gs a propósito: son dos
+ * proyectos de Apps Script independientes y no pueden compartir código. Si
+ * cambiás la regla de identidad o la normalización del teléfono acá, cambiala
+ * también allá; si no, cada backend va a reconocer clientes distintos y se
+ * empiezan a duplicar filas.
+ *
+ * Un cliente se identifica por NOMBRE + TELÉFONO. Sin teléfono no se da de alta:
+ * no habría forma de distinguirlo del próximo que se llame igual.
+ */
+const COLUMNAS_CLIENTES = ['id', 'nombre', 'telefono', 'email', 'alta', 'ultima_venta',
+  'ventas', 'total', 'pedidos', 'total_pedidos', 'ultimo_pedido'];
+const COL_C = { ID: 0, NOMBRE: 1, TELEFONO: 2, EMAIL: 3, ALTA: 4, ULTIMA: 5,
+                VENTAS: 6, TOTAL: 7, PEDIDOS: 8, TOTAL_PEDIDOS: 9, ULTIMO_PEDIDO: 10 };
+
+/* Reduce el teléfono a «código de área + número» para poder comparar.
+   Quedarse con puros dígitos no alcanza: el 0 de larga distancia y el 15 del
+   celular hacen ver distinto al mismo número.
+     2804123456 · (0280) 4123456 · 0280 15-4123456 · +54 9 280 4123456
+   son todos «2804123456». */
+function normalizarTel_(v) {
+  let d = String(v == null ? '' : v).replace(/\D/g, '');
+  if (d.indexOf('54') === 0 && d.length > 10) d = d.slice(2);   // +54 de país
+  if (d.indexOf('9') === 0 && d.length > 10) d = d.slice(1);    // 9 de celular
+  if (d.indexOf('0') === 0) d = d.slice(1);                     // 0 de larga distancia
+  d = d.replace(/^(\d{2,4})15(\d{6,8})$/, '$1$2');              // 15 de celular
+  return d.length > 10 ? d.slice(-10) : d;
+}
+
+function normalizarNombre_(v) {
+  return String(v == null ? '' : v).trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ');
+}
+
+/* Mismo formato que el nuevoId_('C') de la app de administración: los dos
+   backends dan de alta clientes en la misma pestaña y los ids no se pueden
+   pisar. El sufijo al azar es de 4 caracteres —no 2— porque los dos proyectos
+   no comparten lock: dos altas en el mismo segundo son posibles. */
+function nuevoIdCliente_() {
+  return 'C-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd-HHmmss') +
+    '-' + Utilities.getUuid().replace(/-/g, '').slice(0, 4).toUpperCase();
+}
+
+function hojaClientes_(ss) {
+  const h = obtenerHoja_(ss, CONFIG.HOJA_CLIENTES);
+  if (h.getLastRow() === 0) {
+    h.getRange(1, 1, 1, COLUMNAS_CLIENTES.length).setValues([COLUMNAS_CLIENTES]).setFontWeight('bold');
+    h.setFrozenRows(1);
+  }
+  return h;
+}
+
+/* Da de alta o actualiza al cliente de un PEDIDO web. Los contadores de pedidos
+   van aparte de los de ventas del mostrador: un pedido es una intención de
+   compra, una venta es plata cobrada, y mezclarlos daría un total que no es ni
+   una cosa ni la otra. Devuelve el id del cliente, o '' si no se pudo. */
+function guardarClientePedido_(ss, cli, fecha, totalPedido) {
+  const nombre = String((cli && cli.nombre) || '').trim();
+  const telefono = String((cli && (cli.telefono || cli.whatsapp)) || '').trim();
+  const email = String((cli && cli.email) || '').trim();
+  if (!nombre || !normalizarTel_(telefono)) return '';
+
+  const h = hojaClientes_(ss);
+  const vals = h.getDataRange().getValues();
+  const buscadoNombre = normalizarNombre_(nombre);
+  const buscadoTel = normalizarTel_(telefono);
+
+  for (let i = 1; i < vals.length; i++) {
+    if (normalizarNombre_(vals[i][COL_C.NOMBRE]) !== buscadoNombre) continue;
+    if (normalizarTel_(vals[i][COL_C.TELEFONO]) !== buscadoTel) continue;
+
+    h.getRange(i + 1, COL_C.PEDIDOS + 1)
+      .setValue((numeroONull_(vals[i][COL_C.PEDIDOS]) || 0) + 1);
+    h.getRange(i + 1, COL_C.TOTAL_PEDIDOS + 1)
+      .setValue((numeroONull_(vals[i][COL_C.TOTAL_PEDIDOS]) || 0) + (totalPedido || 0));
+    h.getRange(i + 1, COL_C.ULTIMO_PEDIDO + 1).setValue(fecha);
+    if (email && !String(vals[i][COL_C.EMAIL] || '').trim()) {
+      h.getRange(i + 1, COL_C.EMAIL + 1).setValue(email);
+    }
+    return String(vals[i][COL_C.ID] || '');
+  }
+
+  const id = nuevoIdCliente_();
+  const fila = [];
+  fila[COL_C.ID] = id;
+  fila[COL_C.NOMBRE] = nombre;
+  fila[COL_C.TELEFONO] = telefono;
+  fila[COL_C.EMAIL] = email;
+  fila[COL_C.ALTA] = fecha;
+  fila[COL_C.ULTIMA] = '';
+  fila[COL_C.VENTAS] = 0;
+  fila[COL_C.TOTAL] = 0;
+  fila[COL_C.PEDIDOS] = 1;
+  fila[COL_C.TOTAL_PEDIDOS] = totalPedido || 0;
+  fila[COL_C.ULTIMO_PEDIDO] = fecha;
+  h.appendRow(fila);
+  return id;
+}
+
 
 /* ══════════════ doGet: servir catálogo ══════════════ */
 function doGet(e) {
@@ -211,16 +338,30 @@ function catalogoDesdeHojas_() {
 function setup() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  // Pedidos: agregar columna Estado si falta
+  // Pedidos: agregar las columnas que falten, siempre AL FINAL para no correr
+  // de lugar los pedidos ya cargados.
   const hPed = obtenerHoja_(ss, CONFIG.HOJA_PEDIDOS);
   if (hPed.getLastRow() === 0) {
     hPed.appendRow(['Fecha', 'N° Pedido', 'Cliente', 'WhatsApp', 'Email',
-      'Pedido', 'Total estimado', 'A cotizar', 'Carpeta de imágenes', 'Estado']);
+      'Pedido', 'Total estimado', 'A cotizar', 'Carpeta de imágenes', 'Estado',
+      'Cliente ID']);
   } else {
-    const headers = hPed.getRange(1, 1, 1, hPed.getLastColumn()).getValues()[0];
-    if (headers.indexOf('Estado') === -1) {
-      hPed.getRange(1, headers.length + 1).setValue('Estado');
-    }
+    ['Estado', 'Cliente ID'].forEach(titulo => {
+      const headers = hPed.getRange(1, 1, 1, hPed.getLastColumn()).getValues()[0];
+      if (headers.indexOf(titulo) === -1) {
+        hPed.getRange(1, hPed.getLastColumn() + 1).setValue(titulo);
+      }
+    });
+  }
+
+  // Clientes: pestaña compartida con la app de administración.
+  const hCli = hojaClientes_(ss);
+  const cabCli = hCli.getRange(1, 1, 1, Math.max(hCli.getLastColumn(), 1)).getValues()[0]
+    .map(c => String(c).trim().toLowerCase());
+  const faltanCli = COLUMNAS_CLIENTES.filter(c => cabCli.indexOf(c) === -1);
+  if (faltanCli.length) {
+    hCli.getRange(1, hCli.getLastColumn() + 1, 1, faltanCli.length)
+      .setValues([faltanCli]).setFontWeight('bold');
   }
 
   // Items
@@ -1125,6 +1266,14 @@ const CATALOGO_FALLBACK = {
 
 /* ═══════════════════════════════════════════════════════════════════
    EDICIÓN DE PRECIOS CON USUARIOS Y AUDITORÍA  (v4.3 · panel precios)
+
+   ⚠️ FUERA DE SERVICIO. doPost ya no enruta 'login' ni 'guardarPrecios' hacia
+   acá: verificarUsuario_ compara la contraseña en TEXTO PLANO contra la columna
+   B de la pestaña Usuarios, que desde la app de administración guarda un hash
+   SHA-256 con salt. Nunca puede coincidir, y mientras estuvo enganchado era una
+   puerta pública a los precios con un cerrojo que ya no cierra.
+   Se conserva como referencia de lo que hacía el panel viejo; el reemplazo vive
+   en apps-script-admin.gs (sesiones firmadas, roles y auditoría).
    ─────────────────────────────────────────────────────────────────
    Hojas nuevas (las crea setupAdmin()):
      • Usuarios:         usuario | contraseña | nombre | rol | activo
