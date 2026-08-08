@@ -65,9 +65,22 @@ quitar el comentario. Buscá la palabra `DEMO:` en `index.html`.
    configurada). No hay listas de productos duplicadas: si cambiás un precio o agregás
    una medida en el catálogo, el market se actualiza solo.
 
-   - **Cuadros**: las medidas `grandes` de revelado y los collage de 30 cm o más.
-     Cada uno abre su **ficha** (`#p-ficha`), donde el cliente elige marco (referencial),
-     puede adjuntar la foto y sumar retoque digital antes de agregar al carrito.
+   - **Cuadros**: los artículos cuya **categoría** empieza con `cuadro` (portarretratos
+     y demás). Las filas con el mismo producto son **una sola tarjeta**: la ficha arma
+     los botones con la columna `atributos` de la hoja.
+     - **Filtros por Tipo y Tamaño** (`renderFiltrosCuadros()`): los chips se generan
+       con lo que hay cargado. El **tipo** sale de `atributos.material`; si esa fila no
+       lo tiene, se deduce del nombre del producto (`materialDe()`, tabla `MATERIALES`).
+       El **tamaño** sale de `atributos.medida` normalizado a `20x30` (`medidaClave()`).
+       Con un tamaño filtrado, la tarjeta muestra la foto de esa medida y la ficha se
+       abre ya parada en ella.
+     - **Ficha** (`#p-ficha`): manda la **foto real** del artículo. Foto grande + tira de
+       miniaturas, y los chips de color muestran la miniatura de esa terminación, así
+       que el color se elige mirándolo. Arriba van el material, la medida y el precio.
+       Después el cliente decide si adjunta su foto y suma retoque digital.
+       Un artículo **sin fotos cargadas** muestra un marco vacío con su medida
+       (`marcoVacio()`): ya no se dibuja un cuadro de color inventado ni se elige un
+       "marco referencial", porque el marco es el que se ve en la foto.
    - **Más productos**: accesos directos a Revelado, Taza y Souvenirs, con el precio
      "desde" calculado del propio catálogo.
 
@@ -96,6 +109,7 @@ app avisa cada paso con la función `medir()` (buscá `function medir` en `index
 | `pedido_enviado` | Al registrar el pedido | `valor`, `items`, `fotos`, `estado`, `imagenes_omitidas` |
 | `clic_whatsapp` | Al tocar "Abrir WhatsApp" | `valor`, `items`, `estado` |
 | `consentimiento_cookies` | Al elegir en el cartel | `decision` |
+| `filtrar_cuadros` | Al tocar un chip de Tipo o Tamaño | `material`, `medida` (`todos`/`todas` si está sin filtrar) |
 
 **Para usarlos en GTM:** Activador → *Evento personalizado* → nombre del evento.
 Los datos extra quedan disponibles como *Variables de capa de datos*.
@@ -231,6 +245,35 @@ Para conectarlo con la empresa:
 
 > El número de WhatsApp está en la constante `TELEFONO_WA` (misma zona del código),
 > por si hay que cambiarlo por el de la empresa.
+
+### Qué escribe cada pedido
+
+| Pestaña | Qué le agrega |
+|---|---|
+| `Pedidos` | Una fila con la cabecera del pedido, su estado y el `Cliente ID` |
+| `Items` | Una fila por artículo, con sus modificadores |
+| `Clientes` | Da de alta al cliente, o le suma el pedido si ya estaba |
+
+**La pestaña `Clientes` es compartida con la app de administración**
+(`trelew-flash-admin`): la misma persona, pida por la web o compre en el
+mostrador, es una sola ficha. Se la identifica por **nombre + teléfono**, y el
+teléfono se compara sin importar cómo esté escrito (`2804123456`,
+`(0280) 4123456`, `0280 15-4123456` y `+54 9 280 4123456` son el mismo). Los
+contadores van separados: `pedidos`/`total_pedidos` los escribe la tienda,
+`ventas`/`total` los escribe la administración, porque un pedido es una
+intención de compra y una venta es plata cobrada.
+
+> ⚠️ Esa lógica está **duplicada** en `apps-script-admin.gs`, porque son dos
+> proyectos de Apps Script independientes y no pueden compartir código. Si
+> cambiás acá la regla de identidad o la normalización del teléfono, cambiala
+> también allá: si no, cada backend reconoce clientes distintos y se empiezan a
+> duplicar filas. Las dos funciones a mirar son `normalizarTel_` y
+> `normalizarNombre_`.
+
+Si actualizás el `.gs`, **volvé a ejecutar `setup()`**: es lo que crea la
+pestaña `Clientes` y agrega la columna `Cliente ID` a `Pedidos`. Las columnas
+nuevas se suman siempre al final, así que los pedidos ya cargados no se corren
+de lugar.
 
 ---
 
