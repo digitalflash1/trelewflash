@@ -510,6 +510,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .ficha-precio-top { font-size: 26px; font-weight: bold; color: #1a1a00; line-height: 1.1; }
     .ficha-precio-top small { font-size: 13px; font-weight: normal; color: #7a7a52; }
     .ficha-desc { color: #7a7a52; margin: 6px 0 0; font-size: 14px; text-align: left; }
+    /* La medida que ya venía elegida del catálogo: se informa, no se pregunta. */
+    .ficha-medida-fija { font-size: 15px; color: #475569; margin: 18px 0 12px; text-align: left; }
+    .ficha-medida-fija b { color: var(--color-principal); }
+    .link-cambiar { background: none; border: none; padding: 2px 4px; font: inherit; font-size: 14px;
+        color: #64748b; text-decoration: underline; cursor: pointer; }
+    .link-cambiar:hover { color: var(--color-principal); }
     /* Chips de terminación con la foto de ESA variante: el color se elige
        mirándolo, no leyendo "símil madera gris claro". */
     .grid-colores { display: grid; grid-template-columns: repeat(auto-fill,minmax(92px,1fr)); gap: 9px; margin-bottom: 10px; }
@@ -4511,6 +4517,10 @@ function abrirCatalogo() { renderCatalogo(); mostrar("p-catalogo"); }
    de la hoja con su SKU y su precio), que es lo que termina en el carrito. */
 let fichaFamilia = null, fichaEjes = [], fichaValores = {};
 let fichaSel = null, adjuntosFicha = [], fichaConFoto = false;
+/* Medida que llegó ya elegida desde el catálogo. Mientras esté puesta, el
+   selector de medida no se dibuja como paso: queda la línea de arriba con el
+   tamaño y un "cambiar" chiquito, y los pasos se numeran sin él. */
+let fichaMedidaFijada = "";
 /* Foto que el cliente eligió enmarcar desde el flujo de revelado: al abrir la
    ficha de un cuadro se adjunta sola (ver ofrecerEnmarcar). */
 let fotoParaEnmarcar = null;
@@ -4635,6 +4645,11 @@ function abrirFicha(clave, medidaPedida, sinHistorial) {
         fichaFamilia.opciones.find(o => o.fotos && o.fotos.length) || fichaFamilia.opciones[0];
     fichaValores = {};
     fichaEjes.forEach(e => { fichaValores[e.clave] = inicial.atributos[e.clave] || e.valores[0]; });
+    /* Si el cliente entró desde el filtro "Tamaño" (o desde un enlace que lo
+       lleva), la medida ya está decidida: adentro no se le vuelve a preguntar.
+       Solo cuando la combinación con la que abre es de verdad esa medida. */
+    fichaMedidaFijada = (medidaPedida && inicial.medida === medidaPedida)
+        ? (inicial.atributos.medida || "") : "";
     fichaSel = inicial; adjuntosFicha = [];
     document.getElementById("ficha-desc").innerText =
         "Podés llevarlo solo o vincularle una foto tuya para que vaya puesta.";
@@ -4715,6 +4730,10 @@ function elegirEjeFicha(clave, valor) {
         });
         if (mejor) fichaEjes.forEach(e => { fichaValores[e.clave] = mejor.atributos[e.clave] || ""; });
     }
+    /* Si al acomodar el resto se movió la medida (ese color no viene en el
+       tamaño que traía elegido), deja de estar decidida: el selector vuelve y
+       se queda, para no aparecer y desaparecer a cada toque. */
+    if (fichaMedidaFijada && fichaValores.medida !== fichaMedidaFijada) fichaMedidaFijada = "";
     aplicarOpcionFicha();
 }
 /* Repinta todo lo que depende de la combinación elegida: título, datos,
@@ -4761,6 +4780,18 @@ function pintarEjesFicha() {
     cont.innerHTML = "";
     fichaPaso = 0;                       // los ejes son los primeros pasos
     fichaEjes.forEach(e => {
+        /* La medida que vino elegida del catálogo no vuelve a preguntarse: en su
+           lugar va una línea que dice cuál es y deja cambiarla. Si al elegir un
+           color la combinación se movió a otra medida, el selector vuelve solo:
+           un cambio de tamaño no puede pasar sin que el cliente lo vea. */
+        if (e.clave === "medida" && fichaMedidaFijada && fichaValores.medida === fichaMedidaFijada) {
+            const fija = document.createElement("p");
+            fija.className = "ficha-medida-fija";
+            fija.innerHTML = "Medida: <b>" + escHtml(fichaMedidaFijada) + "</b> " +
+                '<button type="button" class="link-cambiar" onclick="liberarMedidaFicha()">cambiar</button>';
+            cont.appendChild(fija);
+            return;
+        }
         const disp = {};                       // valor → opción compatible (para el precio y la foto)
         opcionesCompatibles(e.clave).forEach(o => {
             const v = o.atributos[e.clave] || "";
@@ -4805,6 +4836,14 @@ function pintarEjesFicha() {
         cont.appendChild(grid);
     });
 }
+/* Vuelve a mostrar el selector de medida: el cliente quiere otro tamaño del que
+   traía elegido del catálogo. */
+function liberarMedidaFicha() {
+    fichaMedidaFijada = "";
+    aplicarOpcionFicha();
+    medir("ficha_cambiar_medida", { cuadro: fichaFamilia ? fichaFamilia.id : "" });
+}
+
 /* Los pasos se numeran al pintar: cuántos hay depende de los ejes que tenga
    cargados el producto. */
 let fichaPaso = 0;
