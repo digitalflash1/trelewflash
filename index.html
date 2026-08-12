@@ -176,7 +176,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .caja-inicio .caja-titulo { font-size: 15px; font-weight: bold; color: var(--color-principal); margin: 0 0 12px; }
     /* Proporción fija 16:9: todas las imágenes del carrusel son ~16:9, así
        object-fit:cover las muestra completas sin recortar el texto de los banners. */
-    .carrusel { position: relative; width: 100%; flex: 0 0 auto; aspect-ratio: 16 / 9; margin: 12px 0 12px; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,.10); }
+    /* touch-action pan-y: el dedo hacia arriba/abajo sigue moviendo la página,
+       pero el deslizamiento de costado y el pellizco los maneja el carrusel
+       (si no, el navegador se queda con el pellizco y hace zoom de toda la web). */
+    .carrusel { position: relative; width: 100%; flex: 0 0 auto; aspect-ratio: 16 / 9; margin: 12px 0 12px; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,.10); touch-action: pan-y; }
     .carrusel-track { display: flex; height: 100%; transition: transform .5s cubic-bezier(.25,1,.5,1); }
     .slide-nov { min-width: 100%; height: 100%; box-sizing: border-box; padding: 18px 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #fff; text-align: center; }
     .slide-nov .nov-emoji { font-size: clamp(38px, 10vw, 60px); line-height: 1; }
@@ -226,6 +229,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .carrusel-dots button.activo { background: #fff; }
     .carrusel-flecha { position: absolute; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; border: none; border-radius: 50%; background: rgba(0,0,0,.28); color: #fff; font-size: 18px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .carrusel-flecha.izq { left: 6px; } .carrusel-flecha.der { right: 6px; }
+    /* Mientras se pellizca para acercar, las flechas y los puntitos se apartan
+       para no tapar la imagen. Vuelven al soltar los dedos. */
+    .carrusel-flecha, .carrusel-dots { transition: opacity .2s; }
+    .carrusel.pellizcando .carrusel-flecha, .carrusel.pellizcando .carrusel-dots { opacity: 0; pointer-events: none; }
     @media (prefers-reduced-motion: reduce) { .carrusel-track { transition: none; } }
     @media (max-height: 660px) {
         #p-bienvenida h1 { font-size: 21px; }
@@ -305,6 +312,25 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .modal-flotante.oculto { display: none; }
     .caja-modal { background: #fff; border-radius: 12px; padding: 16px; width: 100%; max-width: 480px; text-align: center; }
     .caja-modal h4 { margin: 0 0 10px; color: var(--color-principal); font-size: 16px; }
+    /* ===== Datos para transferir (cartel de fin del pedido) =====
+       Para cambiar el alias, el titular o el CBU NO se toca este bloque:
+       se editan los valores en DATOS_TRANSFERENCIA (más abajo, en el script). */
+    .caja-transf { margin-top: 10px; padding: 12px 14px; background: #f0fdf4;
+        border: 1px solid #86efac; border-radius: 10px; text-align: left; }
+    .caja-transf .transf-tit { font-size: 13.5px; font-weight: bold; color: #14532d; margin-bottom: 8px; }
+    .transf-fila { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid #bbf7d0; }
+    .transf-fila:first-of-type { border-top: none; }
+    .transf-fila .transf-etq { flex: 0 0 52px; font-size: 11.5px; text-transform: uppercase;
+        letter-spacing: .4px; color: #15803d; }
+    /* El CBU son 22 dígitos: se deja cortar en dos líneas para que entre en
+       pantallas angostas sin desarmar la fila. */
+    .transf-fila .transf-val { flex: 1 1 auto; min-width: 0; font-size: 14px; font-weight: bold;
+        color: #14532d; word-break: break-all; line-height: 1.35; }
+    .transf-fila .transf-copiar { flex: 0 0 auto; border: 1px solid #86efac; background: #fff;
+        color: #15803d; border-radius: 8px; padding: 5px 9px; font-size: 12px; font-weight: bold;
+        cursor: pointer; white-space: nowrap; }
+    .transf-fila .transf-copiar:hover { background: #dcfce7; }
+    .caja-transf .transf-pie { margin: 8px 0 0; font-size: 12px; color: #3f6212; line-height: 1.4; }
     /* Cartel de versión demo (aparece al entrar). */
     .caja-demo { max-width: 420px; padding: 24px 20px; border-top: 6px solid var(--color-boton); }
     .caja-demo .demo-texto { margin: 4px 0 18px; color: #475569; font-size: 15px; line-height: 1.55; }
@@ -376,7 +402,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     #toast-carrito { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(90px);
         background: #1e293b; color: #fff; padding: 9px 10px 9px 16px; border-radius: 24px; font-size: 14px;
-        font-weight: bold; box-shadow: 0 6px 18px rgba(0,0,0,.35); z-index: 999; opacity: 0;
+        /* z-index por encima de los modales (1000): el aviso de "copiado" del
+           cartel de fin de pedido sale con el modal abierto y si no queda tapado. */
+        font-weight: bold; box-shadow: 0 6px 18px rgba(0,0,0,.35); z-index: 1100; opacity: 0;
         transition: all .25s ease; white-space: nowrap; display: flex; align-items: center; gap: 10px; }
     #toast-carrito.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
     #toast-carrito button { background: var(--color-wa); color: #fff; border: none; border-radius: 16px;
@@ -2973,6 +3001,13 @@ z"></path></g>
             <b>comprobante de la transferencia</b> por WhatsApp junto con tu pedido.
             Sin el comprobante, el pedido queda pendiente.
         </div>
+        <!-- Las filas las arma llenarDatosTransferencia() desde DATOS_TRANSFERENCIA,
+             así el alias y el CBU están escritos en un solo lugar. -->
+        <div class="caja-transf">
+            <div class="transf-tit">🏦 Datos para transferir</div>
+            <div id="transf-filas"></div>
+            <p class="transf-pie">Transferí el total del pedido y mandanos el comprobante por WhatsApp.</p>
+        </div>
         <a id="pedido-wa-btn" href="#" target="_blank" class="btn-agregar oculto" style="display:inline-block;text-decoration:none;margin-top:14px;">🟢 Abrir WhatsApp para enviar</a>
         <div style="margin-top:10px;"><button class="btn-tool" onclick="document.getElementById(&#39;modal-pedido&#39;).classList.add(&#39;oculto&#39;)">Cerrar</button></div>
     </div>
@@ -2983,6 +3018,49 @@ z"></path></g>
    1) MODELO DE DATOS  (fácil de portar a Python/Streamlit)
    ========================================================= */
 const TELEFONO_WA = "5492804696961";
+
+/* ⚙️ DATOS PARA TRANSFERIR — PUNTO ÚNICO DE CONFIGURACIÓN
+   Se muestran en el cartel que aparece al terminar el pedido. Si alguna vez
+   cambia la cuenta, se edita SOLO acá: el cartel se arma solo. */
+const DATOS_TRANSFERENCIA = [
+    { etiqueta: "Alias",   valor: "trelewflash" },
+    { etiqueta: "Titular", valor: "Roberto Fabricio Gacitua", sinCopiar: true },
+    { etiqueta: "CBU",     valor: "3840200500000040430508" }
+];
+/* Dibuja las filas del cartel, cada una con su botón de copiar (en el celular
+   nadie quiere transcribir 22 dígitos a mano). */
+function llenarDatosTransferencia() {
+    const cont = document.getElementById("transf-filas");
+    if (!cont) return;
+    cont.innerHTML = "";
+    DATOS_TRANSFERENCIA.forEach(d => {
+        const fila = document.createElement("div"); fila.className = "transf-fila";
+        const etq = document.createElement("span"); etq.className = "transf-etq"; etq.textContent = d.etiqueta;
+        const val = document.createElement("span"); val.className = "transf-val"; val.textContent = d.valor;
+        fila.appendChild(etq); fila.appendChild(val);
+        if (!d.sinCopiar) {
+            const btn = document.createElement("button");
+            btn.type = "button"; btn.className = "transf-copiar";
+            btn.textContent = "Copiar";
+            btn.setAttribute("aria-label", "Copiar " + d.etiqueta);
+            btn.onclick = () => copiarDatoTransferencia(d.etiqueta, d.valor);
+            fila.appendChild(btn);
+        }
+        cont.appendChild(fila);
+    });
+}
+async function copiarDatoTransferencia(etiqueta, valor) {
+    try {
+        await navigator.clipboard.writeText(valor);
+        avisoToast("📋 " + etiqueta + " copiado");
+    } catch (e) {
+        /* Sin permiso de portapapeles (o navegador viejo): al menos se lo
+           dejamos seleccionado para copiar a mano. */
+        window.prompt("Copiá el " + etiqueta + ":", valor);
+    }
+}
+llenarDatosTransferencia();
+
 // ⚙️ BACKEND — PUNTO ÚNICO DE CONFIGURACIÓN
 // Pegá acá la URL del Web App de Google Apps Script publicado con la cuenta Google
 // de la EMPRESA (ver guía "CONECTAR-HOJA.md" y "README-despliegue-v4_3.md").
@@ -6649,7 +6727,12 @@ const NOVEDADES = [
        de la imagen y que se lea. */
     { img: "assets/bienvenida.webp", imgFallback: "assets/bienvenida.jpg", emoji: "🎉", titulo: "¡Bienvenido a Trelewflash!", texto: "Revelado, souvenirs y regalos con tu foto.", color: "linear-gradient(135deg,#4a4a00,#9a9a1e)" },
     /* Banners promocionales: el texto ya viene dentro de la imagen, por eso NO
-       llevan titulo/texto (si no, quedaría texto sobre texto). */
+       llevan titulo/texto (si no, quedaría texto sobre texto).
+       Promo Día del Niño: van primero para que sean lo primero que se vea.
+       Cuando termine la promoción, borrá estas tres líneas. */
+    { img: "assets/dia-nino-sesion.webp", imgFallback: "assets/dia-nino-sesion.jpg", emoji: "📸", color: "#f7c600" },
+    { img: "assets/dia-nino-remera.webp", imgFallback: "assets/dia-nino-remera.jpg", emoji: "👕", color: "#1b5fd0" },
+    { img: "assets/dia-nino-tazas.webp",  imgFallback: "assets/dia-nino-tazas.jpg",  emoji: "☕", color: "#f6e7c1" },
     { img: "assets/set-jardin.webp", imgFallback: "assets/set-jardin.jpg", emoji: "🦁", color: "#f7c600" },
     { img: "assets/taza-caja.webp",  imgFallback: "assets/taza-caja.jpg",  emoji: "☕", color: "#1e3a5f" },
     { img: "assets/remera.webp",     imgFallback: "assets/remera.jpg",     emoji: "👕", color: "#2b3a55" },
@@ -6867,20 +6950,96 @@ function aplicarNov() {
 function irNovedad(i) { novIdx = (i + NOVEDADES.length) % NOVEDADES.length; aplicarNov(); }
 function nextNov() { irNovedad(novIdx + 1); reiniciarAutoNov(); }
 function prevNov() { irNovedad(novIdx - 1); reiniciarAutoNov(); }
-function autoNov() { if (NOVEDADES.length > 1) novTimer = setInterval(() => irNovedad(novIdx + 1), 4800); }
+/* Cuánto se queda quieta cada novedad antes de pasar a la siguiente.
+   Los banners tienen bastante texto adentro: conviene darles tiempo de leerlos. */
+const NOV_ESPERA = 7000;
+function autoNov() { if (NOVEDADES.length > 1) novTimer = setInterval(() => irNovedad(novIdx + 1), NOV_ESPERA); }
 function reiniciarAutoNov() { clearInterval(novTimer); autoNov(); }
+function pausarAutoNov() { clearInterval(novTimer); novTimer = null; }
 (function initNov() {
     renderNovedades(); autoNov();
     const car = document.getElementById("carrusel-novedades");
-    if (car) {
-        let sx = null;
-        car.addEventListener("pointerdown", e => { sx = e.clientX; });
-        car.addEventListener("pointerup", e => {
-            if (sx === null) return;
-            const dx = e.clientX - sx; sx = null;
-            if (dx < -40) nextNov(); else if (dx > 40) prevNov();
-        });
+    if (!car) return;
+
+    /* Dedos apoyados sobre el carrusel. Con uno se pasa de novedad; con dos se
+       pellizca para acercar. */
+    const dedos = new Map();
+    let sx = null;          // arranque del deslizamiento (un solo dedo)
+    let lupa = null;        // datos del pellizco en curso
+    let variosDedos = false; // hubo más de un dedo: entonces no es un deslizamiento
+
+    /* ===== Pellizcar para acercar =====
+       Es una lupa momentánea: agranda la imagen de la novedad que se está
+       viendo y, apenas se sueltan los dedos, vuelve sola a su lugar (no queda
+       nada movido ni hay que hacer doble toque para volver). */
+    function imgActual() {
+        const slide = car.querySelectorAll(".slide-nov")[novIdx];
+        return slide ? slide.querySelector(".nov-img") : null;   // la tarjeta demo no tiene imagen
     }
+    function dosDedos() {
+        const p = [...dedos.values()];
+        return { dist: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y),
+                 cx: (p[0].x + p[1].x) / 2, cy: (p[0].y + p[1].y) / 2 };
+    }
+    function empezarLupa() {
+        const img = imgActual();
+        if (!img) return;                     // la tarjeta demo no se acerca
+        const d = dosDedos();
+        const caja = img.getBoundingClientRect();
+        /* dist0 con un mínimo: si los dedos arrancan casi juntos, sin el piso
+           cualquier movimiento daría un zoom enorme de golpe. */
+        lupa = { img: img, dist0: Math.max(40, d.dist), cx0: d.cx, cy0: d.cy };
+        /* El zoom se hace desde el punto que el usuario pellizcó, no desde el
+           centro: así se acerca justo lo que está mirando. */
+        img.style.transformOrigin = ((d.cx - caja.left) / caja.width * 100) + "% " +
+                                    ((d.cy - caja.top) / caja.height * 100) + "%";
+        img.style.transition = "none";
+        car.classList.add("pellizcando");
+        pausarAutoNov();
+        sx = null;   // lo que empezó como deslizamiento pasó a ser pellizco
+    }
+    function moverLupa() {
+        const d = dosDedos();
+        const escala = Math.min(4, Math.max(1, d.dist / lupa.dist0));
+        lupa.img.style.transform = "translate(" + (d.cx - lupa.cx0) + "px," + (d.cy - lupa.cy0) + "px) scale(" + escala + ")";
+    }
+    function soltarLupa() {
+        const img = lupa.img;
+        lupa = null;
+        car.classList.remove("pellizcando");
+        img.style.transition = "transform .25s ease-out";
+        img.style.transform = "";
+        /* Al terminar la vuelta se limpia todo, para que la próxima vez el
+           origen del zoom se calcule de cero. */
+        setTimeout(() => { img.style.transition = ""; img.style.transformOrigin = ""; }, 300);
+        reiniciarAutoNov();
+    }
+
+    car.addEventListener("pointerdown", e => {
+        dedos.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (dedos.size === 1) { sx = e.clientX; variosDedos = false; }
+        else { variosDedos = true; if (dedos.size === 2 && !lupa) empezarLupa(); }
+    });
+    car.addEventListener("pointermove", e => {
+        if (!dedos.has(e.pointerId)) return;
+        dedos.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (lupa && dedos.size >= 2) { e.preventDefault(); moverLupa(); }
+    }, { passive: false });
+    function levantar(e) {
+        dedos.delete(e.pointerId);
+        if (lupa && dedos.size < 2) soltarLupa();
+        if (dedos.size === 0) {
+            /* Solo se cambia de novedad si fue un dedo solo, de punta a punta.
+               Un pellizco (dos dedos) nunca hace pasar de slide. */
+            const arranque = sx; sx = null;
+            const hubo = variosDedos; variosDedos = false;
+            if (hubo || arranque === null || e.type !== "pointerup") return;
+            const dx = e.clientX - arranque;
+            if (dx < -40) nextNov(); else if (dx > 40) prevNov();
+        }
+    }
+    car.addEventListener("pointerup", levantar);
+    car.addEventListener("pointercancel", levantar);
 })();
 
 </script>
