@@ -152,6 +152,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .intro .btn-menu:nth-of-type(1) { animation: intro-izq    .85s cubic-bezier(0.25, 1, 0.5, 1) .38s both; }
     .intro .btn-menu:nth-of-type(2) { animation: intro-der    .85s cubic-bezier(0.25, 1, 0.5, 1) .54s both; }
     .intro .btn-menu:nth-of-type(3) { animation: intro-izq    .85s cubic-bezier(0.25, 1, 0.5, 1) .70s both; }
+    .intro .btn-menu:nth-of-type(4) { animation: intro-der    .85s cubic-bezier(0.25, 1, 0.5, 1) .86s both; }
     @media (prefers-reduced-motion: reduce) { .intro h1, .intro > p, .intro .btn-menu { animation: none; } }
     h1 { font-size: 26px; color: var(--color-principal); margin: 0 0 6px; }
     h2 { font-size: 22px; color: var(--color-principal); margin: 0 0 20px; }
@@ -557,6 +558,114 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
        tocar igual y el otro selector se acomoda solo. */
     .btn-medida .chip-precio { display: block; font-size: 11px; font-weight: normal; opacity: .8; margin-top: 2px; }
     .btn-medida.no-hay { opacity: .45; }
+
+    /* ===== Dónde estamos / A dónde enviamos =====
+       El mapa va dentro de una caja de proporción fija: así el iframe no salta
+       de alto mientras carga ni desacomoda lo que está abajo. */
+    .donde-caja { background: var(--gris-suave); border: 1px solid var(--gris-borde); border-radius: 14px;
+        padding: 14px 16px; margin-bottom: 14px; text-align: left; }
+    .donde-caja h3 { margin: 0 0 8px; font-size: 16px; color: var(--color-principal); }
+    .donde-caja p { margin: 0 0 6px; font-size: 14px; }
+    .donde-dato { display: flex; gap: 9px; align-items: flex-start; font-size: 14px; color: #475569;
+        line-height: 1.45; margin-bottom: 8px; }
+    .donde-dato .ic { flex: 0 0 auto; font-size: 16px; line-height: 1.3; }
+    .donde-dato b { color: var(--color-principal); }
+    .donde-mapa { position: relative; width: 100%; aspect-ratio: 4 / 3; margin-bottom: 12px;
+        border-radius: 14px; overflow: hidden; border: 2px solid var(--gris-borde); background: #eef0e0; }
+    @media (min-width: 480px) { .donde-mapa { aspect-ratio: 16 / 10; } }
+    .donde-mapa iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+    /* El mapa de cobertura abarca de Sierra Grande a Camarones: necesita una
+       caja más alta que ancha, si no los pines del norte y del sur quedan
+       apretados contra el borde. */
+    .donde-mapa.amplio { aspect-ratio: 1 / 1; }
+    @media (min-width: 480px) { .donde-mapa.amplio { aspect-ratio: 5 / 4; } }
+    .donde-mapa .leaflet-container { position: absolute; inset: 0; width: 100%; height: 100%;
+        background: #eef0e0; font-family: inherit; font-size: 12px; }
+    /* Leaflet pone sus controles en z-index 1000, igual que los modales del
+       sitio. Los bajo para que ningún cartel quede tapado por el zoom. */
+    .donde-mapa .leaflet-top, .donde-mapa .leaflet-bottom { z-index: 500; }
+    /* divIcon trae recuadro blanco por defecto: sobra, el pin ya es un SVG. */
+    .pin-envio { background: none; border: none; }
+    .pin-envio svg { display: block; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+    .mapa-pie { font-size: 12px; color: #7a7a52; margin: 0 0 12px; text-align: left; line-height: 1.5; }
+    /* Cartel mientras el mapa todavía no se pidió (la pantalla nunca se abrió). */
+    .donde-mapa .mapa-espera { position: absolute; inset: 0; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 6px; color: #7a7a52; font-size: 13px; }
+    .donde-acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .donde-acciones a { flex: 1 1 160px; text-decoration: none; text-align: center; border-radius: 10px;
+        padding: 12px 14px; font-size: 14px; font-weight: bold; transition: filter .2s, transform .1s; }
+    .donde-acciones a:hover { filter: brightness(1.06); transform: translateY(-1px); }
+    .donde-acciones .ac-mapa { background: var(--color-boton); color: var(--color-boton-texto); }
+    .donde-acciones .ac-wa { background: var(--color-wa); color: #fff; }
+    .donde-zonas { margin: 0; }
+    .zona-sec { padding: 10px 0; border-bottom: 1px dashed var(--gris-borde); }
+    .zona-sec:last-child { border-bottom: none; }
+    .zona-cab { display: flex; gap: 9px; align-items: flex-start;
+        font-size: 14px; color: #475569; line-height: 1.45; }
+    .zona-cab .zona-ic { flex: 0 0 auto; font-size: 17px; line-height: 1.25; }
+    .zona-cab b { color: var(--color-principal); display: block; }
+    /* La zona también abre y cierra, con los pueblos adentro. Los selectores
+       van con ">" a propósito: sin eso, el chevron de la zona y el de cada
+       pueblo se pisarían, porque son desplegables uno dentro del otro. */
+    details.zona-sec > summary.zona-cab { list-style: none; cursor: pointer; }
+    details.zona-sec > summary.zona-cab::-webkit-details-marker { display: none; }
+    details.zona-sec > summary.zona-cab:hover b { text-decoration: underline; }
+    details.zona-sec > summary .chevron { margin-left: auto; align-self: center;
+        font-size: 12px; color: #7a7a52; transition: transform .2s; }
+    details.zona-sec[open] > summary .chevron { transform: rotate(90deg); }
+    /* Un desplegable por pueblo: <details> nativo, así abre y cierra sin JS y
+       el lector de pantalla ya sabe leerlo. */
+    .pueblo { margin: 7px 0 0 26px; background: #fff; border: 1px solid var(--gris-borde);
+        border-radius: 10px; overflow: hidden; }
+    /* 12px arriba y abajo: el renglón queda de ~44px, la medida mínima para
+       que un dedo le pegue sin errarle en el celular. */
+    .pueblo > summary { list-style: none; cursor: pointer; padding: 12px;
+        display: flex; align-items: center; gap: 8px;
+        font-size: 14px; font-weight: bold; color: var(--color-principal); }
+    .pueblo > summary::-webkit-details-marker { display: none; }   /* Safari */
+    .pueblo > summary:hover { background: var(--gris-suave); }
+    /* El puntito verde repite el color del pin: el pueblo del mapa y el de la
+       lista se leen como la misma cosa. */
+    .pueblo .pin-dot { flex: 0 0 auto; width: 11px; height: 11px; border-radius: 50%;
+        background: var(--color-wa); border: 2px solid #0e6b40; }
+    .pueblo > summary .chevron { margin-left: auto; font-size: 12px; color: #7a7a52; transition: transform .2s; }
+    .pueblo[open] > summary .chevron { transform: rotate(90deg); }
+    .pueblo-datos { padding: 2px 12px 12px 31px; }
+    .pueblo-dato { display: flex; gap: 8px; align-items: flex-start;
+        font-size: 13.5px; color: #475569; line-height: 1.45; margin-top: 7px; }
+    .pueblo-dato .ic { flex: 0 0 auto; }
+    .pueblo-dato b { color: var(--color-principal); }
+    .pueblo-dato.pendiente { color: #8a7a3a; }
+
+    /* ===== Packs de fotos con descuento ===== */
+    .packs-caja { background: #fff; }
+    .pack-medida { margin-top: 14px; }
+    .pack-medida:first-of-type { margin-top: 8px; }
+    .pack-medida .pack-titulo { font-size: 14px; font-weight: bold; color: var(--color-principal);
+        margin: 0 0 7px; display: flex; align-items: baseline; gap: 7px; }
+    .pack-medida .pack-unit { font-size: 12px; font-weight: normal; color: #7a7a52; }
+    .pack-par { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .btn-pack { position: relative; background: var(--gris-suave); border: 2px solid var(--gris-borde);
+        border-radius: 12px; padding: 13px 10px 11px; cursor: pointer; font-family: inherit;
+        text-align: center; transition: transform .1s, border-color .2s, background-color .2s; }
+    .btn-pack:hover { border-color: var(--color-boton-hover); transform: translateY(-2px); }
+    .btn-pack:active { transform: translateY(0); }
+    .btn-pack.activo { border-color: var(--color-wa); background: #e8f9ef; }
+    .btn-pack .pack-cant { display: block; font-size: 16px; font-weight: bold; color: var(--color-principal); }
+    .btn-pack .pack-antes { display: block; font-size: 12px; color: #94a3b8; text-decoration: line-through; margin-top: 3px; }
+    .btn-pack .pack-precio { display: block; font-size: 19px; font-weight: bold; color: var(--color-wa-hover); line-height: 1.15; }
+    .btn-pack .pack-off { position: absolute; top: -9px; right: -6px; background: var(--color-wa); color: #fff;
+        font-size: 12px; font-weight: bold; padding: 2px 8px; border-radius: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,.2); }
+    /* Panel que aparece al elegir un pack. */
+    .pack-detalle { margin-top: 16px; padding: 14px; border-radius: 12px;
+        background: var(--gris-suave); border: 1px solid var(--gris-borde); text-align: left; }
+    .pack-detalle h4 { margin: 0 0 4px; font-size: 15px; color: var(--color-principal); }
+    .pack-detalle .pack-ahorro { margin: 0 0 10px; font-size: 14px; color: var(--color-wa-hover); font-weight: bold; }
+    .pack-detalle .pack-aclara { margin: 10px 0 0; font-size: 12px; color: #7a7a52; }
+    .pack-detalle .btn-agregar { width: 100%; display: block; text-align: center; text-decoration: none; }
+    .pack-transf { margin: 10px 0 0; padding-top: 10px; border-top: 1px dashed var(--gris-borde); }
+    .pack-transf .pack-transf-tit { font-size: 12px; font-weight: bold; color: var(--color-principal); margin: 0 0 6px; }
 </style>
 </head>
 <body>
@@ -2610,6 +2719,56 @@ z"></path></g>
 <button class="btn-menu" onclick="irAPedido()">🛒 Empezar mi pedido</button>
     <button class="btn-menu" onclick="abrirCatalogo()">🖼️ Ver catálogo de cuadros</button>
     <button class="btn-menu" onclick="window.location.href='https://digitalflashtw.wordpress.com/eventos/'">🥳 Ver fotos de eventos sociales</button>
+    <button class="btn-menu" onclick="abrirDonde()">📍 Dónde estamos y envíos</button>
+    </div>
+</div>
+
+<!-- DÓNDE ESTAMOS / A DÓNDE ENVIAMOS
+     Todo el contenido de esta pantalla (dirección, horarios, zonas) sale de
+     LOCAL y ZONAS_ENVIO, allá abajo en el bloque de configuración del script.
+     Acá solo están los contenedores vacíos. -->
+<div id="p-donde" class="pantalla oculto">
+    <div class="barra-sup">
+        <button class="btn-volver" onclick="mostrar(&#39;p-bienvenida&#39;)">⬅ Volver</button>
+        <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-donde">0</span>)</button>
+    </div>
+    <h2>Dónde estamos y a dónde enviamos</h2>
+
+    <div class="donde-caja">
+        <h3>📍 Dónde estamos</h3>
+        <div class="donde-dato"><span class="ic">🏠</span><span id="donde-direccion"></span></div>
+        <div class="donde-dato"><span class="ic">🕘</span><span id="donde-horarios"></span></div>
+        <div class="donde-dato"><span class="ic">🟢</span><span id="donde-tel"></span></div>
+    </div>
+
+    <!-- El iframe se inserta recién al abrir esta pantalla (ver cargarMapa):
+         así Google no se carga en la visita de alguien que nunca llega acá. -->
+    <div class="donde-mapa" id="donde-mapa">
+        <div class="mapa-espera"><span style="font-size:26px;">🗺️</span> Cargando el mapa…</div>
+    </div>
+
+    <div class="donde-acciones">
+        <a class="ac-mapa" id="donde-comollegar" href="#" target="_blank" rel="noopener noreferrer">🧭 Cómo llegar</a>
+        <a class="ac-wa" id="donde-wa" href="#" target="_blank" rel="noopener noreferrer">🟢 Escribinos por WhatsApp</a>
+    </div>
+
+    <div class="donde-caja">
+        <h3>🚚 A dónde enviamos</h3>
+        <div class="donde-mapa amplio" id="mapa-envios">
+            <div class="mapa-espera"><span style="font-size:26px;">🗺️</span> Cargando el mapa…</div>
+        </div>
+        <p class="mapa-pie">Los pines <b style="color:#128C7E;">verdes</b> son los pueblos a los que enviamos; el <b>amarillo</b> es nuestro local. Tocá uno para ver cuál es.</p>
+        <div class="donde-zonas" id="donde-zonas"></div>
+        <p style="margin-top:10px;font-size:13px;">El costo del envío depende de la zona y del tamaño del pedido: lo confirmamos por WhatsApp antes de despachar.</p>
+    </div>
+
+    <!-- PACKS CON DESCUENTO. Los botones y los precios los arma renderPacks()
+         a partir de PACKS_FOTOS y de los precios que ya trae el catálogo. -->
+    <div class="donde-caja packs-caja">
+        <h3>🎉 Packs de fotos con descuento</h3>
+        <p>Revelá de a muchas y pagá menos: <b>pagando por transferencia</b> te hacemos un descuento exclusivo. Elegí tu pack:</p>
+        <div id="packs-grid"></div>
+        <div id="pack-detalle" class="pack-detalle oculto"></div>
     </div>
 </div>
 
@@ -3027,10 +3186,438 @@ const DATOS_TRANSFERENCIA = [
     { etiqueta: "Titular", valor: "Roberto Fabricio Gacitua", sinCopiar: true },
     { etiqueta: "CBU",     valor: "3840200500000040430508" }
 ];
+/* ⚙️ DÓNDE ESTAMOS — PUNTO ÚNICO DE CONFIGURACIÓN
+   Alimenta toda la pantalla "Dónde estamos y envíos": el texto, el mapa
+   incrustado y el botón "Cómo llegar". Si el local se muda, se edita SOLO acá.
+
+   ⚠️ mapaBusqueda es lo que Google Maps va a buscar. Lo más exacto es pegar
+   las coordenadas del local ("-43.248,-65.305"): la dirección escrita a veces
+   cae media cuadra corrida. Para sacarlas: en Google Maps, clic derecho sobre
+   el local → el primer renglón del menú son las coordenadas, se copian solas. */
+const LOCAL = {
+    direccion:    "Belgrano 386",
+    ciudad:       "U9100 Trelew, Chubut",
+    horarios:     "De lunes a sábados de 8 a 20:30 h",
+    mapaBusqueda: "PMWV+W5 Trelew, Chubut",
+    zoom:         17,
+    /* Las mismas coordenadas del plus code de arriba, para el pin del local en
+       el mapa de cobertura (ese mapa no entiende de códigos, solo de números). */
+    lat: -43.2527, lng: -65.3071
+};
+
+/* ⚙️ A DÓNDE ENVIAMOS — PUNTO ÚNICO DE CONFIGURACIÓN
+   De acá salen LAS DOS cosas: la lista de abajo y los pines verdes del mapa.
+   Para sumar un pueblo se agrega al arreglo `pueblos` de su zona y listo:
+   aparece en el texto Y en el mapa, que reencuadra solo para que entre.
+
+   Las coordenadas están tomadas del buscador de OpenStreetMap. Para un pueblo
+   nuevo: entrá a openstreetmap.org, buscalo, clic derecho sobre él →
+   "Mostrar dirección"; los dos números que aparecen son lat y lng.
+
+   ⚠️ FALTA COMPLETAR: empresa / dias / costo de cada pueblo (hoy están en "").
+   Mientras estén vacíos, el desplegable de ese pueblo dice "a confirmar:
+   escribinos por WhatsApp" en vez de mostrar un dato inventado.
+
+   Cómo se completan, para escribir lo menos posible: lo que se pone en la ZONA
+   vale para TODOS sus pueblos; en el pueblo se escribe solo lo que sea
+   distinto. Ejemplo: si a todo el Valle va la misma empresa los mismos días y
+   Gaiman es más barato, la empresa y los días van una vez en la zona y en
+   Gaiman va únicamente su costo. */
+const ZONAS_ENVIO = [
+    { ic: "🏬", zona: "Retiro en el local",
+      detalle: "Belgrano 386, Trelew. Sin costo: te avisamos por WhatsApp apenas está listo." },
+    { ic: "🚐", zona: "Valle",
+      empresa: "", dias: "", costo: "",
+      pueblos: [
+          { n: "Gaiman",      lat: -43.2915, lng: -65.4983, empresa: "", dias: "", costo: "" },
+          { n: "Dolavon",     lat: -43.3081, lng: -65.7106, empresa: "", dias: "", costo: "" },
+          { n: "28 de Julio", lat: -43.3907, lng: -65.8405, empresa: "", dias: "", costo: "" }
+      ] },
+    { ic: "🛣️", zona: "Meseta",
+      empresa: "", dias: "", costo: "",
+      pueblos: [
+          { n: "Las Chapas",     lat: -43.6081, lng: -66.5352, empresa: "", dias: "", costo: "" },
+          { n: "Las Plumas",     lat: -43.7217, lng: -67.2841, empresa: "", dias: "", costo: "" },
+          { n: "Los Altares",    lat: -43.8829, lng: -68.4113, empresa: "", dias: "", costo: "" },
+          { n: "Paso de Indios", lat: -43.8644, lng: -69.0466, empresa: "", dias: "", costo: "" }
+      ] },
+    { ic: "🌊", zona: "Costa y norte",
+      empresa: "", dias: "", costo: "",
+      pueblos: [
+          { n: "Camarones",     lat: -44.7985, lng: -65.7104, empresa: "", dias: "", costo: "" },
+          { n: "Sierra Grande", lat: -41.6054, lng: -65.3569, empresa: "", dias: "", costo: "" }
+      ] }
+];
+/* ⚙️ PACKS DE FOTOS CON DESCUENTO — PUNTO ÚNICO DE CONFIGURACIÓN
+   El descuento es por pagar con transferencia. Los precios NO se escriben acá:
+   se calculan con el precio unitario que ya tiene el catálogo, así que si en la
+   hoja sube el revelado, los packs suben solos y nunca quedan desfasados.
+
+   `grupo` y `sku` son los del catálogo (grupo "medianos" del revelado). El
+   nombre se usa de respaldo por si algún día se renombra un SKU en la hoja. */
+const PACKS_FOTOS = {
+    grupo: "medianos",
+    medidas: [
+        { sku: "REV-10X15-EST", nombre: "10x15 cm" },
+        { sku: "REV-13X18-EST", nombre: "13x18 cm" },
+        { sku: "REV-15X21-EST", nombre: "15x21 cm" }
+    ],
+    packs: [
+        { cantidad: 20, off: 0.08 },
+        { cantidad: 40, off: 0.15 }
+    ]
+};
+/* Precio de una copia suelta, tal como está hoy en el catálogo. */
+function precioUnitarioPack(med) {
+    const grupo = CATALOGO_FOTOS[PACKS_FOTOS.grupo];
+    const items = (grupo && grupo.items) || [];
+    const item = items.find(i => i.sku === med.sku) || items.find(i => i.nombre === med.nombre);
+    return item && item.precio ? item.precio : null;
+}
+/* Redondeo a $100 SIEMPRE PARA ABAJO: un pack no se ofrece en "$ 27.416", y
+   redondeando hacia arriba el cartel diría "-8%" mientras se cobra un 7,9%.
+   Para abajo, el descuento real nunca es menor que el que se promete. */
+function precioPack(unitario, pack) {
+    return Math.floor(unitario * pack.cantidad * (1 - pack.off) / 100) * 100;
+}
+let packElegido = null;
+function renderPacks() {
+    const cont = document.getElementById("packs-grid");
+    if (!cont) return;
+    cont.innerHTML = "";
+    let algunPrecio = false;
+    PACKS_FOTOS.medidas.forEach(med => {
+        const unitario = precioUnitarioPack(med);
+        if (!unitario) return;                 // esa medida no está publicada hoy
+        algunPrecio = true;
+        const bloque = document.createElement("div"); bloque.className = "pack-medida";
+        const tit = document.createElement("div"); tit.className = "pack-titulo";
+        tit.innerHTML = escHtml(med.nombre) +
+            '<span class="pack-unit">' + formatear(unitario) + " c/u sueltas</span>";
+        bloque.appendChild(tit);
+        const par = document.createElement("div"); par.className = "pack-par";
+        PACKS_FOTOS.packs.forEach(pack => {
+            const lleno = unitario * pack.cantidad;
+            const conDto = precioPack(unitario, pack);
+            const btn = document.createElement("button");
+            btn.type = "button"; btn.className = "btn-pack";
+            btn.innerHTML =
+                '<span class="pack-off">-' + Math.round(pack.off * 100) + '%</span>' +
+                '<span class="pack-cant">' + pack.cantidad + ' fotos</span>' +
+                '<span class="pack-antes">' + formatear(lleno) + '</span>' +
+                '<span class="pack-precio">' + formatear(conDto) + '</span>';
+            btn.setAttribute("aria-label",
+                "Pack de " + pack.cantidad + " fotos de " + med.nombre + ", " + formatear(conDto));
+            btn.onclick = () => elegirPack(med, pack, unitario, btn);
+            par.appendChild(btn);
+        });
+        bloque.appendChild(par);
+        cont.appendChild(bloque);
+    });
+    /* Sin catálogo cargado todavía no hay precios que mostrar: mejor un aviso
+       breve que una grilla de botones vacíos. */
+    if (!algunPrecio) cont.innerHTML = '<p style="margin:0;">Estamos actualizando los precios de los packs. Consultanos por WhatsApp.</p>';
+    const det = document.getElementById("pack-detalle");
+    if (det) { det.classList.add("oculto"); det.innerHTML = ""; }
+    packElegido = null;
+}
+/* Si la hoja llega mientras alguien está mirando los packs, se redibujan con
+   los precios nuevos en vez de dejar los del catálogo embebido. */
+function refrescarPacksAbierto() {
+    const p = document.getElementById("p-donde");
+    if (p && !p.classList.contains("oculto")) renderPacks();
+}
+function elegirPack(med, pack, unitario, btn) {
+    document.querySelectorAll(".btn-pack").forEach(b => b.classList.remove("activo"));
+    btn.classList.add("activo");
+    const lleno = unitario * pack.cantidad;
+    const conDto = precioPack(unitario, pack);
+    packElegido = { medida: med.nombre, cantidad: pack.cantidad, precio: conDto };
+
+    const det = document.getElementById("pack-detalle");
+    if (!det) return;
+    det.innerHTML = "";
+    const h = document.createElement("h4");
+    h.textContent = "Pack de " + pack.cantidad + " fotos de " + med.nombre + " · " + formatear(conDto);
+    const ahorro = document.createElement("p"); ahorro.className = "pack-ahorro";
+    ahorro.textContent = "Ahorrás " + formatear(lleno - conDto) + " pagando por transferencia";
+    det.appendChild(h); det.appendChild(ahorro);
+
+    /* Los datos para transferir son los mismos del final del pedido: se arman
+       con la misma función, así nunca dicen un CBU distinto. */
+    const transf = document.createElement("div"); transf.className = "pack-transf";
+    const tit = document.createElement("p"); tit.className = "pack-transf-tit";
+    tit.textContent = "Datos para transferir";
+    const filas = document.createElement("div"); filas.id = "pack-transf-filas";
+    transf.appendChild(tit); transf.appendChild(filas);
+    det.appendChild(transf);
+    llenarDatosTransferencia("pack-transf-filas");
+
+    const msg = "¡Hola! Quiero el pack de " + pack.cantidad + " fotos de " + med.nombre +
+        " (" + formatear(conDto) + ", pagando por transferencia).";
+    const wa = document.createElement("a");
+    wa.className = "btn-agregar";
+    wa.style.marginTop = "12px";
+    wa.href = "https://wa.me/" + TELEFONO_WA + "?text=" + encodeURIComponent(msg);
+    wa.target = "_blank"; wa.rel = "noopener noreferrer";
+    wa.textContent = "🟢 Pedir este pack por WhatsApp";
+    wa.onclick = () => medir("pack_pedido_wa", {
+        medida: med.nombre, cantidad: pack.cantidad, valor: conDto, moneda: "ARS"
+    });
+    det.appendChild(wa);
+
+    const aclara = document.createElement("p"); aclara.className = "pack-aclara";
+    aclara.textContent = "El descuento del pack aplica pagando por transferencia. " +
+        "Las fotos las coordinamos por WhatsApp: podés mandarlas ahí mismo o traerlas al local.";
+    det.appendChild(aclara);
+
+    det.classList.remove("oculto");
+    det.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    medir("pack_elegido", { medida: med.nombre, cantidad: pack.cantidad, valor: conDto, moneda: "ARS" });
+}
+
+/* El desplegable de un pueblo: empresa, días y costo. Cada dato se busca
+   primero en el pueblo y, si ahí no está, se hereda de la zona. */
+function datoEnvio(zona, pueblo, campo) {
+    return (pueblo[campo] || zona[campo] || "").trim();
+}
+function desplegablePueblo(zona, pueblo) {
+    const det = document.createElement("details");
+    det.className = "pueblo";
+
+    const res = document.createElement("summary");
+    const punto = document.createElement("span"); punto.className = "pin-dot";
+    const chev = document.createElement("span"); chev.className = "chevron";
+    chev.textContent = "▶"; chev.setAttribute("aria-hidden", "true");
+    res.appendChild(punto);
+    res.appendChild(document.createTextNode(pueblo.n));
+    res.appendChild(chev);
+    det.appendChild(res);
+
+    const cuerpo = document.createElement("div"); cuerpo.className = "pueblo-datos";
+    [["🚚", "Empresa", "empresa"], ["📅", "Días", "dias"], ["💵", "Costo", "costo"]]
+    .forEach(([emoji, etiqueta, campo]) => {
+        const valor = datoEnvio(zona, pueblo, campo);
+        const fila = document.createElement("div");
+        /* Sin el dato cargado no se inventa nada: se dice que falta confirmarlo.
+           Es preferible a que el cliente lea un precio que no es. */
+        fila.className = "pueblo-dato" + (valor ? "" : " pendiente");
+        const ic = document.createElement("span"); ic.className = "ic"; ic.textContent = emoji;
+        const txt = document.createElement("span");
+        const etq = document.createElement("b"); etq.textContent = etiqueta + ": ";
+        txt.appendChild(etq);
+        txt.appendChild(document.createTextNode(valor || "a confirmar, escribinos por WhatsApp"));
+        fila.appendChild(ic); fila.appendChild(txt);
+        cuerpo.appendChild(fila);
+    });
+    if (pueblo.nota) {
+        const fila = document.createElement("div"); fila.className = "pueblo-dato";
+        const ic = document.createElement("span"); ic.className = "ic"; ic.textContent = "ℹ️";
+        const txt = document.createElement("span"); txt.textContent = pueblo.nota;
+        fila.appendChild(ic); fila.appendChild(txt);
+        cuerpo.appendChild(fila);
+    }
+    det.appendChild(cuerpo);
+
+    /* Qué pueblo abre la gente dice a qué zona conviene mirarle los precios. */
+    det.addEventListener("toggle", () => {
+        if (det.open) medir("envio_pueblo_abierto", { pueblo: pueblo.n, zona: zona.zona });
+    });
+    return det;
+}
+
+/* "Gaiman, Dolavon y 28 de Julio" — como lo diría una persona, no "A, B, C". */
+function listaLegible(nombres) {
+    if (nombres.length <= 1) return nombres.join("");
+    return nombres.slice(0, -1).join(", ") + " y " + nombres[nombres.length - 1];
+}
+
+/* Arma la pantalla con lo de arriba. El mapa se inserta recién acá (y una sola
+   vez) para no cargar Google en la visita de alguien que nunca entra a verlo. */
+function abrirDonde() {
+    const dir = document.getElementById("donde-direccion");
+    if (dir) dir.innerHTML = "<b>" + escHtml(LOCAL.direccion) + "</b><br>" + escHtml(LOCAL.ciudad);
+    const hor = document.getElementById("donde-horarios");
+    if (hor) hor.textContent = LOCAL.horarios;
+    const tel = document.getElementById("donde-tel");
+    if (tel) tel.innerHTML = "WhatsApp <b>" + escHtml(telefonoLegible(TELEFONO_WA)) + "</b>";
+
+    const q = encodeURIComponent(LOCAL.mapaBusqueda);
+    const comoLlegar = document.getElementById("donde-comollegar");
+    if (comoLlegar) comoLlegar.href = "https://www.google.com/maps/dir/?api=1&destination=" + q;
+    const wa = document.getElementById("donde-wa");
+    if (wa) wa.href = "https://wa.me/" + TELEFONO_WA + "?text=" +
+        encodeURIComponent("¡Hola! Quería consultar por el local y los envíos.");
+
+    const lista = document.getElementById("donde-zonas");
+    if (lista) {
+        lista.innerHTML = "";
+        ZONAS_ENVIO.forEach((z, i) => {
+            /* Las zonas con pueblos son desplegables; "Retiro en el local" no
+               tiene nada adentro, así que queda como un renglón común. */
+            const conPueblos = !!(z.pueblos && z.pueblos.length);
+            const sec = document.createElement(conPueblos ? "details" : "div");
+            sec.className = "zona-sec";
+            /* La primera zona arranca abierta: si estuvieran todas cerradas, la
+               parte de envíos se vería como una lista de títulos y nadie sabría
+               que adentro están los precios. */
+            if (conPueblos && i === 1) sec.open = true;
+            const cab = document.createElement(conPueblos ? "summary" : "div");
+            cab.className = "zona-cab";
+            const ic = document.createElement("span"); ic.className = "zona-ic"; ic.textContent = z.ic;
+            const txt = document.createElement("span");
+            const nom = document.createElement("b");
+            nom.textContent = z.pueblos
+                ? z.zona + ": " + listaLegible(z.pueblos.map(p => p.n))
+                : z.zona;
+            txt.appendChild(nom);
+            txt.appendChild(document.createTextNode(
+                z.detalle || "Tocá cada pueblo para ver empresa, días y costo."));
+            cab.appendChild(ic); cab.appendChild(txt);
+            if (conPueblos) {
+                const chev = document.createElement("span"); chev.className = "chevron";
+                chev.textContent = "▶"; chev.setAttribute("aria-hidden", "true");
+                cab.appendChild(chev);
+            }
+            sec.appendChild(cab);
+            (z.pueblos || []).forEach(p => sec.appendChild(desplegablePueblo(z, p)));
+            lista.appendChild(sec);
+        });
+    }
+
+    /* Primero se muestra la pantalla y recién después se arman los mapas: el
+       mapa de cobertura mide su contenedor al nacer, y si todavía estuviera
+       oculto (display:none) mediría cero y saldría en blanco. */
+    renderPacks();
+
+    mostrar("p-donde");
+    cargarMapa();
+    cargarMapaEnvios();
+}
+let mapaCargado = false;
+function cargarMapa() {
+    if (mapaCargado) return;
+    const caja = document.getElementById("donde-mapa");
+    if (!caja) return;
+    mapaCargado = true;
+    const marco = document.createElement("iframe");
+    /* output=embed es el mapa incrustado sin clave de API: no hay nada que
+       renovar ni que pagar, y funciona igual en el celular. */
+    marco.src = "https://www.google.com/maps?q=" + encodeURIComponent(LOCAL.mapaBusqueda) +
+                "&z=" + LOCAL.zoom + "&hl=es&output=embed";
+    marco.title = "Mapa: dónde estamos";
+    marco.loading = "lazy";
+    marco.referrerPolicy = "no-referrer-when-downgrade";
+    marco.allowFullscreen = true;
+    caja.appendChild(marco);
+}
+/* ── Mapa de cobertura (los pines verdes) ──
+   Va con Leaflet + OpenStreetMap, no con Google: el mapa incrustado de Google
+   acepta UNA sola búsqueda y no deja poner marcadores propios ni elegirles el
+   color. Esto no necesita clave de API ni cuenta, y los pines son nuestros.
+
+   Leaflet se baja de un CDN recién cuando alguien abre esta pantalla, y con
+   integrity: si el archivo que llega no es exactamente el de Leaflet 1.9.4,
+   el navegador lo rechaza. Si el CDN no responde, el mapa se reemplaza por un
+   enlace y el resto de la pantalla sigue funcionando igual. */
+const LEAFLET = {
+    css: { url: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
+           sri: "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" },
+    js:  { url: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+           sri: "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" }
+};
+let leafletPedido = null;
+function cargarLeaflet() {
+    if (leafletPedido) return leafletPedido;
+    leafletPedido = new Promise((listo, falló) => {
+        if (window.L) { listo(window.L); return; }
+        const css = document.createElement("link");
+        css.rel = "stylesheet"; css.href = LEAFLET.css.url;
+        css.integrity = LEAFLET.css.sri; css.crossOrigin = "anonymous";
+        document.head.appendChild(css);
+        const js = document.createElement("script");
+        js.src = LEAFLET.js.url;
+        js.integrity = LEAFLET.js.sri; js.crossOrigin = "anonymous";
+        js.onload  = () => window.L ? listo(window.L) : falló(new Error("Leaflet no quedó disponible"));
+        js.onerror = () => falló(new Error("no se pudo bajar Leaflet"));
+        document.head.appendChild(js);
+    });
+    return leafletPedido;
+}
+/* Pin en forma de gota, dibujado acá mismo: así el color se elige desde el
+   código y no hay que subir ninguna imagen. */
+function pinSvg(relleno, borde) {
+    return '<svg width="26" height="34" viewBox="0 0 26 34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<path d="M13 1.5C7.2 1.5 2.5 6.2 2.5 12c0 7.9 10.5 20.5 10.5 20.5S23.5 19.9 23.5 12c0-5.8-4.7-10.5-10.5-10.5z"' +
+        ' fill="' + relleno + '" stroke="' + borde + '" stroke-width="2"/>' +
+        '<circle cx="13" cy="12" r="4" fill="#fff"/></svg>';
+}
+let mapaEnviosCargado = false;
+function cargarMapaEnvios() {
+    if (mapaEnviosCargado) return;
+    const caja = document.getElementById("mapa-envios");
+    if (!caja) return;
+    mapaEnviosCargado = true;
+    cargarLeaflet().then(L => {
+        caja.innerHTML = "";
+        /* En el celular el mapa queda quieto: si se pudiera arrastrar con un
+           dedo, el cliente que baja la página se quedaría trabado adentro del
+           mapa. En la compu sí se puede mover y hacer zoom con los botones. */
+        const movil = L.Browser.mobile;
+        const mapa = L.map(caja, {
+            scrollWheelZoom: false,
+            dragging: !movil, touchZoom: !movil, zoomControl: !movil,
+            keyboard: !movil
+        });
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 17,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+        }).addTo(mapa);
+
+        const icono = (relleno, borde) => L.divIcon({
+            className: "pin-envio", html: pinSvg(relleno, borde),
+            iconSize: [26, 34], iconAnchor: [13, 34], tooltipAnchor: [0, -30]
+        });
+        const puntos = [];
+        L.marker([LOCAL.lat, LOCAL.lng], { icon: icono("#FCFC14", "#4a4a00"), title: "Nuestro local" })
+            .addTo(mapa)
+            .bindTooltip("<b>Estamos acá</b><br>" + escHtml(LOCAL.direccion) + ", Trelew");
+        puntos.push([LOCAL.lat, LOCAL.lng]);
+        const verde = icono("#25D366", "#0e6b40");
+        ZONAS_ENVIO.forEach(z => (z.pueblos || []).forEach(p => {
+            L.marker([p.lat, p.lng], { icon: verde, title: p.n }).addTo(mapa)
+                .bindTooltip("<b>" + escHtml(p.n) + "</b><br>Enviamos acá");
+            puntos.push([p.lat, p.lng]);
+        }));
+        /* El encuadre lo decide la lista, no un zoom fijo: si mañana se suma un
+           pueblo más lejos, el mapa se abre solo para que entre. */
+        /* Más aire arriba que abajo: el pin cuelga hacia arriba de su punto
+           (la punta es la que marca el lugar), así que el de más al norte se
+           comería el borde superior con un padding parejo. */
+        mapa.fitBounds(L.latLngBounds(puntos), {
+            paddingTopLeft: [30, 44], paddingBottomRight: [30, 14]
+        });
+        medir("mapa_envios_visto", { pueblos: puntos.length - 1 });
+    }).catch(() => {
+        mapaEnviosCargado = false;              // que pueda reintentar en la próxima visita
+        caja.innerHTML = '<div class="mapa-espera">🗺️ No se pudo cargar el mapa.' +
+            '<br><a href="https://www.google.com/maps/search/?api=1&query=' +
+            encodeURIComponent(LOCAL.mapaBusqueda) + '" target="_blank" rel="noopener noreferrer">Verlo en Google Maps</a></div>';
+    });
+}
+
+/* "5492804696961" -> "2804 69-6961" (como lo escribiría un vecino). */
+function telefonoLegible(wa) {
+    const s = String(wa).replace(/\D/g, "").replace(/^549?/, "");
+    return s.length === 10 ? s.slice(0, 4) + " " + s.slice(4, 6) + "-" + s.slice(6) : s;
+}
+
 /* Dibuja las filas del cartel, cada una con su botón de copiar (en el celular
-   nadie quiere transcribir 22 dígitos a mano). */
-function llenarDatosTransferencia() {
-    const cont = document.getElementById("transf-filas");
+   nadie quiere transcribir 22 dígitos a mano).
+   El contenedor se puede elegir: el cartel del final del pedido usa el suyo y
+   el panel de packs el propio, pero los datos salen de la misma lista. */
+function llenarDatosTransferencia(idContenedor) {
+    const cont = document.getElementById(idContenedor || "transf-filas");
     if (!cont) return;
     cont.innerHTML = "";
     DATOS_TRANSFERENCIA.forEach(d => {
@@ -3102,7 +3689,8 @@ const NOMBRE_PANTALLA = {
     "p-cliente":     "Datos del cliente",
     "p-eventos":     "Fotos de eventos",
     "p-evento-form": "Consulta de evento",
-    "p-carrito":     "Carrito"
+    "p-carrito":     "Carrito",
+    "p-donde":       "Dónde estamos y envíos"
 };
 
 /* =========================================================
@@ -4143,6 +4731,7 @@ function cargarCatalogoRemoto(reintento) {
                 actualizarEtiquetasPrecios();
                 estadoCatalogo = "listo";
                 refrescarCatalogoAbierto();
+                refrescarPacksAbierto();
                 aplicarEnlaceInicial();   // el cuadro compartido recién ahora existe
                 console.log("Catálogo remoto cargado (v" + ((data.meta && data.meta.version) || "?") + ").");
             } else {
@@ -6256,7 +6845,7 @@ function quitarAdjunto(tipo, i) {
    8) CARRITO Y ENVÍO
    ========================================================= */
 function actualizarBadges() {
-    ["badge-menu", "badge-cat", "badge-sim", "badge-souv", "badge-souv-2", "badge-taza", "badge-catalogo", "badge-ficha"].forEach(id => {
+    ["badge-menu", "badge-cat", "badge-sim", "badge-souv", "badge-souv-2", "badge-taza", "badge-catalogo", "badge-ficha", "badge-donde"].forEach(id => {
         const el = document.getElementById(id); if (el) el.innerText = carrito.length;
     });
 }
@@ -7058,6 +7647,9 @@ function pausarAutoNov() { clearInterval(novTimer); novTimer = null; }
         <a class="red-fb" href="https://www.facebook.com/people/FOTO-FLASH-TW/61571162657400/" target="_blank" rel="noopener noreferrer" title="Facebook · FOTO FLASH TW" aria-label="Facebook">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.09 10.12 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.09 24 18.1 24 12.07z"/></svg>
         </a>
+    </div>
+    <div style="margin-bottom:10px;">
+        <button type="button" class="link-cambiar" onclick="abrirDonde()">📍 Dónde estamos y a dónde enviamos</button>
     </div>
     Diseñado por <span class="cred-mr">MR</span>
     <!-- Para enlazar tu web en el futuro, reemplazá el span de arriba por:
