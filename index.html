@@ -332,13 +332,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         cursor: pointer; white-space: nowrap; }
     .transf-fila .transf-copiar:hover { background: #dcfce7; }
     .caja-transf .transf-pie { margin: 8px 0 0; font-size: 12px; color: #3f6212; line-height: 1.4; }
-    /* Cartel de versión demo (aparece al entrar). */
-    .caja-demo { max-width: 420px; padding: 24px 20px; border-top: 6px solid var(--color-boton); }
-    .caja-demo .demo-texto { margin: 4px 0 18px; color: #475569; font-size: 15px; line-height: 1.55; }
-    .caja-demo .demo-ok { display: inline-block; min-width: 170px; background: var(--color-boton);
-        color: var(--color-boton-texto); border: none; border-radius: 10px; padding: 13px 24px;
-        font-size: 16px; font-weight: bold; cursor: pointer; }
-    .caja-demo .demo-ok:hover { filter: brightness(1.05); }
     #crop-area { position: relative; display: inline-block; max-width: 100%; overflow: hidden; touch-action: none; margin-bottom: 12px; }
     #crop-img { display: block; max-width: 100%; max-height: 55vh; user-select: none; -webkit-user-drag: none; }
     #crop-rect { position: absolute; border: 2px dashed var(--color-boton); box-sizing: border-box; cursor: move;
@@ -7674,37 +7667,6 @@ function pausarAutoNov() { clearInterval(novTimer); novTimer = null; }
         </div>
     </div>
 </div>
-
-<!-- ===== Cartel de versión DEMO =====
-     Se muestra al entrar, una vez por visita (sessionStorage). Avisa que la
-     página es una demostración y que puede tener errores. El cliente lo cierra
-     con "Entendido". -->
-<div id="modal-demo" class="modal-flotante oculto" role="dialog" aria-modal="true" aria-label="Aviso de versión demo">
-    <div class="caja-modal caja-demo">
-        <p class="demo-texto">
-            Estás viendo una <b>versión demo</b> de la página. Es posible que
-            encuentres <b>errores</b> o cosas que todavía estamos ajustando.
-            ¡Gracias por tu paciencia! 🙌
-        </p>
-        <button type="button" class="demo-ok" onclick="cerrarDemo()">Entendido</button>
-    </div>
-</div>
-
-<script>
-/* Muestra el cartel de demo al entrar. Se usa sessionStorage para no repetirlo
-   en cada recarga dentro de la misma visita; en una visita nueva vuelve a salir. */
-function cerrarDemo() {
-    document.getElementById('modal-demo').classList.add('oculto');
-    try { sessionStorage.setItem('tf_demo_visto', '1'); } catch (e) { /* navegación privada */ }
-}
-(function initDemo() {
-    let visto = null;
-    try { visto = sessionStorage.getItem('tf_demo_visto'); } catch (e) { /* navegación privada */ }
-    if (visto) return;
-    document.getElementById('modal-demo').classList.remove('oculto');
-    if (typeof medir === 'function') medir('aviso_demo_visto');
-})();
-</script>
 
 <!-- ===== Aviso de cookies =====
      Se muestra solo si el cliente todavía no eligió. Su decisión se guarda en
