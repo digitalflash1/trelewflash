@@ -17,3 +17,14 @@ Thumbs.db
 *.tmp
 *.bak
 ~$*
+
+# Documentación interna y código del backend: quedan en la compu, NO se suben.
+# GitHub Pages sirve todo lo que esté en el repo, así que cualquier .md o .gs
+# acá adentro se puede abrir desde la dirección pública de la tienda.
+LEEME-DEMO.md
+CONECTAR-HOJA.md
+README-despliegue-v4_3.md
+*.gs
+
+# Archivos de la versión vieja que la tienda ya no usa.
+assets/_sin-uso/
