@@ -5187,8 +5187,23 @@ function ejesDeFamilia(fam) {
         .filter(k => valores[k].length > 1)
         .map(k => ({ clave: k, titulo: defEje(k).titulo, plural: defEje(k).plural, valores: valores[k] }));
 }
+/* El precio que se le muestra al cliente.
+   "A cotizar" es lo que se dice cuando NO hay número. Si la fila tiene un precio
+   cargado, ese número manda aunque además esté marcada "a cotizar": la marca
+   pasa a ser una nota ("a confirmar"), que es exactamente lo que el carrito
+   viene haciendo desde siempre (cobra el precio y aclara al lado).
+   Hace falta porque las dos cosas conviven en la hoja: cargar un precio desde
+   la pantalla de Precios de la app NO destilda "a cotizar", así que esconder el
+   número dejaba el catálogo entero diciendo "A cotizar" con los precios puestos. */
+function precioDe(o) {
+    return (o && o.precio != null && o.precio > 0) ? o.precio : null;
+}
+/* Nota chiquita para la fila que tiene precio Y la marca de cotizar. */
+function notaACotizar(o) {
+    return (o && o.aCotizar && precioDe(o) != null) ? ' <small>a confirmar</small>' : "";
+}
 function preciosDeFamilia(fam) {
-    return (fam.opciones || []).filter(o => !o.aCotizar && o.precio != null && o.precio > 0).map(o => o.precio);
+    return (fam.opciones || []).map(precioDe).filter(p => p != null);
 }
 
 /* Preview con las fotos reales del producto (principal + resto). Los thumbs
@@ -5494,7 +5509,8 @@ function abrirAlbumes() { renderAlbumes(); mostrar("p-albumes"); }
 let stkIdx = 0;
 function stickerPorSku(sku) { return STICKERS_DTF.find(x => x.sku === sku) || null; }
 function precioSticker(st) {
-    return (st && !st.aCotizar && st.precio) ? formatear(st.precio) : "<small>A cotizar</small>";
+    const p = precioDe(st);
+    return p != null ? formatear(p) + notaACotizar(st) : "<small>A cotizar</small>";
 }
 
 /* --- Carrusel ---
@@ -6044,9 +6060,10 @@ function pintarCabeceraFicha() {
     if (medida) tags.push(medida);
     document.getElementById("ficha-tags").innerHTML =
         tags.map(t => '<span class="ficha-tag">' + t + "</span>").join("");
+    const precioSel = precioDe(fichaSel);
     document.getElementById("ficha-precio-top").innerHTML =
-        (fichaSel && !fichaSel.aCotizar && fichaSel.precio)
-            ? formatear(fichaSel.precio)
+        (precioSel != null)
+            ? formatear(precioSel) + notaACotizar(fichaSel)
             : '<small>Precio a confirmar por WhatsApp</small>';
 }
 function pintarEjesFicha() {
@@ -6080,7 +6097,7 @@ function pintarEjesFicha() {
             if (v && !cualquiera[v] && o.fotos && o.fotos.length) cualquiera[v] = o;
         });
         // El precio solo se muestra en el eje que lo hace cambiar (la medida).
-        const precios = e.valores.map(v => disp[v] && !disp[v].aCotizar ? disp[v].precio : null);
+        const precios = e.valores.map(v => disp[v] ? precioDe(disp[v]) : null);
         const conPrecio = precios.filter(p => p != null);
         const mostrarPrecio = conPrecio.length > 1 && Math.min(...conPrecio) !== Math.max(...conPrecio);
         /* El color se elige mirando: si cada terminación tiene su foto, el chip
