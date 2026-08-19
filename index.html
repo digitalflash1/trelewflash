@@ -518,6 +518,87 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .chip-filtro.activo { background: #e8f9ef; border-color: var(--color-wa); color: #128C7E; }
     .cat-vacio { font-size: 13.5px; color: #7a7a52; text-align: left; margin: 0; }
 
+    /* ===== Menú del catálogo completo (cuadros / álbumes / stickers) =====
+       Tres tarjetas grandes: el catálogo dejó de ser una sola pantalla y este
+       es el desvío. Se ven como los botones del inicio, pero con bajada. */
+    .menu-cat { display: block; width: 100%; text-align: left; background: var(--gris-suave);
+        border: 2px solid var(--gris-borde); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+        cursor: pointer; font-family: inherit; transition: transform .15s, box-shadow .2s, border-color .2s; }
+    .menu-cat:hover { transform: translateY(-2px); border-color: var(--color-wa); box-shadow: 0 8px 18px rgba(0,0,0,.08); }
+    .menu-cat:active { transform: translateY(0); }
+    .menu-cat .mc-fila { display: flex; align-items: center; gap: 12px; }
+    .menu-cat .mc-emoji { font-size: 30px; line-height: 1; flex: 0 0 auto; }
+    .menu-cat .mc-tit { display: block; font-size: 16.5px; font-weight: bold; color: var(--color-principal); }
+    .menu-cat .mc-sub { display: block; font-size: 13px; color: #7a7a52; margin-top: 2px; line-height: 1.35; }
+    .menu-cat .mc-flecha { margin-left: auto; font-size: 20px; color: #b8b88a; flex: 0 0 auto; }
+
+    /* ===== Stickers DTF =====
+       La pantalla imita una plancha de stickers: arriba uno grande en el
+       carrusel y abajo todos pegados sobre el fondo, sin tarjeta ni recuadro
+       (los PNG vienen sin fondo, así que el recorte es el que se ve). */
+    .stk-carrusel { position: relative; width: 100%; aspect-ratio: 1 / 1; max-height: 62vh; margin: 4px 0 10px;
+        border-radius: 16px; overflow: hidden; background:
+            radial-gradient(circle at 50% 38%, #fffdf2 0%, #fff6bf 62%, #ffeda1 100%);
+        border: 2px solid var(--gris-borde); touch-action: pan-y; }
+    .stk-track { display: flex; height: 100%; transition: transform .45s cubic-bezier(.25,1,.5,1); }
+    @media (prefers-reduced-motion: reduce) { .stk-track { transition: none; } }
+    .stk-slide { flex: 0 0 100%; height: 100%; display: flex; flex-direction: column; align-items: center;
+        justify-content: center; padding: 14px 44px 62px; }
+    .stk-slide img { max-width: 100%; max-height: 100%; object-fit: contain; display: block;
+        filter: drop-shadow(0 6px 10px rgba(0,0,0,.22)); animation: stk-entra .45s ease-out; }
+    @keyframes stk-entra { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { .stk-slide img { animation: none; } }
+    .stk-pie { position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 12px 10px;
+        background: linear-gradient(to top, rgba(255,255,255,.96), rgba(255,255,255,.75) 70%, rgba(255,255,255,0));
+        display: flex; align-items: center; gap: 10px; }
+    .stk-pie .stk-datos { text-align: left; flex: 1; min-width: 0; }
+    .stk-pie .stk-nom { font-size: 14px; font-weight: bold; color: var(--color-principal);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stk-pie .stk-precio { font-size: 16px; font-weight: bold; color: #1a1a00; }
+    .stk-pie .stk-precio small { font-size: 11px; font-weight: normal; color: #7a7a52; }
+    .stk-add { flex: 0 0 auto; background: var(--color-wa); color: #fff; border: none; border-radius: 10px;
+        padding: 9px 14px; font-size: 13.5px; font-weight: bold; cursor: pointer; font-family: inherit; }
+    .stk-add:hover { background: var(--color-wa-hover); }
+    .stk-vacio { display: flex; height: 100%; align-items: center; justify-content: center;
+        font-size: 13.5px; color: #7a7a52; padding: 20px; }
+
+    /* Todos los stickers, pegados sobre el fondo de la página (sin tarjeta).
+       Cargan de a tandas a medida que se baja: la plancha puede ser larga. */
+    .stk-mosaico { margin-top: 10px; padding: 20px 14px 24px; border-radius: 16px;
+        background: #fff9c4 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='2' cy='2' r='1' fill='%23f2ea9a'/%3E%3C/svg%3E");
+        border: 2px dashed var(--gris-borde);
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 16px 12px; }
+    /* En el celular entran 3 por fila: la plancha se lee como plancha y no
+       como dos stickers gigantes por renglón. */
+    @media (max-width: 480px) { .stk-mosaico { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); } }
+    .stk-peg { position: relative; border: none; background: none; padding: 0; cursor: pointer;
+        font-family: inherit; display: flex; align-items: center; justify-content: center;
+        aspect-ratio: 1; transition: transform .25s cubic-bezier(.34,1.56,.64,1), filter .2s; }
+    .stk-peg img { width: 100%; height: 100%; object-fit: contain; display: block;
+        filter: drop-shadow(0 3px 4px rgba(0,0,0,.28)); opacity: 0; transition: opacity .3s; }
+    .stk-peg img.lista { opacity: 1; }
+    .stk-peg:hover { transform: scale(1.08); }
+    /* Tocado = se agranda en el lugar y se pone por encima del resto. */
+    .stk-peg.grande { transform: scale(1.85); z-index: 30; }
+    .stk-peg.grande img { filter: drop-shadow(0 6px 9px rgba(0,0,0,.3)); }
+    /* Etiqueta que aparece al agrandar: nombre, precio y el botón de pedir.
+       Va contra-escalada (el sticker está en scale 2.05) para que el texto se
+       lea del mismo tamaño que en el resto de la página. */
+    .stk-globo { position: absolute; left: 50%; top: 100%; transform: translateX(-50%) scale(.54);
+        transform-origin: top center; margin-top: 4px; background: #fff; border: 1px solid var(--gris-borde);
+        border-radius: 10px; padding: 6px 9px; box-shadow: 0 4px 12px rgba(0,0,0,.18); white-space: nowrap; z-index: 2;
+        display: flex; align-items: center; gap: 8px; }
+    .stk-globo .g-datos { text-align: left; }
+    .stk-globo .g-nom { font-size: 12px; font-weight: bold; color: var(--color-principal); display: block;
+        max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+    .stk-globo .g-precio { font-size: 14px; font-weight: bold; color: #1a1a00; }
+    .stk-globo .g-precio small { font-size: 10px; font-weight: normal; color: #7a7a52; }
+    .stk-globo .g-add { background: var(--color-wa); color: #fff; border: none;
+        border-radius: 8px; padding: 6px 10px; font-size: 12.5px; font-weight: bold; cursor: pointer; font-family: inherit; }
+    .stk-globo .g-add:hover { background: var(--color-wa-hover); }
+    .stk-cargando { grid-column: 1 / -1; text-align: center; font-size: 13px; color: #7a7a52; padding: 10px 0; }
+    .stk-ayuda { font-size: 12.5px; color: #7a7a52; margin: 2px 0 0; }
+
     /* ===== Ficha de producto (cuadro) ===== */
     /* Galería con las fotos reales del artículo: la principal cambia sola al
        elegir otra terminación. 'contain' para que se vea el producto entero. */
@@ -2714,7 +2795,7 @@ z"></path></g>
 <div class="caja-inicio">
         <p class="caja-titulo">¿Qué querés hacer?</p>
 <button class="btn-menu" onclick="irAPedido()">🛒 Empezar mi pedido</button>
-    <button class="btn-menu" onclick="abrirCatalogo()">🖼️ Ver catálogo de cuadros</button>
+    <button class="btn-menu" onclick="abrirCatalogoCompleto()">🗂️ Ver catálogo completo</button>
     <button class="btn-menu" onclick="window.location.href='https://digitalflashtw.wordpress.com/eventos/'">🥳 Ver fotos de eventos sociales</button>
     <button class="btn-menu" onclick="abrirDonde()">📍 Dónde estamos y envíos</button>
     </div>
@@ -2770,12 +2851,43 @@ z"></path></g>
 </div>
 
 <!-- CATÁLOGO (market) -->
-<div id="p-catalogo" class="pantalla oculto">
+<!-- CATÁLOGO COMPLETO: el desvío a las tres secciones.
+     Antes el botón del inicio llevaba derecho a los cuadros; ahora el catálogo
+     tiene tres partes y esta pantalla es la que reparte. -->
+<div id="p-catalogo-menu" class="pantalla oculto">
     <div class="barra-sup">
         <button class="btn-volver" onclick="mostrar(&#39;p-bienvenida&#39;)">⬅ Volver</button>
-        <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-catalogo">0</span>)</button>
+        <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-catmenu">0</span>)</button>
     </div>
     <h2>Nuestro catálogo</h2>
+    <p>Elegí qué querés mirar.</p>
+
+    <button type="button" class="menu-cat" onclick="abrirCatalogo()">
+        <span class="mc-fila"><span class="mc-emoji">🖼️</span>
+        <span><span class="mc-tit">Cuadros y portarretratos</span>
+        <span class="mc-sub">Para colgar o para el escritorio, en madera, aluminio o vidrio.</span></span>
+        <span class="mc-flecha">›</span></span>
+    </button>
+    <button type="button" class="menu-cat" onclick="abrirAlbumes()">
+        <span class="mc-fila"><span class="mc-emoji">📖</span>
+        <span><span class="mc-tit">Álbumes de fotos</span>
+        <span class="mc-sub">Para guardar tus fotos impresas todas juntas.</span></span>
+        <span class="mc-flecha">›</span></span>
+    </button>
+    <button type="button" class="menu-cat" onclick="abrirStickersDTF()">
+        <span class="mc-fila"><span class="mc-emoji">✨</span>
+        <span><span class="mc-tit">Stickers DTF</span>
+        <span class="mc-sub">Para pegar en la ropa: mirálos uno por uno o todos juntos.</span></span>
+        <span class="mc-flecha">›</span></span>
+    </button>
+</div>
+
+<div id="p-catalogo" class="pantalla oculto">
+    <div class="barra-sup">
+        <button class="btn-volver" onclick="mostrar(&#39;p-catalogo-menu&#39;)">⬅ Volver</button>
+        <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-catalogo">0</span>)</button>
+    </div>
+    <h2>Cuadros y portarretratos</h2>
     <p>Tu foto en la pared: cuadros listos para colgar, y más productos para regalar. Tocá <b>Pedir</b> y armá tu pedido.</p>
 
     <div class="cat-seccion">
@@ -2795,10 +2907,49 @@ z"></path></g>
     <div id="cat-mas" class="cat-grid mini"></div>
 </div>
 
+<!-- ÁLBUMES
+     Sale de la hoja igual que los cuadros: cualquier producto cuya categoría
+     empiece con "album" cae acá y abre la misma ficha. -->
+<div id="p-albumes" class="pantalla oculto">
+    <div class="barra-sup">
+        <button class="btn-volver" onclick="mostrar(&#39;p-catalogo-menu&#39;)">⬅ Volver</button>
+        <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-albumes">0</span>)</button>
+    </div>
+    <h2>Álbumes de fotos</h2>
+    <p>Para tener tus fotos impresas todas juntas y a mano. Tocá uno para ver los tamaños y pedirlo.</p>
+    <div id="alb-grid" class="cat-grid"></div>
+</div>
+
+<!-- STICKERS DTF
+     Dos vistas de lo mismo: arriba el carrusel (uno grande con su precio) y
+     abajo la plancha entera, que se va cargando a medida que se baja. -->
+<div id="p-stickers" class="pantalla oculto">
+    <div class="barra-sup">
+        <button class="btn-volver" onclick="mostrar(&#39;p-catalogo-menu&#39;)">⬅ Volver</button>
+        <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-stickers">0</span>)</button>
+    </div>
+    <h2>Stickers DTF</h2>
+    <p>Se planchan sobre remeras, buzos y telas. Mirálos de a uno acá arriba, o bajá y vas a ver la plancha completa.</p>
+
+    <div id="stk-carrusel" class="stk-carrusel">
+        <div class="stk-track" id="stk-track"></div>
+        <button type="button" class="carrusel-flecha izq" onclick="prevStk()" aria-label="Anterior">‹</button>
+        <button type="button" class="carrusel-flecha der" onclick="nextStk()" aria-label="Siguiente">›</button>
+        <div class="carrusel-dots" id="stk-dots"></div>
+    </div>
+
+    <div class="cat-seccion" id="stk-seccion">
+        <h3>✨ Todos los stickers</h3>
+        <p>Tocá cualquiera para agrandarlo y pedirlo.</p>
+    </div>
+    <div id="stk-mosaico" class="stk-mosaico"></div>
+    <p class="stk-ayuda" id="stk-pie-ayuda"></p>
+</div>
+
 <!-- FICHA DE PRODUCTO (cuadro) -->
 <div id="p-ficha" class="pantalla oculto">
     <div class="barra-sup">
-        <button class="btn-volver" onclick="mostrar(&#39;p-catalogo&#39;)">⬅ Volver al catálogo</button>
+        <button class="btn-volver" id="btn-volver-ficha" onclick="volverDeFicha()">⬅ Volver al catálogo</button>
         <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-ficha">0</span>)</button>
     </div>
     <!-- Galería con las fotos reales del artículo. Si todavía no tiene fotos
@@ -2849,7 +3000,7 @@ z"></path></g>
         <input id="ficha-cant" type="number" min="1" value="1" onchange="recalcularFicha()">
     </div>
 
-    <p class="nota-info">El precio corresponde al cuadro. Si le vinculás una foto, coordinamos con vos la impresión y el armado final.</p>
+    <p class="nota-info" id="ficha-nota-precio">El precio corresponde al cuadro. Si le vinculás una foto, coordinamos con vos la impresión y el armado final.</p>
 
     <div class="caja-precio" style="margin-top:14px;">
         <div class="monto">Subtotal de este ítem: <strong id="ficha-precio">$ 0</strong></div>
@@ -3681,7 +3832,10 @@ const NOMBRE_PANTALLA = {
     "p-souvenirs":   "Souvenirs",
     "p-souv-modelo": "Elegir souvenir",
     "p-taza":        "Armar taza",
+    "p-catalogo-menu": "Catálogo completo",
     "p-catalogo":    "Catálogo de cuadros",
+    "p-albumes":     "Álbumes",
+    "p-stickers":    "Stickers DTF",
     "p-ficha":       "Ficha de producto",
     "p-cliente":     "Datos del cliente",
     "p-eventos":     "Fotos de eventos",
@@ -4568,6 +4722,10 @@ const PLANTILLAS_COLLAGE = {
    las fotos extra y el retoque se cobran como modificadores (una vez por
    diseño, ver precioConocidoFoto). */
 let CATALOGO_FOTOS = {}, CATALOGO_SOUVENIRS = {}, TIPOS_TAZA = [], CATALOGO_CUADROS = [];
+/* Las otras dos secciones del catálogo. Los álbumes son familias igual que los
+   cuadros (una tarjeta, las medidas adentro de la ficha). Los stickers no: cada
+   diseño se mira y se pide suelto, así que se aplanan a una lista de a uno. */
+let CATALOGO_ALBUMES = [], STICKERS_DTF = [];
 
 function construirCatalogosUI() {
     sincronizarMontos();
@@ -4633,47 +4791,89 @@ function construirCatalogosUI() {
        Entra acá cualquier producto cuya CATEGORÍA empiece con "cuadro", que es
        lo que se carga desde la app de administración. No necesita la columna
        "render": las medidas salen del nombre de la variante (ej. "20x30 cm"). */
-    const cuadrosArr = [];
+    /* Familias por categoría: mismo armado para cuadros y para álbumes. Las
+       filas del mismo producto son las combinaciones que existen (terminación ×
+       medida) y se agrupan en UNA familia: el catálogo muestra una tarjeta y la
+       ficha arma los selectores con la columna "atributos". */
+    const familiasDe = (reCategoria, tipo) => {
+        const salida = [];
+        (CAT.productos || []).forEach(p => {
+            if (p.visible_web === false) return;
+            if (!reCategoria.test(String(p.categoria || "").trim())) return;
+            const opciones = [];
+            (p.variantes || []).forEach(v => {
+                if (v.activo === false || v.visible_web === false) return;
+                if (v.precio == null && !v.a_cotizar) return;
+                const at = {};
+                Object.keys(v.atributos || {}).forEach(k => {
+                    const val = String(v.atributos[k] == null ? "" : v.atributos[k]).trim();
+                    if (val) at[k] = val;
+                });
+                // La medida sale del atributo; si no está, del nombre de la variante.
+                const textoMedida = String(at.medida || v.nombre || "");
+                const cm = medidasCm(textoMedida);
+                opciones.push({
+                    sku: v.sku,
+                    nombre: String(v.nombre || "").trim(),   // lo que se lee en la ficha
+                    atributos: at,
+                    precio: v.precio,
+                    aCotizar: !!v.a_cotizar,
+                    w: (v.render && v.render.w) || cm.w,
+                    h: (v.render && v.render.h) || cm.h,
+                    /* Medida normalizada ("20x30") para poder filtrar y ordenar aunque
+                       en la hoja esté escrita "20 x 30 cm" o solo en el nombre. */
+                    medida: medidaClave(textoMedida),
+                    fotos: fotosDe(v)
+                });
+            });
+            if (opciones.length) {
+                salida.push({
+                    id: p.id, producto: p.nombre, tipo: tipo, opciones: opciones,
+                    material: tipo === "cuadro" ? materialDe(p, opciones) : ""
+                });
+            }
+        });
+        return salida;
+    };
+
+    /* --- Cuadros ---
+       Producto aparte del revelado y del collage: el cuadro se vende solo y
+       después se le vincula (opcional) una foto o un collage del cliente.
+       Entra acá cualquier producto cuya CATEGORÍA empiece con "cuadro", que es
+       lo que se carga desde la app de administración. */
+    CATALOGO_CUADROS = familiasDe(/^cuadro/i, "cuadro");
+
+    /* --- Álbumes ---
+       Misma mecánica: categoría que empiece con "album"/"álbum" en la hoja. */
+    CATALOGO_ALBUMES = familiasDe(/^(album|álbum)/i, "album");
+
+    /* --- Stickers DTF ---
+       Acá cada FILA de la hoja es un sticker distinto (su diseño, su foto y su
+       precio), no una variante de algo: por eso se aplanan. Cae adentro
+       cualquier producto cuya categoría empiece con "sticker" o "dtf".
+       La foto tiene que ser PNG con fondo transparente: la plancha de abajo los
+       muestra pegados sobre el fondo, sin recuadro que los disimule. */
+    const stk = [];
     (CAT.productos || []).forEach(p => {
         if (p.visible_web === false) return;
-        if (!/^cuadro/i.test(String(p.categoria || "").trim())) return;
-        /* Las filas del mismo producto son las combinaciones que existen
-           (terminación × medida). Se agrupan en UNA familia: el catálogo muestra
-           una tarjeta y la ficha arma los selectores con la columna "atributos". */
-        const opciones = [];
+        if (!/^(sticker|dtf|calcoman)/i.test(String(p.categoria || "").trim())) return;
         (p.variantes || []).forEach(v => {
-            if (v.activo === false || v.visible_web === false) return;
+            if (!seVendeEnLaWeb(v)) return;
             if (v.precio == null && !v.a_cotizar) return;
-            const at = {};
-            Object.keys(v.atributos || {}).forEach(k => {
-                const val = String(v.atributos[k] == null ? "" : v.atributos[k]).trim();
-                if (val) at[k] = val;
-            });
-            // La medida sale del atributo; si no está, del nombre de la variante.
-            const textoMedida = String(at.medida || v.nombre || "");
-            const cm = medidasCm(textoMedida);
-            opciones.push({
+            const fotos = fotosDe(v);
+            stk.push({
                 sku: v.sku,
-                nombre: String(v.nombre || "").trim(),   // lo que se lee en la ficha
-                atributos: at,
+                nombre: String(v.nombre || p.nombre || "").trim(),
+                producto: String(p.nombre || "").trim(),
                 precio: v.precio,
                 aCotizar: !!v.a_cotizar,
-                w: (v.render && v.render.w) || cm.w,
-                h: (v.render && v.render.h) || cm.h,
-                /* Medida normalizada ("20x30") para poder filtrar y ordenar aunque
-                   en la hoja esté escrita "20 x 30 cm" o solo en el nombre. */
-                medida: medidaClave(textoMedida),
-                fotos: fotosDe(v)
+                fotos: fotos,
+                img: fotos[0] || ""
             });
         });
-        if (opciones.length) {
-            cuadrosArr.push({
-                id: p.id, producto: p.nombre, opciones: opciones,
-                material: materialDe(p, opciones)
-            });
-        }
     });
-    CATALOGO_CUADROS = cuadrosArr;
+    /* Sin foto no hay sticker que mostrar: la sección entera es visual. */
+    STICKERS_DTF = stk.filter(x => x.img);
 }
 construirCatalogosUI();
 
@@ -4689,8 +4889,12 @@ let estadoCatalogo = "cargando";   // cargando | listo | error
 /* La tienda es una sola página: si el catálogo llega DESPUÉS de que el cliente
    abrió la pantalla, hay que repintarla o se queda mirando el vacío. */
 function refrescarCatalogoAbierto() {
-    const p = document.getElementById("p-catalogo");
-    if (p && !p.classList.contains("oculto")) renderCatalogo();
+    const abierta = id => { const p = document.getElementById(id); return p && !p.classList.contains("oculto"); };
+    if (abierta("p-catalogo")) renderCatalogo();
+    if (abierta("p-albumes")) renderAlbumes();
+    /* Los stickers se repintan enteros (carrusel + plancha): si llegaron recién,
+       la pantalla estaba mostrando el cartel de "buscando". */
+    if (abierta("p-stickers")) renderSeccionStickers();
 }
 function reintentarCatalogo() {
     estadoCatalogo = "cargando";
@@ -4873,7 +5077,7 @@ let intencionCatalogo = null;
 function pedirDeCatalogo(tipo, arg, medida) { flujo = "pedido"; aplicarIntencionCatalogo({ tipo, arg, medida }); }
 function aplicarIntencionCatalogo(ic) {
     if (ic.tipo === "foto") { cargarSimulador(ic.arg); }
-    else if (ic.tipo === "ficha") { abrirFicha(ic.arg, ic.medida); }
+    else if (ic.tipo === "ficha") { abrirFicha(ic.arg, ic.medida); }   // la ficha decide sola a dónde vuelve
     else if (ic.tipo === "categorias") { mostrar("p-categorias"); }
     else if (ic.tipo === "taza") { abrirTaza(); }
     else if (ic.tipo === "souvenirs") { abrirSouvenirs(); }
@@ -5172,6 +5376,346 @@ function renderCatalogo() {
 }
 function abrirCatalogo() { renderCatalogo(); mostrar("p-catalogo"); }
 
+/* =========================================================
+   3 bis) CATÁLOGO COMPLETO
+   El botón del inicio ya no lleva derecho a los cuadros: abre este desvío con
+   las tres secciones (cuadros y portarretratos · álbumes · stickers DTF).
+   ========================================================= */
+function abrirCatalogoCompleto() { mostrar("p-catalogo-menu"); }
+
+/* La ficha ahora la abren dos catálogos. Se recuerda cuál para que "Volver"
+   no deposite al cliente en una sección que nunca miró. */
+let origenFicha = "p-catalogo";
+function volverDeFicha() { mostrar(origenFicha || "p-catalogo"); }
+
+/* Cómo se llama lo que se está mirando en la ficha. Sin esto un álbum decía
+   "Solo el cuadro" y "el precio corresponde al cuadro". */
+function etiquetaFicha() {
+    return (fichaFamilia && fichaFamilia.tipo === "album")
+        ? { sing: "álbum", art: "el álbum", contr: "al álbum", volver: "⬅ Volver a los álbumes", emoji: "📖" }
+        : { sing: "cuadro", art: "el cuadro", contr: "al cuadro", volver: "⬅ Volver al catálogo", emoji: "🖼" };
+}
+function aplicarTextosFicha() {
+    const e = etiquetaFicha();
+    const set = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt; };
+    set("btn-volver-ficha", e.volver);
+    set("btn-ficha-sinfoto", e.emoji + " Solo " + e.art);
+    set("btn-compartir-ficha", "📲 Compartir este " + e.sing);
+    set("ficha-nota-precio", "El precio corresponde " + e.contr +
+        ". Si le vinculás una foto, coordinamos con vos la impresión y el armado final.");
+}
+
+/* =========================================================
+   ÁLBUMES
+   Familias igual que los cuadros (una tarjeta por producto, las medidas se
+   eligen adentro), pero sin filtros: son pocos y no tienen material.
+   ========================================================= */
+function tarjetaAlbum(fam) {
+    FICHAS[fam.id] = fam;                       // la ficha se abre desde acá
+    const ops = fam.opciones;
+    const conFoto = ops.find(o => o.fotos && o.fotos.length);
+    const preview = conFoto ? previewFotos(conFoto, fam.id)
+                            : '<div class="cat-preview">📖</div>';
+    const ejes = ejesDeFamilia(fam);
+    const partes = ejes.map(e => e.valores.length + " " + e.plural);
+    const sub = partes.length ? partes.join(" · ") : "Para guardar tus fotos impresas.";
+    const precios = preciosDeFamilia(fam);
+    let precio;
+    if (!precios.length) precio = "A cotizar";
+    else if (Math.min(...precios) !== Math.max(...precios)) precio = "<small>desde </small>" + formatear(Math.min(...precios));
+    else precio = formatear(precios[0]);
+    return '<div class="cat-card">' + preview +
+        '<div class="cat-cuerpo">' +
+            '<div class="cat-titulo">' + escHtml(fam.producto) + '</div>' +
+            '<div class="cat-sub">' + escHtml(sub) + '</div>' +
+            '<div class="cat-precio">' + precio + '</div>' +
+            '<button class="cat-pedir" onclick="abrirFichaDeAlbum(\'' + fam.id + '\')">Ver / pedir →</button>' +
+        '</div></div>';
+}
+function abrirFichaDeAlbum(id) { flujo = "pedido"; origenFicha = "p-albumes"; abrirFicha(id); }
+/* Los álbumes viven solo en la hoja, igual que los cuadros: mientras no llegue
+   (o si falló) hay que decir qué está pasando, no dejar el hueco en blanco. */
+function mensajeSinAlbumes() {
+    if (estadoCatalogo === "cargando") return '<p class="cat-vacio">Buscando los álbumes…</p>';
+    if (estadoCatalogo === "error") {
+        return '<p class="cat-vacio">No pudimos traer los álbumes en este momento. ' +
+            '<button type="button" class="chip-filtro" onclick="reintentarCatalogo()">Reintentar</button></p>';
+    }
+    return '<p class="cat-vacio">Todavía no hay álbumes publicados. Escribinos y te contamos qué tenemos.</p>';
+}
+function renderAlbumes() {
+    CATALOGO_ALBUMES.forEach(fam => { FICHAS[fam.id] = fam; });
+    const html = CATALOGO_ALBUMES.map(tarjetaAlbum).join("");
+    document.getElementById("alb-grid").innerHTML = html || mensajeSinAlbumes();
+}
+function abrirAlbumes() { renderAlbumes(); mostrar("p-albumes"); }
+
+/* =========================================================
+   STICKERS DTF
+   Dos vistas de la misma lista: el carrusel (uno grande, con su precio) y la
+   plancha de abajo, donde están todos pegados sobre el fondo. La plancha se
+   arma de a tandas a medida que el cliente baja: pueden ser cientos de PNG y
+   cargarlos todos de una deja el celular clavado.
+   ========================================================= */
+let stkIdx = 0;
+function stickerPorSku(sku) { return STICKERS_DTF.find(x => x.sku === sku) || null; }
+function precioSticker(st) {
+    return (st && !st.aCotizar && st.precio) ? formatear(st.precio) : "<small>A cotizar</small>";
+}
+
+/* --- Carrusel ---
+   Las imágenes se cargan solo cerca de la que se está mirando (el track es una
+   fila de N pantallas: sin esto el navegador se bajaría los N stickers juntos). */
+function renderCarruselStickers() {
+    const track = document.getElementById("stk-track");
+    const dots = document.getElementById("stk-dots");
+    if (!track || !dots) return;
+    track.innerHTML = ""; dots.innerHTML = "";
+    const pieViejo = document.querySelector("#stk-carrusel .stk-pie");
+    if (pieViejo) pieViejo.remove();
+    if (!STICKERS_DTF.length) {
+        /* El botón de reintentar va acá porque la plancha de abajo, sin
+           stickers, queda escondida: sería el único lugar donde ofrecerlo. */
+        track.innerHTML = '<div class="stk-vacio"><span>' + textoSinStickers() +
+            (estadoCatalogo === "error"
+                ? ' <button type="button" class="chip-filtro" onclick="reintentarCatalogo()">Reintentar</button>'
+                : "") + "</span></div>";
+        document.querySelectorAll("#stk-carrusel .carrusel-flecha").forEach(f => f.style.display = "none");
+        dots.style.display = "none";
+        return;
+    }
+    STICKERS_DTF.forEach((st, i) => {
+        const slide = document.createElement("div");
+        slide.className = "stk-slide";
+        const img = document.createElement("img");
+        img.alt = st.nombre; img.dataset.src = st.img;
+        slide.appendChild(img);
+        track.appendChild(slide);
+        const d = document.createElement("button"); d.type = "button";
+        if (i === 0) d.className = "activo";
+        d.onclick = () => irSticker(i);
+        dots.appendChild(d);
+    });
+    /* El pie es uno solo, fijo abajo del carrusel: cambia de contenido con la
+       imagen en vez de repetirse en cada slide. */
+    const pie = document.createElement("div");
+    pie.className = "stk-pie";
+    pie.innerHTML = '<div class="stk-datos"><div class="stk-nom" id="stk-nom"></div>' +
+                    '<div class="stk-precio" id="stk-precio"></div></div>' +
+                    '<button type="button" class="stk-add" id="stk-add">➕ Agregar</button>';
+    document.getElementById("stk-carrusel").appendChild(pie);
+    const solo = STICKERS_DTF.length <= 1;
+    document.querySelectorAll("#stk-carrusel .carrusel-flecha").forEach(f => f.style.display = solo ? "none" : "");
+    dots.style.display = solo ? "none" : "";
+    stkIdx = 0; aplicarSticker();
+}
+/* Deja cargadas la imagen actual y sus vecinas; el resto espera su turno. */
+function precargarStickers(i) {
+    const imgs = document.querySelectorAll("#stk-track .stk-slide img");
+    if (!imgs.length) return;
+    [i - 1, i, i + 1].forEach(k => {
+        const img = imgs[(k + imgs.length) % imgs.length];
+        if (img && !img.getAttribute("src") && img.dataset.src) img.src = img.dataset.src;
+    });
+}
+function aplicarSticker() {
+    const track = document.getElementById("stk-track");
+    if (!track || !STICKERS_DTF.length) return;
+    track.style.transform = "translateX(" + (-stkIdx * 100) + "%)";
+    const dots = document.getElementById("stk-dots");
+    if (dots) [...dots.children].forEach((d, i) => d.classList.toggle("activo", i === stkIdx));
+    const st = STICKERS_DTF[stkIdx];
+    const nom = document.getElementById("stk-nom");
+    const pre = document.getElementById("stk-precio");
+    const add = document.getElementById("stk-add");
+    if (nom) nom.innerText = st.nombre;
+    if (pre) pre.innerHTML = precioSticker(st);
+    if (add) add.onclick = () => agregarStickerAlCarrito(st.sku);
+    precargarStickers(stkIdx);
+}
+function irSticker(i) {
+    if (!STICKERS_DTF.length) return;
+    stkIdx = (i + STICKERS_DTF.length) % STICKERS_DTF.length;
+    aplicarSticker();
+}
+function nextStk() { irSticker(stkIdx + 1); }
+function prevStk() { irSticker(stkIdx - 1); }
+/* --- La plancha (todos los stickers) --- */
+const STK_TANDA = 12;          // cuántos se agregan cada vez que se llega al final
+let stkPintados = 0, stkObs = null;
+function textoSinStickers() {
+    if (estadoCatalogo === "cargando") return "Buscando los stickers…";
+    if (estadoCatalogo === "error") return "No pudimos traer los stickers en este momento.";
+    return "Todavía no hay stickers publicados. Escribinos y te mostramos los que tenemos.";
+}
+function renderMosaicoStickers() {
+    const cont = document.getElementById("stk-mosaico");
+    if (!cont) return;
+    if (stkObs) { stkObs.disconnect(); stkObs = null; }
+    cont.innerHTML = ""; stkPintados = 0;
+    const ayuda = document.getElementById("stk-pie-ayuda");
+    const seccion = document.getElementById("stk-seccion");
+    /* Sin stickers no hay plancha: el aviso ya lo da el carrusel de arriba y
+       repetirlo abajo, con su título y todo, parece un error de la página. */
+    if (seccion) seccion.classList.toggle("oculto", !STICKERS_DTF.length);
+    cont.classList.toggle("oculto", !STICKERS_DTF.length);
+    if (!STICKERS_DTF.length) { if (ayuda) ayuda.innerText = ""; return; }
+    if (ayuda) ayuda.innerText = STICKERS_DTF.length + " diseños. Tocá uno para agrandarlo.";
+    /* El centinela va al final de la grilla: cuando entra en pantalla es que el
+       cliente llegó abajo y hay que servirle la tanda siguiente. */
+    const centinela = document.createElement("p");
+    centinela.className = "stk-cargando";
+    centinela.id = "stk-centinela";
+    cont.appendChild(centinela);
+    masStickers();
+    if (window.IntersectionObserver) {
+        stkObs = new IntersectionObserver(ents => {
+            if (ents.some(e => e.isIntersecting)) masStickers();
+        }, { rootMargin: "300px 0px" });
+        stkObs.observe(centinela);
+    }
+}
+function masStickers() {
+    const cont = document.getElementById("stk-mosaico");
+    const centinela = document.getElementById("stk-centinela");
+    if (!cont || stkPintados >= STICKERS_DTF.length) return;
+    const hasta = Math.min(stkPintados + STK_TANDA, STICKERS_DTF.length);
+    for (let i = stkPintados; i < hasta; i++) {
+        const st = STICKERS_DTF[i];
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "stk-peg";
+        b.dataset.sku = st.sku;
+        b.title = st.nombre;
+        const img = document.createElement("img");
+        img.alt = st.nombre;
+        img.loading = "lazy";
+        img.onload = () => img.classList.add("lista");
+        /* Un PNG que no está en Drive (o que se borró) dejaría un hueco fantasma
+           que igual se puede tocar: mejor sacar el sticker de la plancha. */
+        img.onerror = () => b.remove();
+        img.src = st.img;
+        b.appendChild(img);
+        b.onclick = ev => { ev.stopPropagation(); agrandarSticker(b); };
+        cont.insertBefore(b, centinela);
+    }
+    stkPintados = hasta;
+    if (!centinela) return;
+    const faltan = STICKERS_DTF.length - stkPintados;
+    centinela.innerText = faltan > 0 ? "Seguí bajando para ver " + faltan + " más…" : "";
+    if (faltan <= 0) {
+        if (stkObs) { stkObs.disconnect(); stkObs = null; }
+        return;
+    }
+    /* El observador avisa cuando el centinela ENTRA en pantalla; si después de
+       esta tanda sigue estando a la vista (pantalla grande, pocos stickers), no
+       hay entrada nueva que avisar y la carga se quedaría trabada esperando un
+       scroll que el cliente no necesita hacer. Volver a observarlo dispara una
+       lectura fresca del estado actual y encadena la tanda siguiente. */
+    if (stkObs) { stkObs.unobserve(centinela); stkObs.observe(centinela); }
+}
+/* Tocar un sticker lo agranda en el lugar (no abre otra pantalla: la gracia es
+   que sigan pareciendo calcos pegados) y saca la etiqueta con precio y pedido. */
+function agrandarSticker(b) {
+    const yaEstaba = b.classList.contains("grande");
+    achicarStickers();
+    if (yaEstaba) return;
+    const st = stickerPorSku(b.dataset.sku);
+    if (!st) return;
+    const globo = document.createElement("span");
+    globo.className = "stk-globo";
+    globo.innerHTML = '<span class="g-datos"><span class="g-nom"></span>' +
+                      '<span class="g-precio">' + precioSticker(st) + "</span></span>" +
+                      '<button type="button" class="g-add">➕ Pedir</button>';
+    globo.querySelector(".g-nom").innerText = st.nombre;
+    globo.querySelector(".g-add").onclick = ev => { ev.stopPropagation(); agregarStickerAlCarrito(st.sku); };
+    globo.onclick = ev => ev.stopPropagation();
+    b.appendChild(globo);
+    /* Los de los bordes crecen hacia adentro: si crecieran desde el centro, el
+       de la última columna se saldría de la pantalla y quedaría cortado. */
+    b.style.transformOrigin = origenAgrandado(b) + " center";
+    b.classList.add("grande");
+    /* Mirarlo grande abajo también lo pone en el carrusel de arriba: son la
+       misma lista y así el cliente no lo pierde de vista. */
+    const i = STICKERS_DTF.findIndex(x => x.sku === st.sku);
+    if (i >= 0) irSticker(i);
+    medir("ver_sticker", { sticker: st.nombre, sku: st.sku });
+}
+/* Hacia dónde crece el sticker al agrandarse, según cuánto lugar tenga a cada
+   lado dentro de la plancha. */
+function origenAgrandado(b) {
+    const cont = document.getElementById("stk-mosaico");
+    if (!cont) return "center";
+    const rc = cont.getBoundingClientRect(), rb = b.getBoundingClientRect();
+    const centro = rb.left + rb.width / 2, mitad = rb.width * 1.85 / 2;
+    if (centro - mitad < rc.left) return "left";
+    if (centro + mitad > rc.right) return "right";
+    return "center";
+}
+function achicarStickers() {
+    document.querySelectorAll("#stk-mosaico .stk-peg.grande").forEach(el => {
+        el.classList.remove("grande");
+        el.style.transformOrigin = "";
+        const g = el.querySelector(".stk-globo");
+        if (g) g.remove();
+    });
+}
+/* Tocar en cualquier otro lado (o Escape) devuelve el sticker a su lugar. */
+document.addEventListener("click", () => achicarStickers());
+document.addEventListener("keydown", ev => { if (ev.key === "Escape") achicarStickers(); });
+
+function agregarStickerAlCarrito(sku) {
+    const st = stickerPorSku(sku);
+    if (!st) return;
+    flujo = "pedido";
+    if (!conDatosCliente(() => agregarStickerAlCarrito(sku))) return;
+    const unit = st.precio || 0;
+    carrito.push({
+        id: Date.now() + Math.random(),
+        tipo: "Sticker DTF",
+        sku: st.sku, producto: st.producto || "Stickers DTF", variante: st.nombre,
+        cant: 1, precioUnit: unit, mods: [],
+        desc: st.nombre + " × 1",
+        detalle: "Sticker DTF para planchar",
+        subtotal: unit,
+        aCotizar: !!st.aCotizar,
+        fotos: []
+    });
+    medir("agregar_al_carrito", {
+        producto: "Sticker DTF", variante: st.nombre, cantidad: 1,
+        fotos_adjuntas: 0, valor: totalCarrito(), moneda: "ARS"
+    });
+    achicarStickers();
+    actualizarBadges();
+    avisoAgregado();
+}
+(function initStkCarrusel() {
+    const car = document.getElementById("stk-carrusel");
+    if (!car) return;
+    let x0 = null, y0 = null;
+    car.addEventListener("touchstart", ev => {
+        if (ev.touches.length !== 1) { x0 = null; return; }
+        x0 = ev.touches[0].clientX; y0 = ev.touches[0].clientY;
+    }, { passive: true });
+    car.addEventListener("touchend", ev => {
+        if (x0 == null) return;
+        const t = ev.changedTouches[0];
+        const dx = t.clientX - x0, dy = t.clientY - y0;
+        x0 = null;
+        /* Solo si el gesto fue claramente horizontal: si no, el cliente estaba
+           bajando la página y le cambiaríamos el sticker de abajo del dedo. */
+        if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) {
+            if (dx < 0) nextStk(); else prevStk();
+        }
+    }, { passive: true });
+})();
+
+/* Ojo con el nombre: "renderStickers" ya está tomado por el buscador de
+   emojis del editor (los que se pegan sobre una foto), que no tiene nada que
+   ver con estos. */
+function renderSeccionStickers() { renderCarruselStickers(); renderMosaicoStickers(); }
+function abrirStickersDTF() { renderSeccionStickers(); mostrar("p-stickers"); }
+
 /* --- Ficha de producto (cuadro) ---
    Está armada alrededor de las fotos reales del artículo: la galería manda, y
    los selectores cambian la foto grande. Ya no se dibuja el cuadro de fantasía
@@ -5287,7 +5831,7 @@ window.addEventListener("popstate", ev => {
     const st = ev.state;
     if (st && st.cuadro) { abrirFicha(st.cuadro, st.medida || "", true); return; }
     const ficha = document.getElementById("p-ficha");
-    if (ficha && !ficha.classList.contains("oculto")) mostrar("p-catalogo");
+    if (ficha && !ficha.classList.contains("oculto")) mostrar(origenFicha || "p-catalogo");
 });
 
 /* medidaPedida = la medida que venía filtrada en el catálogo ("20x30"), para
@@ -5297,7 +5841,7 @@ window.addEventListener("popstate", ev => {
 function abrirFicha(clave, medidaPedida, sinHistorial) {
     if (!familiaDeFicha(clave)) renderCatalogo(); // asegura el registro si aún no se pobló
     const enc = familiaDeFicha(clave);
-    if (!enc) { mostrar("p-catalogo"); return; }
+    if (!enc) { mostrar(origenFicha || "p-catalogo"); return; }
     fichaFamilia = enc.fam;
     fichaEjes = ejesDeFamilia(fichaFamilia);
     /* Arranca en la combinación pedida; si no, en la de la medida que venía
@@ -5315,6 +5859,9 @@ function abrirFicha(clave, medidaPedida, sinHistorial) {
     fichaMedidaFijada = (medidaPedida && inicial.medida === medidaPedida)
         ? (inicial.atributos.medida || "") : "";
     fichaSel = inicial; adjuntosFicha = [];
+    /* Cuadro o álbum: cambian los textos y a dónde vuelve el botón de arriba. */
+    origenFicha = (fichaFamilia.tipo === "album") ? "p-albumes" : "p-catalogo";
+    aplicarTextosFicha();
     document.getElementById("ficha-desc").innerText =
         "Podés llevarlo solo o vincularle una foto tuya para que vaya puesta.";
     renderThumbs("thumbs-ficha", adjuntosFicha, "ficha");
@@ -5667,7 +6214,7 @@ async function agregarFichaAlCarrito() {
     adjuntosFicha = [];
     actualizarBadges();
     avisoAgregado();
-    mostrar("p-catalogo");
+    mostrar(origenFicha || "p-catalogo");
 }
 function guardarCliente() {
     const nombre = document.getElementById("in-nombre").value.trim();
@@ -6842,7 +7389,8 @@ function quitarAdjunto(tipo, i) {
    8) CARRITO Y ENVÍO
    ========================================================= */
 function actualizarBadges() {
-    ["badge-menu", "badge-cat", "badge-sim", "badge-souv", "badge-souv-2", "badge-taza", "badge-catalogo", "badge-ficha", "badge-donde"].forEach(id => {
+    ["badge-menu", "badge-cat", "badge-sim", "badge-souv", "badge-souv-2", "badge-taza", "badge-catmenu",
+     "badge-catalogo", "badge-albumes", "badge-stickers", "badge-ficha", "badge-donde"].forEach(id => {
         const el = document.getElementById(id); if (el) el.innerText = carrito.length;
     });
 }
