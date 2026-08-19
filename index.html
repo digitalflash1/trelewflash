@@ -517,6 +517,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .chip-filtro:hover { border-color: var(--color-wa); }
     .chip-filtro.activo { background: #e8f9ef; border-color: var(--color-wa); color: #128C7E; }
     .cat-vacio { font-size: 13.5px; color: #7a7a52; text-align: left; margin: 0; }
+    /* Fila del botón de compartir, al pie de cada sección. */
+    .fila-compartir { justify-content: center; margin: 18px 0 0; padding-top: 14px;
+        border-top: 1px dashed var(--gris-borde); }
 
     /* ===== Menú del catálogo completo (cuadros / álbumes / stickers) =====
        Tres tarjetas grandes: el catálogo dejó de ser una sola pantalla y este
@@ -2930,9 +2933,6 @@ z"></path></g>
     </div>
     <h2>Stickers DTF</h2>
     <p>Se planchan sobre remeras, buzos y telas. Mirálos de a uno acá arriba, o bajá y vas a ver la plancha completa.</p>
-    <div class="cat-filtro-fila" style="justify-content:center;">
-        <button type="button" class="chip-filtro" onclick="compartirSeccion('p-stickers')">📲 Compartir los stickers</button>
-    </div>
 
     <div id="stk-carrusel" class="stk-carrusel">
         <div class="stk-track" id="stk-track"></div>
@@ -5005,6 +5005,9 @@ let flujo = "pedido";
 let cliente = { nombre: "", telefono: "", email: "" };
 let carrito = [];
 let grupoActual = null;
+/* La clave del grupo ("chicos", "collage"…), no el objeto: es lo que viaja en
+   la URL para poder rearmar el simulador al refrescar o al compartirlo. */
+let grupoActualKey = "";
 let selFoto = { sku: "", nombre: "", precio: 0, estilo: "sin-borde", especial: false };
 let adjuntosSim = [];
 let selSouv = { sku: "", nombre: "", precio: 0, subtitulo: "" };
@@ -5025,6 +5028,7 @@ function mostrar(id) {
     if (bienv) bienv.classList.remove("intro");
     document.querySelectorAll(".pantalla").forEach(p => p.classList.add("oculto"));
     document.getElementById(id).classList.remove("oculto");
+    pintarBotonCompartir(id);
     window.scrollTo(0, 0);
     /* La URL acompaña a la pantalla: el catálogo lleva sus filtros y el resto
        queda pelado. Si no, el cliente compartiría desde el carrito un enlace a
@@ -5298,8 +5302,49 @@ function setFiltroCuadro(clave, valor) {
 const TITULO_SECCION = {
     "p-catalogo-menu": "El catálogo de Trelewflash",
     "p-albumes":       "Álbumes de fotos de Trelewflash",
-    "p-stickers":      "Stickers DTF de Trelewflash"
+    "p-stickers":      "Stickers DTF de Trelewflash",
+    "p-menu":          "Todo lo que hacemos en Trelewflash",
+    "p-categorias":    "Revelado de fotos en Trelewflash",
+    "p-simulador":     "Revelado de fotos en Trelewflash",
+    "p-souvenirs":     "Souvenirs de Trelewflash",
+    "p-taza":          "Tazas personalizadas de Trelewflash",
+    "p-eventos":       "Fotos de eventos de Trelewflash",
+    "p-donde":         "Dónde estamos y a dónde enviamos"
 };
+/* Qué dice el botón en cada pantalla. El carrito no está: compartir el enlace
+   no comparte el pedido (el carrito vive en la memoria del navegador de cada
+   uno), así que el botón prometería algo que no pasa. Tampoco el catálogo de
+   cuadros, que tiene el suyo entre los filtros y comparte la selección. */
+const BOTON_COMPARTIR = {
+    "p-catalogo-menu": "📲 Compartir el catálogo",
+    "p-albumes":       "📲 Compartir los álbumes",
+    "p-stickers":      "📲 Compartir los stickers",
+    "p-menu":          "📲 Compartir esta lista",
+    "p-categorias":    "📲 Compartir el revelado",
+    "p-simulador":     "📲 Compartir estos tamaños",
+    "p-souvenirs":     "📲 Compartir los souvenirs",
+    "p-taza":          "📲 Compartir las tazas",
+    "p-eventos":       "📲 Compartir esta sección",
+    "p-donde":         "📲 Compartir la dirección"
+};
+/* Lo pone mostrar() al final de la pantalla, una sola vez. Antes estaba escrito
+   a mano en el HTML de cada una, que era la forma segura de que a la próxima
+   sección alguien se olvidara de ponérselo. */
+function pintarBotonCompartir(idPantalla) {
+    const texto = BOTON_COMPARTIR[idPantalla];
+    if (!texto) return;
+    const panel = document.getElementById(idPantalla);
+    if (!panel || panel.querySelector(".fila-compartir")) return;
+    const fila = document.createElement("div");
+    fila.className = "cat-filtro-fila fila-compartir";
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip-filtro";
+    b.innerText = texto;
+    b.onclick = () => compartirSeccion(idPantalla);
+    fila.appendChild(b);
+    panel.appendChild(fila);
+}
 async function compartirSeccion(idPantalla) {
     const url = urlDeSeccion(idPantalla);
     const titulo = TITULO_SECCION[idPantalla] || "Trelewflash";
@@ -5830,20 +5875,47 @@ function sincronizarUrl(idPantalla) {
     if (!window.history || !history.replaceState) return;
     if (idPantalla === "p-ficha") return;
     const destino = (idPantalla === "p-catalogo") ? urlDelCatalogo()
-                  : (SECCION_URL[idPantalla] ? urlDeSeccion(idPantalla) : urlBase());
+                  : (SECCION_URL[pantallaConUrl(idPantalla)] ? urlDeSeccion(idPantalla) : urlBase());
     if (location.href !== destino) history.replaceState(null, "", destino);
 }
-/* Secciones que se pueden mandar por WhatsApp: "…?ver=stickers" abre la tienda
-   directamente ahí. El catálogo de cuadros no está acá porque tiene su propia
-   dirección con los filtros puestos (urlDelCatalogo). */
+
+/* ── Cada pantalla, su dirección ──
+   Sirve para dos cosas al mismo tiempo: mandar el enlace por WhatsApp
+   ("…?ver=stickers") y que refrescar el navegador devuelva al cliente donde
+   estaba en vez de tirarlo al inicio.
+   El catálogo de cuadros no está acá porque tiene la suya, que además lleva los
+   filtros puestos (urlDelCatalogo), y la ficha tampoco (va con ?cuadro=). */
 const SECCION_URL = {
     "p-catalogo-menu": "catalogo",
     "p-albumes":       "albumes",
-    "p-stickers":      "stickers"
+    "p-stickers":      "stickers",
+    "p-menu":          "pedido",
+    "p-categorias":    "tamanos",
+    "p-simulador":     "revelado",
+    "p-souvenirs":     "souvenirs",
+    "p-taza":          "taza",
+    "p-eventos":       "eventos",
+    "p-carrito":       "carrito",
+    "p-donde":         "donde"
 };
+/* Pantallas que son un PASO adentro de otra: no tienen dirección propia porque
+   dependen de algo que el cliente eligió un momento antes y que al refrescar ya
+   no está (qué souvenir, qué evento, los datos a medio escribir). Se las manda
+   a la pantalla de la que cuelgan: refrescar retrocede un paso, que es mucho
+   mejor que volver al principio. */
+function pantallaConUrl(idPantalla) {
+    if (idPantalla === "p-souv-modelo") return "p-souvenirs";
+    if (idPantalla === "p-evento-form") return "p-eventos";
+    if (idPantalla === "p-cliente") return (flujo === "eventos") ? "p-eventos" : "p-menu";
+    return idPantalla;
+}
 function urlDeSeccion(idPantalla) {
+    const real = pantallaConUrl(idPantalla);
     const u = new URL(urlBase());
-    u.searchParams.set("ver", SECCION_URL[idPantalla]);
+    u.searchParams.set("ver", SECCION_URL[real]);
+    /* El simulador es la única que necesita un dato más para volver a armarse:
+       sin el grupo no sabe si mostrar los chicos, los grandes o el collage. */
+    if (real === "p-simulador" && grupoActualKey) u.searchParams.set("grupo", grupoActualKey);
     return u.toString();
 }
 /* Medida de lo que está elegido ahora, normalizada ("20x30"). */
@@ -5863,10 +5935,11 @@ function leerEnlaceInicial() {
     if (ver) {
         const pantalla = Object.keys(SECCION_URL).find(k => SECCION_URL[k] === ver);
         if (pantalla) {
-            flujo = "pedido";
-            if (pantalla === "p-stickers") abrirStickersDTF();
-            else if (pantalla === "p-albumes") abrirAlbumes();
-            else mostrar(pantalla);
+            flujo = (pantalla === "p-eventos") ? "eventos" : "pedido";
+            /* Cada una se abre por su puerta, no con mostrar() a secas: varias
+               tienen que pintarse antes (el catálogo, los souvenirs, la taza) y
+               con mostrar() aparecerían vacías. */
+            abrirPantallaDeUrl(pantalla, p);
             medir("abrir_seccion_compartida", { seccion: ver });
             return;
         }
@@ -5878,6 +5951,28 @@ function leerEnlaceInicial() {
     else if (tipo || tamano) catalogoPendienteUrl = true;
     aplicarEnlaceInicial();
 }
+/* Puerta de entrada de cada pantalla cuando se llega por la URL. Es la misma
+   función que usa el botón correspondiente del menú: así la pantalla queda
+   armada igual que si el cliente hubiera llegado tocando. */
+function abrirPantallaDeUrl(pantalla, params) {
+    switch (pantalla) {
+        case "p-stickers":  abrirStickersDTF(); return;
+        case "p-albumes":   abrirAlbumes(); return;
+        case "p-souvenirs": abrirSouvenirs(); return;
+        case "p-taza":      abrirTaza(); return;
+        case "p-donde":     abrirDonde(); return;
+        case "p-simulador": {
+            /* Sin grupo válido no hay nada que simular: se queda un paso atrás,
+               en la pantalla donde se elige el tamaño. */
+            const g = String((params && params.get("grupo")) || "");
+            if (g && CATALOGO_FOTOS[g]) cargarSimulador(g);
+            else mostrar("p-categorias");
+            return;
+        }
+        default: mostrar(pantalla);
+    }
+}
+
 function aplicarEnlaceInicial() {
     if (!CATALOGO_CUADROS.length) return;     // los cuadros llegan con la hoja
     if (!fichaPendienteUrl && !catalogoPendienteUrl) return;
@@ -6425,6 +6520,7 @@ function renderCuadro(wcm, hcm, estilo, label) {
 
 function cargarSimulador(categoria) {
     grupoActual = CATALOGO_FOTOS[categoria];
+    grupoActualKey = categoria;
     escenaOverride = null; vistaMediano = 'living';
     const tv = document.getElementById("toggle-vista");
     if (tv) tv.classList.toggle("oculto", categoria !== "medianos");
