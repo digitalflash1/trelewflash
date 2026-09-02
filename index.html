@@ -747,6 +747,119 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .pack-detalle .btn-agregar { width: 100%; display: block; text-align: center; text-decoration: none; }
     .pack-transf { margin: 10px 0 0; padding-top: 10px; border-top: 1px dashed var(--gris-borde); }
     .pack-transf .pack-transf-tit { font-size: 12px; font-weight: bold; color: var(--color-principal); margin: 0 0 6px; }
+    /* ===== PROMOS (pantalla p-promos) =====
+       Es el flyer de la promo, pero para tocar: mismos colores y mismo orden
+       que la pieza que circula por WhatsApp (crema + navy + rosa, una tarjeta
+       por opción), y arriba de eso lo que el papel no puede hacer: elegir una,
+       ver cuánto se ahorra, poner cuántas y que el total se calcule solo.
+       El color de cada opción sale de PROMOS.opciones[].color y entra por la
+       variable --pc, igual que NOVEDADES trae el color de cada novedad. */
+    #p-promos {
+        --promo-crema: #fdf2e0; --promo-navy: #0b1638; --promo-rosa: #ee3e77;
+        background: var(--promo-crema); border-color: #f0dcbc;
+    }
+    .promo-cab { text-align: center; margin-bottom: 4px; }
+    .promo-cinta { display: inline-block; background: var(--promo-rosa); color: #fff;
+        font-size: 15px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase;
+        padding: 3px 14px; border-radius: 4px; transform: rotate(-1.5deg); }
+    .promo-cab h2 { margin: 6px 0 0; font-size: clamp(24px, 7vw, 34px); line-height: 1;
+        color: var(--promo-navy); font-weight: 800; letter-spacing: -.5px; text-transform: uppercase; }
+    /* "Perfecta" va en la manuscrita del flyer. Es una de las fuentes que la
+       página ya carga para los textos impresos: no agrega ningún pedido nuevo. */
+    .promo-cab .promo-script { display: block; font-family: "Satisfy", cursive; color: var(--promo-rosa);
+        font-size: clamp(30px, 9vw, 42px); text-transform: none; letter-spacing: 0; line-height: 1.05; margin-top: 2px; }
+    .promo-faja { display: inline-block; background: var(--promo-navy); color: #fff;
+        font-size: clamp(11px, 3.2vw, 13px); font-weight: 800; letter-spacing: .6px; text-transform: uppercase;
+        padding: 5px 14px; border-radius: 5px; margin-top: 8px; }
+    .promo-faja b { color: #ffd84d; }
+    .promo-sub { margin: 12px 0 0; font-size: 14px; font-weight: bold; color: var(--promo-navy); text-transform: uppercase; }
+    .promo-sub em { display: block; font-family: "Satisfy", cursive; font-style: normal; text-transform: none;
+        font-size: 17px; font-weight: normal; color: var(--promo-rosa); margin-top: 2px; }
+
+    /* Dos columnas en el celular y las cuatro en fila desde tablet, como el
+       flyer. En 320px de ancho, cuatro tarjetas dejarían el precio partido en
+       dos renglones. */
+    .promo-grilla { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 18px 0 0; }
+    @media (min-width: 620px) { .promo-grilla { grid-template-columns: repeat(4, 1fr); gap: 10px; } }
+
+    /* Fondo crema, el mismo que traen recortadas las fotos del flyer: si la
+       tarjeta fuera blanca, cada pilón se vería como un recuadro pegado encima.
+       Igual que en la pieza impresa, lo que dibuja la tarjeta es el borde de
+       color, no el relleno; la elegida se marca con el anillo y el ✓. */
+    .promo-op { position: relative; background: #fef1e0; border: 2px solid var(--pc); border-radius: 14px;
+        padding: 22px 8px 12px; margin-top: 14px; cursor: pointer; font-family: inherit; text-align: center;
+        display: flex; flex-direction: column; align-items: center; gap: 6px;
+        transition: transform .12s, box-shadow .2s, background-color .2s; }
+    .promo-op:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(11,22,56,.16); }
+    .promo-op:active { transform: translateY(0); }
+    .promo-op.activa { box-shadow: 0 0 0 3px var(--pc) inset, 0 8px 18px rgba(11,22,56,.18); }
+    /* El numerito montado sobre el borde de arriba, como en el flyer. */
+    .promo-op .op-num { position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+        width: 28px; height: 28px; border-radius: 50%; background: var(--pc); color: #fff;
+        font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,.18); }
+    .promo-op .op-cant { font-size: clamp(28px, 8vw, 36px); font-weight: 800; line-height: .95; color: var(--pc); }
+    .promo-op .op-fotos { font-size: 13px; font-weight: 800; color: var(--promo-navy); letter-spacing: .5px; }
+    .promo-op .op-medida { display: inline-block; background: var(--pc); color: #fff; font-size: 12.5px;
+        font-weight: bold; font-style: italic; padding: 3px 10px; border-radius: 6px; white-space: nowrap; }
+    /* El pilón está recortado del flyer y arrastra el degradé que la pieza
+       tiene adentro de cada tarjeta: los bordes se desvanecen para que ese
+       cambio de tono no se lea como un rectángulo pegado. */
+    .promo-op .op-img { width: 100%; max-width: 150px; aspect-ratio: 212 / 228; object-fit: contain; margin: 2px 0;
+        -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+        mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%); }
+    /* ANTES tachado arriba, AHORA grande abajo: el mismo par que el flyer pone
+       en dos filas separadas, pero acá pegado a su tarjeta, así no hay que
+       contar columnas para saber de cuál es cada precio. */
+    .promo-op .op-antes { font-size: 12.5px; color: #9a8f80; text-decoration: line-through; }
+    /* inline-block para que el tachado del precio no le pase por encima:
+       heredado, text-decoration no se puede apagar desde el hijo. */
+    .promo-op .op-antes b { display: inline-block; font-family: "Playfair Display", serif;
+        font-style: italic; font-weight: normal; color: #b3a595; margin-right: 4px; }
+    .promo-op .op-ahora { font-size: clamp(19px, 5.4vw, 23px); font-weight: 800; color: var(--pc); line-height: 1.05; }
+    .promo-op .op-off { position: absolute; top: 6px; right: 6px; background: var(--promo-navy); color: #ffd84d;
+        font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 20px; }
+    .promo-op .op-elegida { display: none; font-size: 12px; font-weight: bold; color: var(--pc); }
+    .promo-op.activa .op-elegida { display: block; }
+
+    /* Panel que se abre al elegir una opción. */
+    .promo-detalle { margin-top: 18px; padding: 16px 14px; border-radius: 14px; text-align: left;
+        background: #fff; border: 2px solid var(--pc); }
+    .promo-detalle h4 { margin: 0; font-size: 17px; color: var(--promo-navy); }
+    .promo-detalle .promo-ahorro { margin: 6px 0 0; font-size: 14px; font-weight: bold; color: var(--color-wa-hover); }
+    .promo-detalle .promo-unit { margin: 2px 0 0; font-size: 13px; color: #7a7a52; }
+    .promo-pasos { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        margin: 14px 0 0; padding: 10px 12px; background: var(--promo-crema); border-radius: 10px; }
+    .promo-pasos .pasos-txt { font-size: 14px; font-weight: bold; color: var(--promo-navy); }
+    .promo-pasos .pasos-ctrl { display: flex; align-items: center; gap: 10px; }
+    .promo-pasos button { width: 34px; height: 34px; border: 2px solid var(--pc); background: #fff; color: var(--pc);
+        border-radius: 50%; font-size: 19px; font-weight: bold; line-height: 1; cursor: pointer; }
+    .promo-pasos button:hover { background: var(--pc); color: #fff; }
+    .promo-pasos button:disabled { border-color: #d8cfc2; color: #d8cfc2; background: #fff; cursor: not-allowed; }
+    .promo-pasos .pasos-n { min-width: 22px; text-align: center; font-size: 18px; font-weight: 800; color: var(--promo-navy); }
+    .promo-total { margin: 12px 0 0; font-size: 15px; color: var(--promo-navy); }
+    .promo-total b { font-size: 24px; }
+    .promo-detalle .btn-agregar { display: block; width: 100%; margin-top: 12px; text-align: center; text-decoration: none; }
+    .promo-detalle .btn-tool { display: block; width: 100%; margin-top: 8px; }
+    .promo-detalle .promo-aclara { margin: 10px 0 0; font-size: 12px; color: #7a7a52; }
+
+    .promo-pie { margin: 18px 0 0; padding: 10px 14px; background: var(--promo-navy); border-radius: 10px;
+        color: #fff; font-size: 13px; font-weight: bold; text-align: center; text-transform: uppercase; }
+    .promo-pie b { color: #ffd84d; }
+
+    /* Novedad del carrusel que lleva a algún lado: el cartelito avisa que se
+       puede tocar (la tarjeta entera también responde). */
+    .slide-nov.nov-accion { cursor: pointer; }
+    /* Abajo a la izquierda: a la derecha taparía el precio de la última
+       opción del banner, y acá solo pisa la franja decorativa del pie. */
+    .slide-nov .nov-cta { position: absolute; left: 10px; bottom: 10px; z-index: 3;
+        background: var(--color-boton); color: var(--color-boton-texto); border: none;
+        font-family: inherit; font-size: clamp(11px, 3vw, 13px); font-weight: bold;
+        padding: 7px 13px; border-radius: 20px; cursor: pointer;
+        box-shadow: 0 3px 9px rgba(0,0,0,.28); animation: nov-cta-late 2.6s ease-in-out infinite; }
+    .slide-nov .nov-cta:hover { background: var(--color-boton-hover); }
+    @keyframes nov-cta-late { 0%, 88%, 100% { transform: scale(1); } 94% { transform: scale(1.07); } }
+    @media (prefers-reduced-motion: reduce) { .slide-nov .nov-cta { animation: none; } }
 </style>
 </head>
 <body>
@@ -2808,6 +2921,32 @@ z"></path></g>
      Todo el contenido de esta pantalla (dirección, horarios, zonas) sale de
      LOCAL y ZONAS_ENVIO, allá abajo en el bloque de configuración del script.
      Acá solo están los contenedores vacíos. -->
+<!-- PROMOS
+     La versión que se toca del flyer de la promo. Todo lo que dice (opciones,
+     medidas, precios de antes y de ahora, textos) sale de PROMOS, allá abajo en
+     el bloque de configuración del script; acá solo están los contenedores.
+     Se llega tocando la primera tarjeta del carrusel de la portada o con
+     ?ver=promos. -->
+<div id="p-promos" class="pantalla oculto">
+    <div class="barra-sup">
+        <button class="btn-volver" onclick="mostrar(&#39;p-bienvenida&#39;)">⬅ Volver</button>
+        <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-promos">0</span>)</button>
+    </div>
+
+    <div class="promo-cab">
+        <span class="promo-cinta">¡Tenemos</span>
+        <h2>La opción <span class="promo-script">Perfecta</span></h2>
+        <span class="promo-faja">A la altura de <b>tu necesidad</b></span>
+        <p class="promo-sub">Elegí el tamaño que más te guste
+            <em>y llená tus momentos de recuerdos</em></p>
+    </div>
+
+    <div id="promo-grilla" class="promo-grilla"></div>
+    <div id="promo-detalle" class="promo-detalle oculto"></div>
+
+    <p class="promo-pie">Porque los mejores momentos <b>merecen quedar para siempre</b></p>
+</div>
+
 <div id="p-donde" class="pantalla oculto">
     <div class="barra-sup">
         <button class="btn-volver" onclick="mostrar(&#39;p-bienvenida&#39;)">⬅ Volver</button>
@@ -3527,6 +3666,160 @@ function elegirPack(med, pack, unitario, btn) {
     medir("pack_elegido", { medida: med.nombre, cantidad: pack.cantidad, valor: conDto, moneda: "ARS" });
 }
 
+/* ⚙️ PROMO DE 30 FOTOS — PUNTO ÚNICO DE CONFIGURACIÓN
+   Es la promo del flyer que circula por WhatsApp e Instagram, acá para tocar
+   (pantalla p-promos). A diferencia de PACKS_FOTOS, los precios NO se calculan
+   desde el catálogo: son los que están impresos en la pieza y tienen que decir
+   exactamente lo mismo. Si sale un flyer nuevo, se cambian estos números (y el
+   banner del carrusel, assets/promo-30fotos.webp).
+
+   Cada opción: n (el numerito), medida, grupo (con cuál del simulador se ve el
+   tamaño real), img (assets/promo-N.webp, el pilón de fotos recortado del
+   flyer), cant, antes, ahora y color. El porcentaje de descuento y el precio
+   por foto se calculan solos: no hay que tocarlos. */
+const PROMOS = {
+    /* Vacío = sin fecha de corte a la vista. Si la promo vence, poner acá el
+       texto tal cual se quiere leer: "Válida hasta el 30 de septiembre". */
+    vigencia: "",
+    opciones: [
+        { n: 1, medida: "Polaroid",  grupo: "polaroid", img: "promo-1", cant: 30, antes: 39000, ahora: 27000, color: "#e8497f" },
+        { n: 2, medida: "10x15 cm",  grupo: "medianos", img: "promo-2", cant: 30, antes: 45000, ahora: 33000, color: "#0696a1" },
+        { n: 3, medida: "13x18 cm",  grupo: "medianos", img: "promo-3", cant: 30, antes: 49000, ahora: 40000, color: "#fa7c0b" },
+        { n: 4, medida: "15x21 cm",  grupo: "medianos", img: "promo-4", cant: 30, antes: 57000, ahora: 48000, color: "#733888" }
+    ]
+};
+/* Redondeado hacia abajo, por lo mismo que los packs: el cartel nunca puede
+   prometer un descuento más grande que el que se hace de verdad. */
+function promoOff(op) { return Math.floor((op.antes - op.ahora) / op.antes * 100); }
+function promoPorFoto(op) { return Math.round(op.ahora / op.cant); }
+
+let promoIdx = null, promoCant = 1;
+
+/* Las tarjetas se arman una sola vez por visita a la pantalla. La elección no
+   se conserva al salir: es una promo, no un pedido a medio hacer. */
+function renderPromos() {
+    const cont = document.getElementById("promo-grilla");
+    if (!cont) return;
+    cont.innerHTML = "";
+    PROMOS.opciones.forEach((op, i) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "promo-op";
+        b.style.setProperty("--pc", op.color);
+        b.setAttribute("aria-pressed", "false");
+        b.setAttribute("aria-label",
+            op.cant + " fotos " + op.medida + ", " + formatear(op.ahora) +
+            " en vez de " + formatear(op.antes));
+        b.innerHTML =
+            '<span class="op-num" aria-hidden="true">' + op.n + '</span>' +
+            '<span class="op-off">-' + promoOff(op) + '%</span>' +
+            '<span class="op-cant">' + op.cant + '</span>' +
+            '<span class="op-fotos">FOTOS</span>' +
+            '<span class="op-medida">' + escHtml(op.medida) + '</span>' +
+            '<img class="op-img" src="assets/' + op.img + '.webp" alt="" loading="lazy" ' +
+                 'onerror="this.onerror=null;this.src=\'assets/' + op.img + '.jpg\';">' +
+            '<span class="op-antes"><b>Antes</b>' + formatear(op.antes) + '</span>' +
+            '<span class="op-ahora">' + formatear(op.ahora) + '</span>' +
+            '<span class="op-elegida">✓ Elegida</span>';
+        b.onclick = () => elegirPromo(i);
+        cont.appendChild(b);
+    });
+    promoIdx = null; promoCant = 1;
+    const det = document.getElementById("promo-detalle");
+    if (det) { det.classList.add("oculto"); det.innerHTML = ""; }
+}
+
+function elegirPromo(i) {
+    const op = PROMOS.opciones[i];
+    if (!op) return;
+    promoIdx = i; promoCant = 1;
+    document.querySelectorAll("#promo-grilla .promo-op").forEach((b, j) => {
+        b.classList.toggle("activa", j === i);
+        b.setAttribute("aria-pressed", j === i ? "true" : "false");
+    });
+
+    const det = document.getElementById("promo-detalle");
+    if (!det) return;
+    det.style.setProperty("--pc", op.color);
+    det.innerHTML =
+        '<h4>' + op.cant + ' fotos ' + escHtml(op.medida) + '</h4>' +
+        '<p class="promo-ahorro">Ahorrás ' + formatear(op.antes - op.ahora) +
+            ' (' + promoOff(op) + '% menos)</p>' +
+        '<p class="promo-unit">Te queda a ' + formatear(promoPorFoto(op)) + ' cada foto, ' +
+            'contra ' + formatear(Math.round(op.antes / op.cant)) + ' de antes.</p>' +
+        '<div class="promo-pasos">' +
+            '<span class="pasos-txt">¿Cuántas promos?</span>' +
+            '<span class="pasos-ctrl">' +
+                '<button type="button" id="promo-menos" onclick="cambiarCantPromo(-1)" aria-label="Una menos">−</button>' +
+                '<span class="pasos-n" id="promo-n" aria-live="polite">1</span>' +
+                '<button type="button" onclick="cambiarCantPromo(1)" aria-label="Una más">+</button>' +
+            '</span>' +
+        '</div>' +
+        '<p class="promo-total">Total: <b id="promo-total">' + formatear(op.ahora) + '</b> ' +
+            '<span id="promo-total-fotos">(' + op.cant + ' fotos)</span></p>' +
+        '<a class="btn-agregar" id="promo-wa" href="#" target="_blank" rel="noopener noreferrer">🟢 Pedir esta promo por WhatsApp</a>' +
+        '<button type="button" class="btn-tool" onclick="verMedidaPromo()">📱 Ver cómo queda esta medida</button>' +
+        '<p class="promo-aclara">Las fotos nos las mandás por WhatsApp o las traés al local. ' +
+            'Las ' + op.cant + ' copias son de la misma medida. ' +
+            escHtml(PROMOS.vigencia) + '</p>';
+    det.classList.remove("oculto");
+    actualizarPromo();
+    det.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    medir("promo_elegida", {
+        medida: op.medida, cantidad: op.cant, valor: op.ahora, moneda: "ARS"
+    });
+}
+
+function cambiarCantPromo(delta) {
+    /* Hasta 10: más que eso ya no es una promo suelta, conviene que lo hablen
+       por WhatsApp. */
+    promoCant = Math.min(10, Math.max(1, promoCant + delta));
+    actualizarPromo();
+}
+
+/* Todo lo que depende de la cantidad, en un solo lugar: el número, el total,
+   cuántas fotos son y el mensaje que se va a mandar. */
+function actualizarPromo() {
+    const op = PROMOS.opciones[promoIdx];
+    if (!op) return;
+    const total = op.ahora * promoCant, fotos = op.cant * promoCant;
+    const n = document.getElementById("promo-n");
+    if (n) n.textContent = promoCant;
+    const menos = document.getElementById("promo-menos");
+    if (menos) menos.disabled = promoCant <= 1;
+    const t = document.getElementById("promo-total");
+    if (t) t.textContent = formatear(total);
+    const tf = document.getElementById("promo-total-fotos");
+    if (tf) tf.textContent = "(" + fotos + " fotos)";
+
+    const wa = document.getElementById("promo-wa");
+    if (!wa) return;
+    let msg = "¡Hola! Quiero la promo de " + op.cant + " fotos " + op.medida +
+        " a " + formatear(op.ahora);
+    if (promoCant > 1) msg += " × " + promoCant + " (total " + formatear(total) + ")";
+    wa.href = "https://wa.me/" + TELEFONO_WA + "?text=" + encodeURIComponent(msg + ".");
+    wa.onclick = () => medir("promo_pedida_wa", {
+        medida: op.medida, cantidad: promoCant, fotos: fotos, valor: total, moneda: "ARS"
+    });
+}
+
+/* "¿Y de qué tamaño es?" se contesta mejor mirándolo: manda al simulador, que
+   ya sabe mostrar la medida real contra la pared o contra el celular. */
+function verMedidaPromo() {
+    const op = PROMOS.opciones[promoIdx];
+    if (!op) return;
+    flujo = "pedido";
+    medir("promo_ver_medida", { medida: op.medida });
+    /* Los tamaños salen de la hoja: si todavía no llegó, se cae a la pantalla
+       donde se eligen, que sabe esperar. */
+    if (op.grupo && CATALOGO_FOTOS[op.grupo]) cargarSimulador(op.grupo);
+    else mostrar("p-categorias");
+}
+
+function abrirPromos() {
+    renderPromos();
+    mostrar("p-promos");
+}
+
 /* El desplegable de un pueblo: empresa, días y costo. Cada dato se busca
    primero en el pueblo y, si ahí no está, se hereda de la zona. */
 function datoEnvio(zona, pueblo, campo) {
@@ -3844,6 +4137,7 @@ const NOMBRE_PANTALLA = {
     "p-eventos":     "Fotos de eventos",
     "p-evento-form": "Consulta de evento",
     "p-carrito":     "Carrito",
+    "p-promos":      "Promos",
     "p-donde":       "Dónde estamos y envíos"
 };
 
@@ -5309,6 +5603,7 @@ const TITULO_SECCION = {
     "p-souvenirs":     "Souvenirs de Trelewflash",
     "p-taza":          "Tazas personalizadas de Trelewflash",
     "p-eventos":       "Fotos de eventos de Trelewflash",
+    "p-promos":        "La promo de 30 fotos de Trelewflash",
     "p-donde":         "Dónde estamos y a dónde enviamos"
 };
 /* Qué dice el botón en cada pantalla. El carrito no está: compartir el enlace
@@ -5325,6 +5620,7 @@ const BOTON_COMPARTIR = {
     "p-souvenirs":     "📲 Compartir los souvenirs",
     "p-taza":          "📲 Compartir las tazas",
     "p-eventos":       "📲 Compartir esta sección",
+    "p-promos":        "📲 Compartir la promo",
     "p-donde":         "📲 Compartir la dirección"
 };
 /* Lo pone mostrar() al final de la pantalla, una sola vez. Antes estaba escrito
@@ -5896,6 +6192,7 @@ const SECCION_URL = {
     "p-taza":          "taza",
     "p-eventos":       "eventos",
     "p-carrito":       "carrito",
+    "p-promos":        "promos",
     "p-donde":         "donde"
 };
 /* Pantallas que son un PASO adentro de otra: no tienen dirección propia porque
@@ -5961,6 +6258,7 @@ function abrirPantallaDeUrl(pantalla, params) {
         case "p-souvenirs": abrirSouvenirs(); return;
         case "p-taza":      abrirTaza(); return;
         case "p-donde":     abrirDonde(); return;
+        case "p-promos":    abrirPromos(); return;
         case "p-simulador": {
             /* Sin grupo válido no hay nada que simular: se queda un paso atrás,
                en la pantalla donde se elige el tamaño. */
@@ -7566,7 +7864,8 @@ function quitarAdjunto(tipo, i) {
    ========================================================= */
 function actualizarBadges() {
     ["badge-menu", "badge-cat", "badge-sim", "badge-souv", "badge-souv-2", "badge-taza", "badge-catmenu",
-     "badge-catalogo", "badge-albumes", "badge-stickers", "badge-ficha", "badge-donde"].forEach(id => {
+     "badge-catalogo", "badge-albumes", "badge-stickers", "badge-ficha", "badge-donde",
+     "badge-promos"].forEach(id => {
         const el = document.getElementById(id); if (el) el.innerText = carrito.length;
     });
 }
@@ -8033,6 +8332,11 @@ function inyectarSticker(url) {
 /* ===== Carrusel de novedades (pantalla de bienvenida) =====
    Para editar, cambia los items de NOVEDADES (emoji, titulo, texto, color). */
 const NOVEDADES = [
+    /* Promo del mes. Es la única novedad que lleva a algún lado: `accion` la
+       hace tocable y `cta` es lo que dice el cartelito de la esquina. El texto
+       ya viene dentro del banner, por eso no lleva titulo/texto. */
+    { img: "assets/promo-30fotos.webp", imgFallback: "assets/promo-30fotos.jpg", emoji: "🔥",
+      color: "#fdf2e0", accion: "promos", cta: "Ver la promo ➜" },
     /* Foto real: lleva recuadro de color detrás del texto (nov-cap) para separarlo
        de la imagen y que se lea. */
     { img: "assets/bienvenida.webp", imgFallback: "assets/bienvenida.jpg", emoji: "🎉", titulo: "¡Bienvenido a Trelewflash!", texto: "Revelado, souvenirs y regalos con tu foto.", color: "linear-gradient(135deg,#4a4a00,#9a9a1e)" },
@@ -8235,6 +8539,16 @@ function renderNovedades() {
             const p = document.createElement("p"); p.textContent = n.texto || "";
             s.appendChild(e); s.appendChild(h); s.appendChild(p);
         }
+        /* Novedad que lleva a una pantalla: además del cartelito, la
+           tarjeta entera responde al toque (ver `levantar`, más abajo). */
+        if (n.accion) {
+            s.classList.add("nov-accion");
+            const cta = document.createElement("button");
+            cta.type = "button"; cta.className = "nov-cta";
+            cta.textContent = n.cta || "Ver más ➜";
+            cta.onclick = ev => { ev.stopPropagation(); abrirNovedad(n); };
+            s.appendChild(cta);
+        }
         track.appendChild(s);
         const d = document.createElement("button"); d.type = "button";
         if (i === 0) d.className = "activo";
@@ -8251,6 +8565,13 @@ function aplicarNov() {
     if (track) track.style.transform = "translateX(" + (-novIdx * 100) + "%)";
     const dots = document.getElementById("carrusel-dots");
     if (dots) [...dots.children].forEach((d, i) => d.classList.toggle("activo", i === novIdx));
+}
+/* A dónde lleva una novedad tocable. Es el único lugar donde se traduce
+   `accion` a una pantalla: agregar un destino nuevo es agregar un `case`. */
+function abrirNovedad(n) {
+    if (!n || !n.accion) return;
+    medir("novedad_tocada", { novedad: n.accion });
+    if (n.accion === "promos") abrirPromos();
 }
 function irNovedad(i) { novIdx = (i + NOVEDADES.length) % NOVEDADES.length; aplicarNov(); }
 function nextNov() { irNovedad(novIdx + 1); reiniciarAutoNov(); }
@@ -8340,7 +8661,14 @@ function pausarAutoNov() { clearInterval(novTimer); novTimer = null; }
             const hubo = variosDedos; variosDedos = false;
             if (hubo || arranque === null || e.type !== "pointerup") return;
             const dx = e.clientX - arranque;
-            if (dx < -40) nextNov(); else if (dx > 40) prevNov();
+            if (dx < -40) { nextNov(); return; }
+            if (dx > 40) { prevNov(); return; }
+            /* Casi sin desplazamiento: fue un toque, no un deslizamiento. Las
+               flechas, los puntitos y el cartelito tienen lo suyo. */
+            if (Math.abs(dx) <= 8 && e.target &&
+                !e.target.closest(".carrusel-flecha, .carrusel-dots, .nov-cta")) {
+                abrirNovedad(NOVEDADES[novIdx]);
+            }
         }
     }
     car.addEventListener("pointerup", levantar);
