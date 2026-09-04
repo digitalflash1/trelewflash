@@ -48,24 +48,26 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- End Google Tag Manager -->
 
 <!-- Microsoft Clarity · mapas de calor y grabaciones de sesión.
-     Va DESPUÉS del bloque de consentimiento igual que GA4: arranca sin
-     consentimiento y recién guarda cookies (_clck / _clsk) cuando el cliente
-     acepta, desde decidirCookies() allá abajo.
-     ⚠️ Para que Clarity respete ese "no" hay que dejar prendida la opción
-     de consentimiento de cookies en la configuración del proyecto en Clarity. -->
+     A diferencia de GA4, acá el tag NO se carga al abrir la página: Clarity
+     graba la sesión apenas arranca, así que si lo cargáramos siempre estaría
+     grabando a gente que todavía no dijo que sí. Por eso se carga recién
+     cuando el cliente acepta, desde decidirCookies() allá abajo; si rechaza,
+     o si cierra sin decidir, no se descarga nada y no se graba nada. -->
 <script>
 var ID_CLARITY = "xu5yu8cp8b";   /* ID del proyecto, de Clarity → Configuración → Información general */
-if (ID_CLARITY) {
+function cargarClarity() {
+    if (!ID_CLARITY || window.clarity) return;   /* sin ID, o ya cargado */
     (function(c,l,a,r,i,t,y){
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
         t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     })(window, document, "clarity", "script", ID_CLARITY);
-    /* Sin decisión previa se arranca en "no", como el resto del sitio. */
-    try {
-        clarity('consent', localStorage.getItem('tf_cookies') === 'ok');
-    } catch (e) { clarity('consent', false); }
+    clarity('consent', true);
 }
+/* Si ya había aceptado en una visita anterior, se carga sin volver a preguntar. */
+try {
+    if (localStorage.getItem('tf_cookies') === 'ok') cargarClarity();
+} catch (e) { /* navegación privada: no se carga */ }
 </script>
 <!-- End Microsoft Clarity -->
 
@@ -8751,7 +8753,7 @@ function pausarAutoNov() { clearInterval(novTimer); novTimer = null; }
 </div>
 
 <script>
-/* Guarda la elección y se la avisa a GTM y a Clarity. Sin "aceptar" no se escriben
+/* Guarda la elección: se la avisa a GTM y, si aceptó, se carga Clarity. Sin "aceptar" no se escriben
    cookies de estadística: el consentimiento arranca en "denied" en el <head>. */
 function decidirCookies(acepta) {
     try { localStorage.setItem('tf_cookies', acepta ? 'ok' : 'no'); } catch (e) { /* navegación privada */ }
@@ -8761,8 +8763,8 @@ function decidirCookies(acepta) {
             ad_personalization: 'granted', analytics_storage: 'granted'
         });
     }
-    /* Lo mismo para Clarity: si dijo que no, no graba ni guarda cookies. */
-    if (typeof clarity === 'function') { clarity('consent', !!acepta); }
+    /* Clarity se descarga recién ahora, y sólo si aceptó. */
+    if (acepta) cargarClarity();
     medir('consentimiento_cookies', { decision: acepta ? 'aceptado' : 'rechazado' });
     document.getElementById('aviso-cookies').classList.add('oculto');
     document.body.classList.remove('con-cookies');
