@@ -55,8 +55,23 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
      o si cierra sin decidir, no se descarga nada y no se graba nada. -->
 <script>
 var ID_CLARITY = "xu5yu8cp8b";   /* ID del proyecto, de Clarity → Configuración → Información general */
+
+/* Opt-out propio. Entrando UNA vez con ?nomedir=1 el navegador queda marcado y
+   Clarity no se carga nunca más ahí: sirve para que las visitas nuestras no
+   ensucien las grabaciones. Hay que hacerlo en cada aparato (compu, celular).
+   Se hace por acá y no bloqueando la IP en Clarity porque el proveedor la rota
+   entre varias direcciones, y encima son del mismo pool que usan los clientes
+   de Trelew: bloquear ese rango taparía sesiones reales.
+   Para deshacerlo: entrar con ?nomedir=0 */
+try {
+    var _nm = new URLSearchParams(location.search).get('nomedir');
+    if (_nm === '1') localStorage.setItem('tf_no_medir', '1');
+    if (_nm === '0') localStorage.removeItem('tf_no_medir');
+} catch (e) { /* navegación privada */ }
+
 function cargarClarity() {
     if (!ID_CLARITY || window.clarity) return;   /* sin ID, o ya cargado */
+    try { if (localStorage.getItem('tf_no_medir') === '1') return; } catch (e) { /* sigue */ }
     (function(c,l,a,r,i,t,y){
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
         t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
