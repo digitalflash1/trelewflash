@@ -4126,7 +4126,7 @@ const APP_VERSION = "4.3";
    Cada evento va por dos caminos: derecho a GA4 con gtag (que es lo que hace
    que se vean en los informes) y además a la capa de datos, por si algún día
    se quiere enganchar otra herramienta desde GTM: Activador → "Evento
-   personalizado" → nombre del evento (por ej. pedido_enviado), y los datos
+   personalizado" → nombre del evento (por ej. purchase), y los datos
    extra quedan disponibles como variables de capa de datos.
 
    No se envía NINGÚN dato personal: ni nombre, ni teléfono, ni email, ni fotos.
@@ -8068,14 +8068,21 @@ async function enviarPedido() {
 
     /* "estado" distingue un pedido guardado en la hoja de uno que falló: si en los
        informes aparecen muchos "error", el problema es el backend, no la tienda. */
-    medir("pedido_enviado", {
+    const medicionPedido = {
         value: totalCarrito(),
         items: carrito.length,
         fotos: carrito.reduce((s, it) => s + ((it.fotos || []).length), 0),
         estado: estado,
         imagenes_omitidas: sinImagenes,
         currency: "ARS"
-    });
+    };
+    /* El evento se llama "purchase" porque es el único nombre con el que GA4
+       cuenta facturación; con cualquier otro el importe queda como un dato
+       suelto. Y el número de pedido va como transaction_id, que es lo que usa
+       GA4 para no contar dos veces la misma venta si el cliente recarga.
+       Si el backend falló no hay número, y el evento sale sin él. */
+    if (numero) medicionPedido.transaction_id = numero;
+    medir("purchase", medicionPedido);
 
     mostrarResultadoPedido(numero, carpeta, wa, estado, sinImagenes);
 }
