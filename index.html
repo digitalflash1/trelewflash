@@ -4138,12 +4138,16 @@ function medir(evento, datos) {
         /* Y además, directo a GA4. El push de arriba es formato GTM y gtag no
            lo lee; como el contenedor no tiene ninguna etiqueta escuchando estos
            eventos, sin esta parte no llegaban a ningún lado.
-           "items" se renombra porque en GA4 es un nombre reservado del comercio
-           electrónico y espera una lista, no un número: mandado tal cual se
-           descarta en silencio. */
+           "items" en GA4 es un nombre reservado del comercio electrónico y espera
+           la lista de productos. Cuando de verdad viene una lista (el purchase)
+           pasa tal cual; cuando es un número suelto se renombra, porque mandado
+           así GA4 lo descarta en silencio. */
         if (typeof gtag === 'function') {
             var p = Object.assign({}, datos || {});
-            if ('items' in p) { p.cantidad_items = p.items; delete p.items; }
+            if ('items' in p && !Array.isArray(p.items)) {
+                p.cantidad_items = p.items;
+                delete p.items;
+            }
             gtag('event', evento, p);
         }
     } catch (e) { /* la medición nunca debe romper la tienda */ }
@@ -8070,7 +8074,7 @@ async function enviarPedido() {
        informes aparecen muchos "error", el problema es el backend, no la tienda. */
     const medicionPedido = {
         value: totalCarrito(),
-        items: carrito.length,
+        cantidad_items: carrito.length,
         fotos: carrito.reduce((s, it) => s + ((it.fotos || []).length), 0),
         estado: estado,
         imagenes_omitidas: sinImagenes,
@@ -8082,6 +8086,23 @@ async function enviarPedido() {
        GA4 para no contar dos veces la misma venta si el cliente recarga.
        Si el backend falló no hay número, y el evento sale sin él. */
     if (numero) medicionPedido.transaction_id = numero;
+    /* La lista de productos en el formato que espera GA4: sin esto la
+       facturación llega entera pero no se puede abrir por producto.
+       El precio sale de subtotal/cantidad y no de precioUnit a propósito: así
+       los modificadores (retoque, collage, foto extra) quedan adentro y la suma
+       de los ítems da exactamente el total del pedido. */
+    medicionPedido.items = carrito.map(function (it) {
+        const cant = it.cant || 1;
+        const linea = {
+            item_id: it.sku || it.producto || it.tipo,
+            item_name: it.producto || it.tipo,
+            item_category: it.tipo,
+            price: Math.round((it.subtotal / cant) * 100) / 100,
+            quantity: cant
+        };
+        if (it.variante) linea.item_variant = it.variante;
+        return linea;
+    });
     medir("purchase", medicionPedido);
 
     mostrarResultadoPedido(numero, carpeta, wa, estado, sinImagenes);
