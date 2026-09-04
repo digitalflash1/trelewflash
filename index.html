@@ -4117,14 +4117,17 @@ const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxxkTt_esCqor3id4ZT
 const APP_VERSION = "4.3";
 
 /* =========================================================
-   MEDICIÓN (Google Tag Manager)
+   MEDICIÓN (GA4 directo + capa de datos para GTM)
    La tienda es UNA sola página: las pantallas son <div> que se muestran y
    ocultan, así que GTM por sí solo contaría una única visita por cliente.
    Estos eventos son los que permiten ver el embudo: cuántos entran, cuántos
    agregan al carrito y cuántos terminan abriendo WhatsApp.
 
-   Cómo usarlos en GTM: Activador → "Evento personalizado" → nombre del evento
-   (por ej. pedido_enviado). Los datos extra quedan como variables de capa de datos.
+   Cada evento va por dos caminos: derecho a GA4 con gtag (que es lo que hace
+   que se vean en los informes) y además a la capa de datos, por si algún día
+   se quiere enganchar otra herramienta desde GTM: Activador → "Evento
+   personalizado" → nombre del evento (por ej. pedido_enviado), y los datos
+   extra quedan disponibles como variables de capa de datos.
 
    No se envía NINGÚN dato personal: ni nombre, ni teléfono, ni email, ni fotos.
    ========================================================= */
@@ -4132,6 +4135,17 @@ function medir(evento, datos) {
     try {
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push(Object.assign({ event: evento }, datos || {}));
+        /* Y además, directo a GA4. El push de arriba es formato GTM y gtag no
+           lo lee; como el contenedor no tiene ninguna etiqueta escuchando estos
+           eventos, sin esta parte no llegaban a ningún lado.
+           "items" se renombra porque en GA4 es un nombre reservado del comercio
+           electrónico y espera una lista, no un número: mandado tal cual se
+           descarta en silencio. */
+        if (typeof gtag === 'function') {
+            var p = Object.assign({}, datos || {});
+            if ('items' in p) { p.cantidad_items = p.items; delete p.items; }
+            gtag('event', evento, p);
+        }
     } catch (e) { /* la medición nunca debe romper la tienda */ }
 }
 
