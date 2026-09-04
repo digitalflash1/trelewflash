@@ -3668,7 +3668,7 @@ function elegirPack(med, pack, unitario, btn) {
     wa.target = "_blank"; wa.rel = "noopener noreferrer";
     wa.textContent = "🟢 Pedir este pack por WhatsApp";
     wa.onclick = () => medir("pack_pedido_wa", {
-        medida: med.nombre, cantidad: pack.cantidad, valor: conDto, moneda: "ARS"
+        medida: med.nombre, cantidad: pack.cantidad, value: conDto, currency: "ARS"
     });
     det.appendChild(wa);
 
@@ -3679,7 +3679,7 @@ function elegirPack(med, pack, unitario, btn) {
 
     det.classList.remove("oculto");
     det.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    medir("pack_elegido", { medida: med.nombre, cantidad: pack.cantidad, valor: conDto, moneda: "ARS" });
+    medir("pack_elegido", { medida: med.nombre, cantidad: pack.cantidad, value: conDto, currency: "ARS" });
 }
 
 /* ⚙️ PROMO DE 30 FOTOS — PUNTO ÚNICO DE CONFIGURACIÓN
@@ -3781,7 +3781,7 @@ function elegirPromo(i) {
     actualizarPromo();
     det.scrollIntoView({ behavior: "smooth", block: "nearest" });
     medir("promo_elegida", {
-        medida: op.medida, cantidad: op.cant, valor: op.ahora, moneda: "ARS"
+        medida: op.medida, cantidad: op.cant, value: op.ahora, currency: "ARS"
     });
 }
 
@@ -3814,7 +3814,7 @@ function actualizarPromo() {
     if (promoCant > 1) msg += " × " + promoCant + " (total " + formatear(total) + ")";
     wa.href = "https://wa.me/" + TELEFONO_WA + "?text=" + encodeURIComponent(msg + ".");
     wa.onclick = () => medir("promo_pedida_wa", {
-        medida: op.medida, cantidad: promoCant, fotos: fotos, valor: total, moneda: "ARS"
+        medida: op.medida, cantidad: promoCant, fotos: fotos, value: total, currency: "ARS"
     });
 }
 
@@ -5369,7 +5369,7 @@ function mostrar(id) {
     /* El carrito con ítems es el paso previo a enviar: sirve para medir
        cuántos llegan hasta acá y no terminan enviando. */
     if (id === "p-carrito" && carrito.length) {
-        medir("iniciar_checkout", { valor: totalCarrito(), items: carrito.length, moneda: "ARS" });
+        medir("iniciar_checkout", { value: totalCarrito(), items: carrito.length, currency: "ARS" });
     }
 }
 /* El pedido arranca directo en el menú: los datos del cliente se piden recién
@@ -6104,7 +6104,7 @@ function agregarStickerAlCarrito(sku) {
     });
     medir("agregar_al_carrito", {
         producto: "Sticker DTF", variante: st.nombre, cantidad: 1,
-        fotos_adjuntas: 0, valor: totalCarrito(), moneda: "ARS"
+        fotos_adjuntas: 0, value: totalCarrito(), currency: "ARS"
     });
     achicarStickers();
     actualizarBadges();
@@ -6711,8 +6711,8 @@ async function agregarFichaAlCarrito() {
         variante: varianteTxt,
         cantidad: cant,
         fotos_adjuntas: adjuntosFicha.length,
-        valor: totalCarrito(),
-        moneda: "ARS"
+        value: totalCarrito(),
+        currency: "ARS"
     });
     adjuntosFicha = [];
     actualizarBadges();
@@ -7089,8 +7089,8 @@ async function agregarFotoAlCarrito() {
         variante: nombreItem,
         cantidad: cant,
         fotos_adjuntas: fotosItem.length,
-        valor: totalCarrito(),
-        moneda: "ARS"
+        value: totalCarrito(),
+        currency: "ARS"
     });
 
     /* Se guardan antes de limpiar: son las que se le ofrecen para enmarcar. */
@@ -7409,8 +7409,8 @@ function agregarSouvAlCarrito() {
         variante: selSouv.nombre,
         cantidad: cant,
         fotos_adjuntas: adjuntosSouv.length,
-        valor: totalCarrito(),
-        moneda: "ARS"
+        value: totalCarrito(),
+        currency: "ARS"
     });
     adjuntosSouv = [];
     renderThumbs("thumbs-souv", adjuntosSouv, "souv");
@@ -7631,8 +7631,8 @@ function agregarTazaAlCarrito() {
         variante: "Taza " + taza.tipo.nombre,
         cantidad: cant,
         fotos_adjuntas: fotos.length,
-        valor: totalCarrito(),
-        moneda: "ARS"
+        value: totalCarrito(),
+        currency: "ARS"
     });
     actualizarBadges();
     avisoAgregado();
@@ -8069,12 +8069,12 @@ async function enviarPedido() {
     /* "estado" distingue un pedido guardado en la hoja de uno que falló: si en los
        informes aparecen muchos "error", el problema es el backend, no la tienda. */
     medir("pedido_enviado", {
-        valor: totalCarrito(),
+        value: totalCarrito(),
         items: carrito.length,
         fotos: carrito.reduce((s, it) => s + ((it.fotos || []).length), 0),
         estado: estado,
         imagenes_omitidas: sinImagenes,
-        moneda: "ARS"
+        currency: "ARS"
     });
 
     mostrarResultadoPedido(numero, carpeta, wa, estado, sinImagenes);
@@ -8143,7 +8143,7 @@ function mostrarResultadoPedido(numero, carpeta, wa, estado, sinImagenes) {
     /* Conversión final: que el pedido se registre no significa que el cliente
        haya escrito. Esto mide el clic real que abre WhatsApp. */
     waBtn.onclick = function () {
-        medir("clic_whatsapp", { valor: totalCarrito(), items: carrito.length, estado: estado, moneda: "ARS" });
+        medir("clic_whatsapp", { value: totalCarrito(), items: carrito.length, estado: estado, currency: "ARS" });
     };
     document.getElementById("modal-pedido").classList.remove("oculto");
 }
