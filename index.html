@@ -28,6 +28,22 @@ try {
 } catch (e) { /* navegación privada: se queda en denied */ }
 </script>
 
+<!-- Marca de "acá no midas". Entrando UNA vez con ?nomedir=1 este navegador
+     queda marcado y GTM deja de disparar la etiqueta de Clarity: la excepción
+     vive en el contenedor GTM-K9M24PKG (variable "No medir" + activador
+     "Navegador marcado como propio"). Sirve para que nuestras visitas no
+     ensucien las grabaciones; hay que entrar una vez en cada aparato.
+     Para deshacerlo: entrar con ?nomedir=0
+     Va acá arriba a propósito: la marca tiene que estar puesta ANTES de que el
+     contenedor evalúe sus disparadores. -->
+<script>
+try {
+    var _nm = new URLSearchParams(location.search).get('nomedir');
+    if (_nm === '1') localStorage.setItem('tf_no_medir', '1');
+    if (_nm === '0') localStorage.removeItem('tf_no_medir');
+} catch (e) { /* navegación privada */ }
+</script>
+
 <!-- Google tag (gtag.js) · GA4 G-7ZGZ6GP56R
      Va DESPUÉS del bloque de consentimiento de arriba: así respeta el "denied"
      inicial y no escribe cookies hasta que el cliente acepta.
