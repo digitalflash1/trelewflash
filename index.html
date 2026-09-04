@@ -47,45 +47,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-K9M24PKG');</script>
 <!-- End Google Tag Manager -->
 
-<!-- Microsoft Clarity · mapas de calor y grabaciones de sesión.
-     A diferencia de GA4, acá el tag NO se carga al abrir la página: Clarity
-     graba la sesión apenas arranca, así que si lo cargáramos siempre estaría
-     grabando a gente que todavía no dijo que sí. Por eso se carga recién
-     cuando el cliente acepta, desde decidirCookies() allá abajo; si rechaza,
-     o si cierra sin decidir, no se descarga nada y no se graba nada. -->
-<script>
-var ID_CLARITY = "xu5yu8cp8b";   /* ID del proyecto, de Clarity → Configuración → Información general */
-
-/* Opt-out propio. Entrando UNA vez con ?nomedir=1 el navegador queda marcado y
-   Clarity no se carga nunca más ahí: sirve para que las visitas nuestras no
-   ensucien las grabaciones. Hay que hacerlo en cada aparato (compu, celular).
-   Se hace por acá y no bloqueando la IP en Clarity porque el proveedor la rota
-   entre varias direcciones, y encima son del mismo pool que usan los clientes
-   de Trelew: bloquear ese rango taparía sesiones reales.
-   Para deshacerlo: entrar con ?nomedir=0 */
-try {
-    var _nm = new URLSearchParams(location.search).get('nomedir');
-    if (_nm === '1') localStorage.setItem('tf_no_medir', '1');
-    if (_nm === '0') localStorage.removeItem('tf_no_medir');
-} catch (e) { /* navegación privada */ }
-
-function cargarClarity() {
-    if (!ID_CLARITY || window.clarity) return;   /* sin ID, o ya cargado */
-    try { if (localStorage.getItem('tf_no_medir') === '1') return; } catch (e) { /* sigue */ }
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", ID_CLARITY);
-    clarity('consent', true);
-}
-/* Si ya había aceptado en una visita anterior, se carga sin volver a preguntar. */
-try {
-    if (localStorage.getItem('tf_cookies') === 'ok') cargarClarity();
-} catch (e) { /* navegación privada: no se carga */ }
-</script>
-<!-- End Microsoft Clarity -->
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trelewflash · Asistente de pedidos</title>
 <meta name="description" content="Revelado de fotos, souvenirs, tazas, collages e imanes en Trelew. Armá tu pedido paso a paso desde el celular y envialo por WhatsApp.">
@@ -8768,7 +8729,7 @@ function pausarAutoNov() { clearInterval(novTimer); novTimer = null; }
 </div>
 
 <script>
-/* Guarda la elección: se la avisa a GTM y, si aceptó, se carga Clarity. Sin "aceptar" no se escriben
+/* Guarda la elección y se la avisa a GTM. Sin "aceptar" no se escriben
    cookies de estadística: el consentimiento arranca en "denied" en el <head>. */
 function decidirCookies(acepta) {
     try { localStorage.setItem('tf_cookies', acepta ? 'ok' : 'no'); } catch (e) { /* navegación privada */ }
@@ -8778,8 +8739,6 @@ function decidirCookies(acepta) {
             ad_personalization: 'granted', analytics_storage: 'granted'
         });
     }
-    /* Clarity se descarga recién ahora, y sólo si aceptó. */
-    if (acepta) cargarClarity();
     medir('consentimiento_cookies', { decision: acepta ? 'aceptado' : 'rechazado' });
     document.getElementById('aviso-cookies').classList.add('oculto');
     document.body.classList.remove('con-cookies');
