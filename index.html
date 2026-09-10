@@ -868,6 +868,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .promo-fotos .pf-cuenta { font-weight: normal; color: #7a7a52; }
     .promo-detalle .promo-fotos .btn-tool { display: inline-block; width: auto; margin: 0; }
     .promo-fotos .pf-nota { margin: 8px 0 0; font-size: 12px; color: #7a7a52; line-height: 1.4; }
+    .promo-fotos .pf-aviso { margin: 8px 0 0; font-size: 12.5px; font-weight: bold; color: #b45309; }
+    /* Un poco más grandes que el resto de la tienda: acá la miniatura lleva dos
+       chapitas (quitar y copias) y con 46px se pisaban. */
+    .promo-fotos .thumb img { width: 54px; height: 54px; }
+    /* La chapita de copias cuelga por debajo de la miniatura: sin este aire
+       entre filas se le monta a la × de la fila siguiente. */
+    .promo-fotos .thumbs { row-gap: 20px; }
+    /* Cuántas copias de ESTA foto. Tocarla suma una; al llegar al tope de la
+       promo vuelve a 1, así nunca se puede pedir más de lo que se paga. */
+    .promo-fotos .thumb .btn-copias { top: auto; bottom: -6px; right: -6px; left: auto;
+        width: auto; min-width: 22px; height: 19px; padding: 0 6px; border-radius: 10px;
+        background: #fff; color: var(--promo-navy); border: 1px solid #cbd5e1;
+        font-size: 11px; font-weight: bold; }
+    .promo-fotos .thumb .btn-copias.varias { background: var(--promo-rosa); color: #fff; border-color: transparent; }
     .promo-detalle .promo-wa { margin-top: 8px; font-size: 14px; text-align: center;
         text-decoration: none; color: var(--color-wa-hover); }
 
@@ -3727,10 +3741,41 @@ let promoIdx = null, promoCant = 1;
    entra al carrito: si mira otra opción o se va a ver una medida, las suyas
    siguen ahí. */
 let adjuntosPromo = [];
-/* No se suben más fotos que copias compradas: 30 por promo, 60 si lleva dos. */
-function topeFotosPromo() {
+/* ── Copias por foto ──
+   La promo se vende por COPIAS, no por fotos distintas: 30 copias pueden ser
+   30 fotos una vez cada una, o 10 fotos tres veces cada una. Cada adjunto lleva
+   su `copias` (1 de entrada) y la suma no puede pasarse del total comprado. */
+function topeCopiasPromo() {
     const op = PROMOS.opciones[promoIdx];
     return op ? op.cant * promoCant : MAX_FOTOS_ITEM;
+}
+function copiasPromo() { return adjuntosPromo.reduce((s, f) => s + (f.copias || 1), 0); }
+function copiasLibresPromo() { return topeCopiasPromo() - copiasPromo(); }
+/* Cada foto nueva ocupa una copia: se pueden sumar tantas como copias queden. */
+function topeFotosPromo() { return adjuntosPromo.length + Math.max(0, copiasLibresPromo()); }
+
+/* Una copia más de esta foto. Sin lugar vuelve a 1: es la forma de bajarla sin
+   meter un segundo botón en una miniatura de 54px. */
+function masCopiasPromo(i) {
+    const f = adjuntosPromo[i];
+    if (!f) return;
+    f.copias = copiasLibresPromo() > 0 ? (f.copias || 1) + 1 : 1;
+    renderThumbs("thumbs-promo", adjuntosPromo, "promo");
+    actualizarPromo();
+}
+
+/* Al bajar la cantidad de promos entran menos copias: se las saca a las fotos
+   que más tienen, que es donde menos se nota. Si aun así sobran (más fotos que
+   copias), lo avisa actualizarPromo() y agregarPromoAlCarrito() no deja seguir:
+   sacar fotos del cliente por nuestra cuenta sería peor. */
+function ajustarCopiasPromo() {
+    let sobran = copiasPromo() - topeCopiasPromo();
+    while (sobran > 0) {
+        const f = adjuntosPromo.reduce((a, b) => ((b.copias || 1) > (a.copias || 1) ? b : a),
+                                       adjuntosPromo[0]);
+        if (!f || (f.copias || 1) <= 1) break;
+        f.copias--; sobran--;
+    }
 }
 
 /* Las tarjetas se arman una sola vez por visita a la pantalla. La elección no
@@ -3800,8 +3845,11 @@ function elegirPromo(i) {
                 '<input type="file" accept="image/*" multiple style="display:none" onchange="adjuntarPromo(event)">' +
             '</label>' +
             '<div id="thumbs-promo" class="thumbs"></div>' +
-            '<p class="pf-nota">Viajan con el pedido a nuestro Drive, no hace falta que las mandes por chat. ' +
-                'Podés subir las que tengas ahora y el resto lo coordinamos por WhatsApp.</p>' +
+            '<p class="pf-aviso oculto" id="promo-fotos-aviso"></p>' +
+            '<p class="pf-nota">¿Querés dos o tres copias de la misma foto? Tocá el ' +
+                '<b>×1</b> de la miniatura y va sumando (al llegar al tope vuelve a 1).<br>' +
+                'Viajan con el pedido a nuestro Drive, no hace falta que las mandes por chat: ' +
+                'subí las que tengas ahora y el resto lo coordinamos por WhatsApp.</p>' +
         '</div>' +
         '<button type="button" class="btn-agregar" id="promo-agregar" onclick="agregarPromoAlCarrito()">🛒 Agregar al carrito</button>' +
         '<a class="btn-tool promo-wa" id="promo-wa" href="#" target="_blank" rel="noopener noreferrer">🟢 Prefiero pedirla por WhatsApp</a>' +
@@ -3823,6 +3871,8 @@ function cambiarCantPromo(delta) {
     /* Hasta 10: más que eso ya no es una promo suelta, conviene que lo hablen
        por WhatsApp. */
     promoCant = Math.min(10, Math.max(1, promoCant + delta));
+    ajustarCopiasPromo();
+    renderThumbs("thumbs-promo", adjuntosPromo, "promo");
     actualizarPromo();
 }
 
@@ -3841,13 +3891,31 @@ function actualizarPromo() {
     const tf = document.getElementById("promo-total-fotos");
     if (tf) tf.textContent = "(" + fotos + " fotos)";
 
+    /* El contador cuenta COPIAS, que es lo que se vende: "8 fotos · 30 de 30
+       copias" le dice al cliente que ya completó la promo sin haber subido 30
+       archivos distintos. */
+    const nFotos = adjuntosPromo.length, copias = copiasPromo(), topeC = topeCopiasPromo();
     const cuenta = document.getElementById("promo-fotos-cuenta");
-    if (cuenta) cuenta.textContent = "(" + adjuntosPromo.length + " de " + topeFotosPromo() + ")";
+    if (cuenta) cuenta.textContent = nFotos
+        ? "(" + nFotos + " foto" + (nFotos > 1 ? "s" : "") + " · " + copias + " de " + topeC + " copias)"
+        : "(0 de " + topeC + " copias)";
+
+    const aviso = document.getElementById("promo-fotos-aviso");
+    if (aviso) {
+        const sobran = copias - topeC;
+        aviso.textContent = sobran > 0
+            ? "⚠️ Te pasaste por " + sobran + " copia" + (sobran > 1 ? "s" : "") +
+              ": sacá alguna foto o sumá otra promo."
+            : "";
+        aviso.classList.toggle("oculto", sobran <= 0);
+    }
+
     /* El botón dice con cuántas fotos se va a agregar: es la única señal de que
        lo que subió está enganchado al ítem que entra al carrito. */
     const agregar = document.getElementById("promo-agregar");
-    if (agregar) agregar.textContent = adjuntosPromo.length
-        ? "🛒 Agregar al carrito con mis " + adjuntosPromo.length + " foto" + (adjuntosPromo.length > 1 ? "s" : "")
+    if (agregar) agregar.textContent = nFotos
+        ? "🛒 Agregar al carrito con mis " + nFotos + " foto" + (nFotos > 1 ? "s" : "") +
+          (copias !== nFotos ? " (" + copias + " copias)" : "")
         : "🛒 Agregar al carrito";
 
     const wa = document.getElementById("promo-wa");
@@ -3886,7 +3954,20 @@ async function agregarPromoAlCarrito() {
         if (btn) { btn.disabled = false; btn.textContent = txt; }
     }
 
-    const fotos = adjuntosPromo.slice();
+    if (copiasPromo() > topeCopiasPromo()) {
+        alert("Asignaste más copias de las que entran en la promo.\n\n" +
+              "Sacá alguna foto o sumá otra promo.");
+        return;
+    }
+
+    /* El nombre lleva las copias adelante ("x3-verano.jpg"): así el taller lo ve
+       en la carpeta de Drive sin tener que cruzar nada con la hoja. Se arma acá,
+       sobre una copia del objeto, para no ensuciar el adjunto que el cliente
+       sigue viendo en pantalla. */
+    const fotos = adjuntosPromo.map(f => Object.assign({}, f, {
+        name: ((f.copias || 1) > 1 ? "x" + f.copias + "-" : "") + (f.name || "foto.jpg")
+    }));
+    const copias = copiasPromo();
     carrito.push({
         id: Date.now() + Math.random(),
         tipo: "Promo",
@@ -3899,7 +3980,7 @@ async function agregarPromoAlCarrito() {
         /* Redactado en neutro: este mismo texto se lee en el carrito y, tal
            cual, adentro del mensaje que el cliente nos manda por WhatsApp. */
         detalle: fotos.length
-            ? fotos.length + " foto(s) adjuntas"
+            ? fotos.length + " foto(s) adjuntas · " + copias + " copia(s)"
             : "fotos a coordinar por WhatsApp",
         subtotal: op.ahora * promoCant,
         aCotizar: false,
@@ -3907,7 +3988,7 @@ async function agregarPromoAlCarrito() {
     });
     medir("agregar_al_carrito", {
         producto: "Promo " + op.cant + " fotos", variante: op.medida, cantidad: promoCant,
-        fotos_adjuntas: fotos.length, valor: totalCarrito(), moneda: "ARS"
+        fotos_adjuntas: fotos.length, copias: copias, valor: totalCarrito(), moneda: "ARS"
     });
 
     /* Las fotos ya son del ítem: si el cliente agrega otra promo, arranca de
@@ -7931,7 +8012,13 @@ function adjuntarSouv(ev) { leerAdjuntos(ev, adjuntosSouv, "thumbs-souv", "souv"
 /* La promo lleva su propio tope: son 30 copias, más que el máximo por producto
    del resto de la tienda (ver agregarPromoAlCarrito). */
 function adjuntarPromo(ev) {
-    leerAdjuntos(ev, adjuntosPromo, "thumbs-promo", "promo", actualizarPromo, topeFotosPromo());
+    leerAdjuntos(ev, adjuntosPromo, "thumbs-promo", "promo", trasAdjuntarPromo, topeFotosPromo());
+}
+/* Toda foto recién subida vale una copia hasta que el cliente diga otra cosa. */
+function trasAdjuntarPromo() {
+    adjuntosPromo.forEach(f => { if (!f.copias) f.copias = 1; });
+    renderThumbs("thumbs-promo", adjuntosPromo, "promo");
+    actualizarPromo();
 }
 /* maxFotos: cuántas acepta ESTE destino. Sin él vale el máximo por producto. */
 async function leerAdjuntos(ev, destino, contId, tipo, onDone, maxFotos) {
@@ -7974,6 +8061,11 @@ function renderThumbs(contId, arr, tipo) {
         (tipo === "sim"
             ? '<button class="btn-texto-foto" title="Agregar texto impreso (+$300)" onclick="editarTextoFoto(' + i + ')">📝</button>' +
               '<button class="btn-crop-foto" title="Recortar esta foto" onclick="recortarAdjunto(' + i + ')">✂</button>'
+            : '') +
+        (tipo === "promo"
+            ? '<button class="btn-copias' + ((f.copias || 1) > 1 ? ' varias' : '') +
+              '" title="Copias de esta foto: tocá para sumar otra" onclick="masCopiasPromo(' + i + ')">×' +
+              (f.copias || 1) + '</button>'
             : '') +
         '</div>'
     ).join("");
