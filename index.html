@@ -858,6 +858,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .promo-detalle .btn-agregar { display: block; width: 100%; margin-top: 12px; text-align: center; text-decoration: none; }
     .promo-detalle .btn-tool { display: block; width: 100%; margin-top: 8px; }
     .promo-detalle .promo-aclara { margin: 10px 0 0; font-size: 12px; color: #7a7a52; }
+    /* Subir las fotos acá es lo que hace que el pedido llegue con su carpeta de
+       Drive armada, en vez de tener que pedírselas después por chat. Va después
+       de las reglas de .promo-detalle: el botón de elegir fotos no ocupa todo
+       el ancho como los otros. */
+    .promo-fotos { margin: 14px 0 0; padding: 12px; border-radius: 10px;
+        background: var(--promo-crema); border: 1px dashed var(--pc); }
+    .promo-fotos .pf-tit { margin: 0 0 8px; font-size: 14px; font-weight: bold; color: var(--promo-navy); }
+    .promo-fotos .pf-cuenta { font-weight: normal; color: #7a7a52; }
+    .promo-detalle .promo-fotos .btn-tool { display: inline-block; width: auto; margin: 0; }
+    .promo-fotos .pf-nota { margin: 8px 0 0; font-size: 12px; color: #7a7a52; line-height: 1.4; }
+    .promo-detalle .promo-wa { margin-top: 8px; font-size: 14px; text-align: center;
+        text-decoration: none; color: var(--color-wa-hover); }
 
     .promo-pie { margin: 18px 0 0; padding: 10px 14px; background: var(--promo-navy); border-radius: 10px;
         color: #fff; font-size: 13px; font-weight: bold; text-align: center; text-transform: uppercase; }
@@ -3689,19 +3701,20 @@ function elegirPack(med, pack, unitario, btn) {
    exactamente lo mismo. Si sale un flyer nuevo, se cambian estos números (y el
    banner del carrusel, assets/promo-30fotos.webp).
 
-   Cada opción: n (el numerito), medida, grupo (con cuál del simulador se ve el
-   tamaño real), img (assets/promo-N.webp, el pilón de fotos recortado del
-   flyer), cant, antes, ahora y color. El porcentaje de descuento y el precio
+   Cada opción: n (el numerito), medida, sku (con el que entra a la pestaña
+   Items de la hoja), grupo (con cuál del simulador se ve el tamaño real), img
+   (assets/promo-N.webp, el pilón de fotos recortado del flyer), cant, antes,
+   ahora y color. El porcentaje de descuento y el precio
    por foto se calculan solos: no hay que tocarlos. */
 const PROMOS = {
     /* Vacío = sin fecha de corte a la vista. Si la promo vence, poner acá el
        texto tal cual se quiere leer: "Válida hasta el 30 de septiembre". */
     vigencia: "",
     opciones: [
-        { n: 1, medida: "Polaroid",  grupo: "polaroid", img: "promo-1", cant: 30, antes: 39000, ahora: 27000, color: "#e8497f" },
-        { n: 2, medida: "10x15 cm",  grupo: "medianos", img: "promo-2", cant: 30, antes: 45000, ahora: 33000, color: "#0696a1" },
-        { n: 3, medida: "13x18 cm",  grupo: "medianos", img: "promo-3", cant: 30, antes: 49000, ahora: 40000, color: "#fa7c0b" },
-        { n: 4, medida: "15x21 cm",  grupo: "medianos", img: "promo-4", cant: 30, antes: 57000, ahora: 48000, color: "#733888" }
+        { n: 1, medida: "Polaroid",  sku: "PROMO30-POL",   grupo: "polaroid", img: "promo-1", cant: 30, antes: 39000, ahora: 27000, color: "#e8497f" },
+        { n: 2, medida: "10x15 cm",  sku: "PROMO30-10X15", grupo: "medianos", img: "promo-2", cant: 30, antes: 45000, ahora: 33000, color: "#0696a1" },
+        { n: 3, medida: "13x18 cm",  sku: "PROMO30-13X18", grupo: "medianos", img: "promo-3", cant: 30, antes: 49000, ahora: 40000, color: "#fa7c0b" },
+        { n: 4, medida: "15x21 cm",  sku: "PROMO30-15X21", grupo: "medianos", img: "promo-4", cant: 30, antes: 57000, ahora: 48000, color: "#733888" }
     ]
 };
 /* Redondeado hacia abajo, por lo mismo que los packs: el cartel nunca puede
@@ -3710,6 +3723,15 @@ function promoOff(op) { return Math.floor((op.antes - op.ahora) / op.antes * 100
 function promoPorFoto(op) { return Math.round(op.ahora / op.cant); }
 
 let promoIdx = null, promoCant = 1;
+/* Las fotos que el cliente sube desde la promo. Se vacía recién cuando el ítem
+   entra al carrito: si mira otra opción o se va a ver una medida, las suyas
+   siguen ahí. */
+let adjuntosPromo = [];
+/* No se suben más fotos que copias compradas: 30 por promo, 60 si lleva dos. */
+function topeFotosPromo() {
+    const op = PROMOS.opciones[promoIdx];
+    return op ? op.cant * promoCant : MAX_FOTOS_ITEM;
+}
 
 /* Las tarjetas se arman una sola vez por visita a la pantalla. La elección no
    se conserva al salir: es una promo, no un pedido a medio hacer. */
@@ -3772,12 +3794,24 @@ function elegirPromo(i) {
         '</div>' +
         '<p class="promo-total">Total: <b id="promo-total">' + formatear(op.ahora) + '</b> ' +
             '<span id="promo-total-fotos">(' + op.cant + ' fotos)</span></p>' +
-        '<a class="btn-agregar" id="promo-wa" href="#" target="_blank" rel="noopener noreferrer">🟢 Pedir esta promo por WhatsApp</a>' +
+        '<div class="promo-fotos">' +
+            '<p class="pf-tit">📷 Subí tus fotos ahora <span class="pf-cuenta" id="promo-fotos-cuenta"></span></p>' +
+            '<label class="btn-tool">📷 Elegir fotos' +
+                '<input type="file" accept="image/*" multiple style="display:none" onchange="adjuntarPromo(event)">' +
+            '</label>' +
+            '<div id="thumbs-promo" class="thumbs"></div>' +
+            '<p class="pf-nota">Viajan con el pedido a nuestro Drive, no hace falta que las mandes por chat. ' +
+                'Podés subir las que tengas ahora y el resto lo coordinamos por WhatsApp.</p>' +
+        '</div>' +
+        '<button type="button" class="btn-agregar" id="promo-agregar" onclick="agregarPromoAlCarrito()">🛒 Agregar al carrito</button>' +
+        '<a class="btn-tool promo-wa" id="promo-wa" href="#" target="_blank" rel="noopener noreferrer">🟢 Prefiero pedirla por WhatsApp</a>' +
         '<button type="button" class="btn-tool" onclick="verMedidaPromo()">📱 Ver cómo queda esta medida</button>' +
-        '<p class="promo-aclara">Las fotos nos las mandás por WhatsApp o las traés al local. ' +
-            'Las ' + op.cant + ' copias son de la misma medida. ' +
+        '<p class="promo-aclara">Las ' + op.cant + ' copias son de la misma medida. ' +
             escHtml(PROMOS.vigencia) + '</p>';
     det.classList.remove("oculto");
+    /* El panel se rehace entero al cambiar de opción: las fotos ya subidas
+       siguen en adjuntosPromo, hay que volver a pintarlas. */
+    renderThumbs("thumbs-promo", adjuntosPromo, "promo");
     actualizarPromo();
     det.scrollIntoView({ behavior: "smooth", block: "nearest" });
     medir("promo_elegida", {
@@ -3807,6 +3841,15 @@ function actualizarPromo() {
     const tf = document.getElementById("promo-total-fotos");
     if (tf) tf.textContent = "(" + fotos + " fotos)";
 
+    const cuenta = document.getElementById("promo-fotos-cuenta");
+    if (cuenta) cuenta.textContent = "(" + adjuntosPromo.length + " de " + topeFotosPromo() + ")";
+    /* El botón dice con cuántas fotos se va a agregar: es la única señal de que
+       lo que subió está enganchado al ítem que entra al carrito. */
+    const agregar = document.getElementById("promo-agregar");
+    if (agregar) agregar.textContent = adjuntosPromo.length
+        ? "🛒 Agregar al carrito con mis " + adjuntosPromo.length + " foto" + (adjuntosPromo.length > 1 ? "s" : "")
+        : "🛒 Agregar al carrito";
+
     const wa = document.getElementById("promo-wa");
     if (!wa) return;
     let msg = "¡Hola! Quiero la promo de " + op.cant + " fotos " + op.medida +
@@ -3816,6 +3859,64 @@ function actualizarPromo() {
     wa.onclick = () => medir("promo_pedida_wa", {
         medida: op.medida, cantidad: promoCant, fotos: fotos, value: total, currency: "ARS"
     });
+}
+
+/* La promo entra al carrito como un ítem más, y ahí está la gracia: el pedido
+   se registra en la hoja y sus fotos se suben solas a la carpeta de Drive, sin
+   que nadie tenga que pedírselas por chat después. Lo hace enviarPedido(). */
+async function agregarPromoAlCarrito() {
+    const op = PROMOS.opciones[promoIdx];
+    if (!op) return;
+    if (adjuntosPendientes()) return;
+    flujo = "pedido";
+    if (!conDatosCliente(agregarPromoAlCarrito)) return;
+
+    const btn = document.getElementById("promo-agregar");
+    const txt = btn ? btn.textContent : "";
+    if (btn) { btn.disabled = true; btn.textContent = "⏳ Preparando tus fotos…"; }
+    try {
+        /* Primero la resolución que pide la medida impresa, después el recorte
+           para que el pedido entre en el POST. En ese orden: no tiene sentido
+           agrandar lo que enseguida hay que achicar, pero una foto que ya venía
+           chica sí hay que subirla de resolución antes de medir el peso. */
+        await asegurarResolucion(adjuntosPromo, ladoParaMedida(op.medida), "thumbs-promo", "promo");
+        await ajustarFotosAlTope(adjuntosPromo, TOPE_FOTOS_PEDIDO - pesoFotosCarrito(),
+                                 "thumbs-promo", "promo");
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = txt; }
+    }
+
+    const fotos = adjuntosPromo.slice();
+    carrito.push({
+        id: Date.now() + Math.random(),
+        tipo: "Promo",
+        sku: op.sku || "", producto: "Promo " + op.cant + " fotos", variante: op.medida,
+        cant: promoCant, precioUnit: op.ahora, mods: [],
+        desc: "Promo " + op.cant + " fotos " + op.medida + " × " + promoCant,
+        /* Sin la cantidad de copias adentro: eso ya lo dice `desc` ("× 2"), y
+           acá quedaría viejo apenas el cliente cambie la cantidad en el
+           carrito, que no rehace el detalle de este tipo de ítem. */
+        /* Redactado en neutro: este mismo texto se lee en el carrito y, tal
+           cual, adentro del mensaje que el cliente nos manda por WhatsApp. */
+        detalle: fotos.length
+            ? fotos.length + " foto(s) adjuntas"
+            : "fotos a coordinar por WhatsApp",
+        subtotal: op.ahora * promoCant,
+        aCotizar: false,
+        fotos: fotos
+    });
+    medir("agregar_al_carrito", {
+        producto: "Promo " + op.cant + " fotos", variante: op.medida, cantidad: promoCant,
+        fotos_adjuntas: fotos.length, valor: totalCarrito(), moneda: "ARS"
+    });
+
+    /* Las fotos ya son del ítem: si el cliente agrega otra promo, arranca de
+       cero en vez de mandar las mismas dos veces. */
+    adjuntosPromo = [];
+    renderThumbs("thumbs-promo", adjuntosPromo, "promo");
+    actualizarPromo();
+    actualizarBadges();
+    avisoAgregado();
 }
 
 /* "¿Y de qué tamaño es?" se contesta mejor mirándolo: manda al simulador, que
@@ -7777,6 +7878,43 @@ async function asegurarResolucion(fotos, ladoNecesario, contId, tipo) {
     if (cont) renderThumbs(contId, fotos, tipo);
 }
 
+/* ── Que las fotos entren en el POST ──
+   Las imágenes viajan como data URL, o sea texto: su largo ES lo que va a pesar
+   el pedido. Si no entran, enviarPedido() las descarta TODAS y el pedido queda
+   sin carpeta de Drive; antes de llegar a eso conviene bajarles la resolución,
+   que es una pérdida mucho menor. 30 fotos de 2000 px no entran; las mismas a
+   1500 px sí, y a esa medida una 15x21 sigue imprimiendo bien. */
+const TOPE_FOTOS_PEDIDO = Math.floor(MAX_POST_MB * 1024 * 1024 * 0.85);
+function pesoFotos(fotos) { return (fotos || []).reduce((s, f) => s + ((f.url || "").length), 0); }
+function pesoFotosCarrito() { return carrito.reduce((s, it) => s + pesoFotos(it.fotos), 0); }
+
+/* Baja la resolución por escalones hasta que el conjunto entre en `disponible`.
+   Rehace cada foto desde el archivo original, así que no se degrada dos veces:
+   siempre se parte del mismo original, no de la versión ya achicada. */
+async function ajustarFotosAlTope(fotos, disponible, contId, tipo) {
+    if (pesoFotos(fotos) <= disponible) return true;
+    const cont = contId ? document.getElementById(contId) : null;
+    if (cont) cont.innerHTML = '<div class="nota-info" style="flex-basis:100%;">⏳ Preparando tus fotos ' +
+                               'para que viajen con el pedido…</div>';
+    adjuntosEnProceso++;
+    try {
+        for (const lado of [1600, 1400, 1200, 1000]) {
+            for (const f of fotos) {
+                /* Sin el archivo original no hay de dónde rehacerla, y una foto
+                   recortada a mano perdería el recorte. */
+                if (!f || !f.file || f.recortada || f.lado <= lado) continue;
+                const nueva = await comprimirFoto(f.file, lado);
+                if (nueva) { f.url = nueva.url; f.lado = nueva.lado; }
+            }
+            if (pesoFotos(fotos) <= disponible) break;
+        }
+    } finally {
+        adjuntosEnProceso--;
+    }
+    if (cont) renderThumbs(contId, fotos, tipo);
+    return pesoFotos(fotos) <= disponible;
+}
+
 /* Preparar 10 fotos lleva unos segundos: si el cliente toca "Agregar al carrito"
    mientras tanto, el ítem se guardaría sin ellas. Este contador lo evita. */
 let adjuntosEnProceso = 0;
@@ -7790,20 +7928,27 @@ function adjuntosPendientes() {
 
 function adjuntarSim(ev)  { leerAdjuntos(ev, adjuntosSim, "thumbs-sim", "sim", recalcularSim); }
 function adjuntarSouv(ev) { leerAdjuntos(ev, adjuntosSouv, "thumbs-souv", "souv", null); }
-async function leerAdjuntos(ev, destino, contId, tipo, onDone) {
+/* La promo lleva su propio tope: son 30 copias, más que el máximo por producto
+   del resto de la tienda (ver agregarPromoAlCarrito). */
+function adjuntarPromo(ev) {
+    leerAdjuntos(ev, adjuntosPromo, "thumbs-promo", "promo", actualizarPromo, topeFotosPromo());
+}
+/* maxFotos: cuántas acepta ESTE destino. Sin él vale el máximo por producto. */
+async function leerAdjuntos(ev, destino, contId, tipo, onDone, maxFotos) {
     const files = [...ev.target.files];
     ev.target.value = "";
     if (!files.length) return;
 
-    const lugar = MAX_FOTOS_ITEM - destino.length;
+    const tope = maxFotos || MAX_FOTOS_ITEM;
+    const lugar = tope - destino.length;
     if (lugar <= 0) {
-        alert("Podés adjuntar hasta " + MAX_FOTOS_ITEM + " fotos por producto.\n\n" +
+        alert("Podés adjuntar hasta " + tope + " fotos acá.\n\n" +
               "Si necesitás más, agregá otro ítem al carrito o mandálas por WhatsApp.");
         return;
     }
     const aProcesar = files.slice(0, lugar);
     if (files.length > lugar) {
-        alert("Se agregan las primeras " + lugar + " fotos (el máximo es " + MAX_FOTOS_ITEM + " por producto).");
+        alert("Se agregan las primeras " + lugar + " fotos (el máximo es " + tope + " acá).");
     }
 
     const cont = document.getElementById(contId);
@@ -7891,6 +8036,7 @@ function quitarAdjunto(tipo, i) {
     if (tipo === "sim")  { adjuntosSim.splice(i, 1);  renderThumbs("thumbs-sim", adjuntosSim, "sim"); recalcularSim(); }
     if (tipo === "souv") { adjuntosSouv.splice(i, 1); renderThumbs("thumbs-souv", adjuntosSouv, "souv"); }
     if (tipo === "ficha") { adjuntosFicha.splice(i, 1); renderThumbs("thumbs-ficha", adjuntosFicha, "ficha"); recalcularFicha(); }
+    if (tipo === "promo") { adjuntosPromo.splice(i, 1); renderThumbs("thumbs-promo", adjuntosPromo, "promo"); actualizarPromo(); }
 }
 
 /* =========================================================
