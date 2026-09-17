@@ -173,6 +173,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .intro .btn-menu:nth-of-type(2) { animation: intro-der    .85s cubic-bezier(0.25, 1, 0.5, 1) .54s both; }
     .intro .btn-menu:nth-of-type(3) { animation: intro-izq    .85s cubic-bezier(0.25, 1, 0.5, 1) .70s both; }
     .intro .btn-menu:nth-of-type(4) { animation: intro-der    .85s cubic-bezier(0.25, 1, 0.5, 1) .86s both; }
+    .intro .btn-menu:nth-of-type(5) { animation: intro-izq    .85s cubic-bezier(0.25, 1, 0.5, 1) 1.02s both; }
     @media (prefers-reduced-motion: reduce) { .intro h1, .intro > p, .intro .btn-menu { animation: none; } }
     h1 { font-size: 26px; color: var(--color-principal); margin: 0 0 6px; }
     h2 { font-size: 22px; color: var(--color-principal); margin: 0 0 20px; }
@@ -261,6 +262,41 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .btn-menu { padding: 14px 12px; font-size: 16px; margin-bottom: 10px; }
         .caja-inicio { padding: 12px 12px 4px; }
     }
+    /* ===== Recuerdo escolar =====
+       La propuesta para colegios, en el mismo tono que el volante impreso. */
+    .rec-tit { font-family: 'Bebas Neue', system-ui, sans-serif; font-weight: normal; letter-spacing: .5px;
+        font-size: 34px; line-height: 1; color: #1e3a8a; margin: 4px 0 0; }
+    .rec-tit span { display: block; color: #e11d48; font-size: 38px; }
+    .rec-sub { display: inline-block; font-family: 'Caveat', cursive; font-size: 22px; font-weight: bold;
+        color: #1e3a8a; background: #fde047; padding: 0 14px; border-radius: 6px; margin: 6px 0 16px; }
+    .rec-op { border: 2px dashed #93c5fd; background: #eff6ff; border-radius: 14px; padding: 12px 14px 14px;
+        margin-bottom: 14px; }
+    .rec-op.b { border-color: #86efac; background: #f0fdf4; }
+    .rec-op .rec-letra { display: inline-block; font-family: 'Bebas Neue', system-ui, sans-serif; font-size: 22px;
+        color: #fff; background: #2563eb; padding: 1px 14px; border-radius: 8px; transform: rotate(-2deg); }
+    .rec-op.b .rec-letra { background: #16a34a; }
+    .rec-op .rec-prod { font-family: 'Bebas Neue', system-ui, sans-serif; font-size: 26px; line-height: 1.1;
+        color: #fff; background: #e11d48; border-radius: 8px; padding: 4px 10px; margin: 8px 0; }
+    .rec-op .rec-diseno { font-size: 13px; font-weight: bold; color: #1e3a8a; background: #fef08a;
+        display: inline-block; padding: 2px 10px; border-radius: 6px; margin-bottom: 6px; }
+    .rec-op p { margin: 0; color: #1e3a8a; font-size: 15px; }
+    .rec-nota { background: #fefce8; border: 2px solid #fde68a; border-radius: 14px; padding: 10px 14px;
+        margin-bottom: 14px; color: #1e3a8a; font-size: 15px; text-align: left; }
+    .rec-nota b.et { color: #fff; background: #e11d48; border-radius: 6px; padding: 1px 8px; margin-right: 4px; }
+    .rec-pago { background: #fdf2f8; border: 2px solid #fbcfe8; border-radius: 14px; padding: 12px 14px;
+        margin-bottom: 14px; text-align: left; }
+    .rec-pago h3 { margin: 0 0 8px; font-size: 17px; color: #e11d48; }
+    .rec-paso { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; color: #1e3a8a; font-size: 15px; line-height: 1.4; }
+    .rec-paso:last-child { margin-bottom: 0; }
+    .rec-paso .n { flex: 0 0 28px; height: 28px; border-radius: 50%; color: #fff; font-weight: bold;
+        display: flex; align-items: center; justify-content: center; background: #f59e0b; }
+    .rec-paso .n.v { background: #16a34a; }
+    .rec-paso u { text-decoration-color: #e11d48; text-decoration-thickness: 2px; font-weight: bold; }
+    .rec-aviso { background: #2563eb; color: #fff; font-weight: bold; border-radius: 12px; padding: 10px 12px;
+        margin-bottom: 14px; font-size: 14px; letter-spacing: .3px; }
+    .rec-pie { font-size: 13px; color: #64748b; margin: 10px 0 0; }
+    .btn-agregar.rec-wa { text-decoration: none; display: block; box-sizing: border-box; }
+
     .btn-secundario { background: #64748b; box-shadow: 0 4px 6px rgba(100,116,139,.2); }
     .btn-secundario:hover { background: #475569; }
 
@@ -2954,6 +2990,7 @@ z"></path></g>
         <p class="caja-titulo">¿Qué querés hacer?</p>
 <button class="btn-menu" onclick="irAPedido()">🛒 Empezar mi pedido</button>
     <button class="btn-menu" onclick="abrirCatalogoCompleto()">🗂️ Ver catálogo completo</button>
+    <button class="btn-menu" onclick="abrirRecuerdoEscolar()">🎒 Recuerdo Escolar</button>
     <button class="btn-menu" onclick="window.location.href='https://digitalflashtw.wordpress.com/eventos/'">🥳 Ver fotos de eventos sociales</button>
     <button class="btn-menu" onclick="abrirDonde()">📍 Dónde estamos y envíos</button>
     </div>
@@ -3032,6 +3069,46 @@ z"></path></g>
         <div id="packs-grid"></div>
         <div id="pack-detalle" class="pack-detalle oculto"></div>
     </div>
+</div>
+
+<!-- RECUERDO ESCOLAR: la propuesta para colegios (primaria y jardín).
+     Es el volante impreso pasado a la web. Si cambian los precios, se cambian
+     acá a mano: no salen de la hoja. -->
+<div id="p-recuerdo" class="pantalla oculto">
+    <div class="barra-sup">
+        <button class="btn-volver" onclick="mostrar(&#39;p-bienvenida&#39;)">⬅ Volver</button>
+        <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-recuerdo">0</span>)</button>
+    </div>
+    <h2 class="rec-tit">📸 Presupuesto <span>Recuerdo Escolar</span></h2>
+    <div class="rec-sub">— Primaria y Jardín —</div>
+
+    <div class="rec-op">
+        <span class="rec-letra">Opción A</span>
+        <div class="rec-prod">Carpeta 15x21 = <span style="white-space:nowrap">$ 14.000</span></div>
+        <div class="rec-diseno">✨ Diseño personalizado</div>
+        <p>Consta de 2 fotografías, una grupal y otra individual, con el nombre del niño / niña, nombre del colegio, año y curso y/o sala.</p>
+    </div>
+
+    <div class="rec-op b">
+        <span class="rec-letra">Opción B</span>
+        <div class="rec-prod">Foto 15x21 doble faz = <span style="white-space:nowrap">$ 7.000</span></div>
+        <div class="rec-diseno">✨ Diseño personalizado</div>
+        <p>De un lado, la foto grupal de los alumnos; del otro, los datos del colegio (logo), año y curso.</p>
+    </div>
+
+    <div class="rec-nota"><b class="et">NOTA</b> De <b>REGALO</b> un llavero acrílico doble imagen con fotos del alumno/a ❤️</div>
+
+    <div class="rec-pago">
+        <h3>💳 Forma de pago</h3>
+        <div class="rec-paso"><span class="n">1</span><span>Al retirar y pagar el Recuerdo Escolar en el colegio, la institución recibirá un <u>20%</u> del valor abonado.</span></div>
+        <div class="rec-paso"><span class="n v">2</span><span>Los papás pueden pagar y retirar en nuestro local (valor sin descuento).</span></div>
+    </div>
+
+    <div class="rec-aviso">El copiado de carpetas se realiza después de recibido el pago</div>
+
+    <a class="btn-agregar rec-wa" id="recuerdo-wa" href="#" target="_blank" rel="noopener noreferrer"
+       onclick="medir('consulta_recuerdo_escolar', {})">🟢 Consultar por WhatsApp</a>
+    <p class="rec-pie">Trelew Flash · Belgrano 386 · WhatsApp 2804 69-6961<br>Presupuesto del 02/09/2026</p>
 </div>
 
 <!-- CATÁLOGO (market) -->
@@ -4076,6 +4153,14 @@ function listaLegible(nombres) {
 
 /* Arma la pantalla con lo de arriba. El mapa se inserta recién acá (y una sola
    vez) para no cargar Google en la visita de alguien que nunca entra a verlo. */
+/* Recuerdo escolar: el contenido es fijo en el HTML; acá solo se arma el
+   enlace de WhatsApp con el mensaje ya escrito. */
+function abrirRecuerdoEscolar() {
+    const wa = document.getElementById("recuerdo-wa");
+    if (wa) wa.href = "https://wa.me/" + TELEFONO_WA + "?text=" +
+        encodeURIComponent("Hola! Quería consultar por el Recuerdo Escolar para un colegio.");
+    mostrar("p-recuerdo");
+}
 function abrirDonde() {
     const dir = document.getElementById("donde-direccion");
     if (dir) dir.innerHTML = "<b>" + escHtml(LOCAL.direccion) + "</b><br>" + escHtml(LOCAL.ciudad);
@@ -4354,7 +4439,8 @@ const NOMBRE_PANTALLA = {
     "p-evento-form": "Consulta de evento",
     "p-carrito":     "Carrito",
     "p-promos":      "Promos",
-    "p-donde":       "Dónde estamos y envíos"
+    "p-donde":       "Dónde estamos y envíos",
+    "p-recuerdo":    "Recuerdo escolar"
 };
 
 /* =========================================================
@@ -5820,7 +5906,8 @@ const TITULO_SECCION = {
     "p-taza":          "Tazas personalizadas de Trelewflash",
     "p-eventos":       "Fotos de eventos de Trelewflash",
     "p-promos":        "La promo de 30 fotos de Trelewflash",
-    "p-donde":         "Dónde estamos y a dónde enviamos"
+    "p-donde":         "Dónde estamos y a dónde enviamos",
+    "p-recuerdo":      "Recuerdo Escolar de Trelewflash"
 };
 /* Qué dice el botón en cada pantalla. El carrito no está: compartir el enlace
    no comparte el pedido (el carrito vive en la memoria del navegador de cada
@@ -5837,7 +5924,8 @@ const BOTON_COMPARTIR = {
     "p-taza":          "📲 Compartir las tazas",
     "p-eventos":       "📲 Compartir esta sección",
     "p-promos":        "📲 Compartir la promo",
-    "p-donde":         "📲 Compartir la dirección"
+    "p-donde":         "📲 Compartir la dirección",
+    "p-recuerdo":      "📲 Compartir la propuesta"
 };
 /* Lo pone mostrar() al final de la pantalla, una sola vez. Antes estaba escrito
    a mano en el HTML de cada una, que era la forma segura de que a la próxima
@@ -6409,7 +6497,8 @@ const SECCION_URL = {
     "p-eventos":       "eventos",
     "p-carrito":       "carrito",
     "p-promos":        "promos",
-    "p-donde":         "donde"
+    "p-donde":         "donde",
+    "p-recuerdo":      "recuerdo-escolar"
 };
 /* Pantallas que son un PASO adentro de otra: no tienen dirección propia porque
    dependen de algo que el cliente eligió un momento antes y que al refrescar ya
@@ -6475,6 +6564,7 @@ function abrirPantallaDeUrl(pantalla, params) {
         case "p-taza":      abrirTaza(); return;
         case "p-donde":     abrirDonde(); return;
         case "p-promos":    abrirPromos(); return;
+        case "p-recuerdo":  abrirRecuerdoEscolar(); return;
         case "p-simulador": {
             /* Sin grupo válido no hay nada que simular: se queda un paso atrás,
                en la pantalla donde se elige el tamaño. */
@@ -8137,7 +8227,7 @@ function quitarAdjunto(tipo, i) {
 function actualizarBadges() {
     ["badge-menu", "badge-cat", "badge-sim", "badge-souv", "badge-souv-2", "badge-taza", "badge-catmenu",
      "badge-catalogo", "badge-albumes", "badge-stickers", "badge-ficha", "badge-donde",
-     "badge-promos"].forEach(id => {
+     "badge-promos", "badge-recuerdo"].forEach(id => {
         const el = document.getElementById(id); if (el) el.innerText = carrito.length;
     });
 }
