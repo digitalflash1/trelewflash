@@ -269,6 +269,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .rec-tit span { display: block; color: #e11d48; font-size: 38px; }
     .rec-sub { display: inline-block; font-family: 'Caveat', cursive; font-size: 22px; font-weight: bold;
         color: #1e3a8a; background: #fde047; padding: 0 14px; border-radius: 6px; margin: 6px 0 16px; }
+    .rec-video-tit { font-weight: bold; color: #1e3a8a; font-size: 16px; margin-bottom: 8px; }
+    /* Short de YouTube: 9:16. Con max-width no ocupa toda la pantalla de alto en la compu. */
+    .rec-video { position: relative; width: 100%; max-width: 300px; aspect-ratio: 9 / 16; margin: 0 auto 16px;
+        border-radius: 14px; overflow: hidden; background: #111; box-shadow: 0 6px 18px rgba(0,0,0,.18); }
+    .rec-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+    .rec-video > a { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        color: #fff; font-weight: bold; text-decoration: none; }
     .rec-op { border: 2px dashed #93c5fd; background: #eff6ff; border-radius: 14px; padding: 12px 14px 14px;
         margin-bottom: 14px; }
     .rec-op.b { border-color: #86efac; background: #f0fdf4; }
@@ -294,6 +301,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .rec-paso u { text-decoration-color: #e11d48; text-decoration-thickness: 2px; font-weight: bold; }
     .rec-aviso { background: #2563eb; color: #fff; font-weight: bold; border-radius: 12px; padding: 10px 12px;
         margin-bottom: 14px; font-size: 14px; letter-spacing: .3px; }
+    .rec-confian { margin-top: 18px; background: #eff6ff; border: 2px solid #bfdbfe; border-radius: 14px; padding: 14px; }
+    .rec-confian h3 { margin: 0 0 4px; font-size: 18px; color: #1e3a8a; }
+    .rec-confian > p { margin: 0 0 10px; font-size: 14px; }
+    .rec-confian h4 { margin: 10px 0 8px; font-size: 15px; color: #e11d48; }
+    .rec-confian ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+    .rec-confian li { background: #fff; border: 1px solid #bfdbfe; border-radius: 999px; padding: 5px 12px;
+        font-size: 14px; font-weight: bold; color: #1e3a8a; }
     .rec-pie { font-size: 13px; color: #64748b; margin: 10px 0 0; }
     .btn-agregar.rec-wa { text-decoration: none; display: block; box-sizing: border-box; }
 
@@ -3082,6 +3096,13 @@ z"></path></g>
     <h2 class="rec-tit">📸 Presupuesto <span>Recuerdo Escolar</span></h2>
     <div class="rec-sub">— Primaria y Jardín —</div>
 
+    <!-- Video de las carpetas (un Short, vertical). El iframe lo pone
+         abrirRecuerdoEscolar(); si YouTube no carga, queda el enlace. -->
+    <div class="rec-video-tit">🎬 Mirá cómo quedan las carpetas</div>
+    <div class="rec-video" id="recuerdo-video">
+        <a class="mapa-espera" href="https://youtube.com/shorts/B18_26Qs1g4" target="_blank" rel="noopener noreferrer">▶ Ver el video en YouTube</a>
+    </div>
+
     <div class="rec-op">
         <span class="rec-letra">Opción A</span>
         <div class="rec-prod">Carpeta 15x21 = <span style="white-space:nowrap">$ 14.000</span></div>
@@ -3108,6 +3129,31 @@ z"></path></g>
 
     <a class="btn-agregar rec-wa" id="recuerdo-wa" href="#" target="_blank" rel="noopener noreferrer"
        onclick="medir('consulta_recuerdo_escolar', {})">🟢 Consultar por WhatsApp</a>
+    <div class="rec-confian">
+        <h3>🤝 Confiaron en nosotros</h3>
+        <p>Escuelas y jardines de Trelew que ya tienen su Recuerdo Escolar.</p>
+        <h4>🏫 Escuelas</h4>
+        <ul>
+            <li>Escuela N° 40</li>
+            <li>Escuela N° 64</li>
+            <li>Escuela N° 195</li>
+            <li>Escuela del Sol</li>
+            <li>Instituto María Auxiliadora</li>
+        </ul>
+        <h4>🧸 Jardines</h4>
+        <ul>
+            <li>Jardín N° 405</li>
+            <li>Jardín N° 412</li>
+            <li>Jardín N° 425</li>
+            <li>Jardín N° 429</li>
+            <li>Jardín N° 433</li>
+            <li>Jardín N° 437</li>
+            <li>Jardín N° 492</li>
+            <li>Jardín Pichi Ayelén</li>
+            <li>Jardín del Sol</li>
+        </ul>
+    </div>
+
     <p class="rec-pie">Trelew Flash · Belgrano 386 · WhatsApp 2804 69-6961<br>Presupuesto del 02/09/2026</p>
 </div>
 
@@ -4151,16 +4197,31 @@ function listaLegible(nombres) {
     return nombres.slice(0, -1).join(", ") + " y " + nombres[nombres.length - 1];
 }
 
-/* Arma la pantalla con lo de arriba. El mapa se inserta recién acá (y una sola
-   vez) para no cargar Google en la visita de alguien que nunca entra a verlo. */
-/* Recuerdo escolar: el contenido es fijo en el HTML; acá solo se arma el
-   enlace de WhatsApp con el mensaje ya escrito. */
+/* Recuerdo escolar: el contenido es fijo en el HTML; acá se arma el enlace de
+   WhatsApp con el mensaje ya escrito y se inserta el video.
+   El iframe entra recién al abrir la pantalla (y una sola vez), igual que el
+   mapa: YouTube no se carga en la visita de alguien que nunca llega acá. Va por
+   youtube-nocookie, que no deja cookies hasta que se le da play. */
+const VIDEO_RECUERDO = "B18_26Qs1g4";
 function abrirRecuerdoEscolar() {
     const wa = document.getElementById("recuerdo-wa");
     if (wa) wa.href = "https://wa.me/" + TELEFONO_WA + "?text=" +
         encodeURIComponent("Hola! Quería consultar por el Recuerdo Escolar para un colegio.");
+    const caja = document.getElementById("recuerdo-video");
+    if (caja && !caja.querySelector("iframe")) {
+        const marco = document.createElement("iframe");
+        marco.src = "https://www.youtube-nocookie.com/embed/" + VIDEO_RECUERDO + "?rel=0&playsinline=1";
+        marco.title = "Así quedan las carpetas del Recuerdo Escolar";
+        marco.allow = "accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen";
+        marco.allowFullscreen = true;
+        marco.referrerPolicy = "strict-origin-when-cross-origin";
+        caja.innerHTML = "";
+        caja.appendChild(marco);
+    }
     mostrar("p-recuerdo");
 }
+/* Arma la pantalla con lo de arriba. El mapa se inserta recién acá (y una sola
+   vez) para no cargar Google en la visita de alguien que nunca entra a verlo. */
 function abrirDonde() {
     const dir = document.getElementById("donde-direccion");
     if (dir) dir.innerHTML = "<b>" + escHtml(LOCAL.direccion) + "</b><br>" + escHtml(LOCAL.ciudad);
@@ -8723,6 +8784,10 @@ const NOVEDADES = [
        ya viene dentro del banner, por eso no lleva titulo/texto. */
     { img: "assets/promo-30fotos.webp", imgFallback: "assets/promo-30fotos.jpg", emoji: "🔥",
       color: "#fdf2e0", accion: "promos", cta: "Ver la promo ➜" },
+    /* Recuerdo escolar: sin banner propio, es una tarjeta de color que lleva a
+       la pantalla con el presupuesto y el video. */
+    { emoji: "🎒", titulo: "Recuerdo Escolar", texto: "Carpetas y fotos personalizadas para primaria y jardín.",
+      color: "linear-gradient(135deg,#1e3a8a,#e11d48)", accion: "recuerdo", cta: "Ver la propuesta ➜" },
     /* Foto real: lleva recuadro de color detrás del texto (nov-cap) para separarlo
        de la imagen y que se lea. */
     { img: "assets/bienvenida.webp", imgFallback: "assets/bienvenida.jpg", emoji: "🎉", titulo: "¡Bienvenido a Trelewflash!", texto: "Revelado, souvenirs y regalos con tu foto.", color: "linear-gradient(135deg,#4a4a00,#9a9a1e)" },
@@ -8958,6 +9023,7 @@ function abrirNovedad(n) {
     if (!n || !n.accion) return;
     medir("novedad_tocada", { novedad: n.accion });
     if (n.accion === "promos") abrirPromos();
+    if (n.accion === "recuerdo") abrirRecuerdoEscolar();
 }
 function irNovedad(i) { novIdx = (i + NOVEDADES.length) % NOVEDADES.length; aplicarNov(); }
 function nextNov() { irNovedad(novIdx + 1); reiniciarAutoNov(); }
