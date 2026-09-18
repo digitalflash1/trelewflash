@@ -950,6 +950,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         padding: 7px 13px; border-radius: 20px; cursor: pointer;
         box-shadow: 0 3px 9px rgba(0,0,0,.28); animation: nov-cta-late 2.6s ease-in-out infinite; }
     .slide-nov .nov-cta:hover { background: var(--color-boton-hover); }
+    /* Novedad con leyenda Y botón: el botón deja de flotar y entra adentro de
+       la leyenda. Suelto abajo a la izquierda le caía justo encima del texto.
+       Van en UNA fila (título a la izquierda, botón a la derecha): apilados, en
+       un celular la leyenda se comía dos tercios de la tarjeta y de la foto no
+       quedaba nada para ver. */
+    .slide-nov .nov-cap.con-cta { display: flex; align-items: center; gap: 10px; }
+    .slide-nov .nov-cap.con-cta h3 { flex: 1; min-width: 0; }
+    .slide-nov .nov-cap .nov-cta { position: static; flex: 0 0 auto; }
     @keyframes nov-cta-late { 0%, 88%, 100% { transform: scale(1); } 94% { transform: scale(1.07); } }
     @media (prefers-reduced-motion: reduce) { .slide-nov .nov-cta { animation: none; } }
 </style>
@@ -8829,9 +8837,17 @@ const NOVEDADES = [
        ya viene dentro del banner, por eso no lleva titulo/texto. */
     { img: "assets/promo-30fotos.webp", imgFallback: "assets/promo-30fotos.jpg", emoji: "🔥",
       color: "#fdf2e0", accion: "promos", cta: "Ver la promo ➜" },
-    /* Recuerdo escolar: sin banner propio, es una tarjeta de color que lleva a
-       la pantalla con el presupuesto y el video. */
-    { emoji: "🎒", titulo: "Recuerdo Escolar", texto: "Carpetas y fotos personalizadas para primaria y jardín.",
+    /* Recuerdo escolar: la portada de una carpeta, tal cual se entrega. Lleva a
+       la pantalla con el presupuesto y el video.
+       La portada es 10:7 y el carrusel 16:9: el asset ya viene encajado entero
+       sobre un fondo desenfocado de sí misma, para no recortarle el marco.
+       El cartel de abajo ("Jardín 0000…") es el de muestra, así que la leyenda
+       del carrusel le cae encima a propósito y dice de qué se trata. */
+    /* Sin `texto`: la leyenda va en una sola fila con el botón al lado. Los dos
+       renglones de antes ("Carpetas y fotos personalizadas…") ocupaban en un
+       celular más alto que la foto. Lo que falta contar ya está adentro. */
+    { img: "assets/recuerdo-escolar.webp", imgFallback: "assets/recuerdo-escolar.jpg",
+      emoji: "🎒", titulo: "Recuerdo Escolar",
       color: "linear-gradient(135deg,#1e3a8a,#e11d48)", accion: "recuerdo", cta: "Ver la propuesta ➜" },
     /* Foto real: lleva recuadro de color detrás del texto (nov-cap) para separarlo
        de la imagen y que se lea. */
@@ -9043,7 +9059,12 @@ function renderNovedades() {
             cta.type = "button"; cta.className = "nov-cta";
             cta.textContent = n.cta || "Ver más ➜";
             cta.onclick = ev => { ev.stopPropagation(); abrirNovedad(n); };
-            s.appendChild(cta);
+            /* Si la novedad tiene leyenda, el botón va adentro: flotando abajo
+               a la izquierda le quedaba encima del texto. Sin leyenda (los
+               banners, que ya traen todo dibujado) sigue flotando. */
+            const cap = s.querySelector(".nov-cap");
+            if (cap) cap.classList.add("con-cta");
+            (cap || s).appendChild(cta);
         }
         track.appendChild(s);
         const d = document.createElement("button"); d.type = "button";
