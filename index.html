@@ -4111,7 +4111,10 @@ async function agregarPromoAlCarrito() {
     });
     medir("agregar_al_carrito", {
         producto: "Promo " + op.cant + " fotos", variante: op.medida, cantidad: promoCant,
-        fotos_adjuntas: fotos.length, copias: copias, valor: totalCarrito(), moneda: "ARS"
+        /* value y currency, no "valor"/"moneda": son los nombres que GA4
+           reconoce. Con los otros el importe llegaba como un dato suelto y
+           este evento quedaba fuera del total de "agregar al carrito". */
+        fotos_adjuntas: fotos.length, copias: copias, value: totalCarrito(), currency: "ARS"
     });
 
     /* Las fotos ya son del ítem: si el cliente agrega otra promo, arranca de
@@ -4240,16 +4243,19 @@ function abrirDonde() {
     const lista = document.getElementById("donde-zonas");
     if (lista) {
         lista.innerHTML = "";
+        /* La PRIMERA zona con pueblos arranca abierta: si estuvieran todas
+           cerradas, la parte de envíos se vería como una lista de títulos y
+           nadie sabría que adentro están los precios. Se busca por contenido y
+           no por posición: atado al índice, agregar una zona arriba de "Valle"
+           abría la equivocada. */
+        const primeraConPueblos = ZONAS_ENVIO.findIndex(z => z.pueblos && z.pueblos.length);
         ZONAS_ENVIO.forEach((z, i) => {
             /* Las zonas con pueblos son desplegables; "Retiro en el local" no
                tiene nada adentro, así que queda como un renglón común. */
             const conPueblos = !!(z.pueblos && z.pueblos.length);
             const sec = document.createElement(conPueblos ? "details" : "div");
             sec.className = "zona-sec";
-            /* La primera zona arranca abierta: si estuvieran todas cerradas, la
-               parte de envíos se vería como una lista de títulos y nadie sabría
-               que adentro están los precios. */
-            if (conPueblos && i === 1) sec.open = true;
+            if (conPueblos && i === primeraConPueblos) sec.open = true;
             const cab = document.createElement(conPueblos ? "summary" : "div");
             cab.className = "zona-cab";
             const ic = document.createElement("span"); ic.className = "zona-ic"; ic.textContent = z.ic;
@@ -7796,34 +7802,61 @@ function elegirTipoTaza(t, botonEl) {
     botonEl.classList.add("activo");
     recalcularTaza();
 }
-function subirFotosTaza(ev) {
+/* Las fotos que entran al lienzo de la taza se reescalan igual que las del
+   resto de la tienda. Antes entraban tal cual salían del celular (4-8 MB cada
+   una) y de ahí viajaban al pedido: con tres fotos el POST se pasaba del tope
+   y enviarPedido() descartaba TODAS las imágenes del pedido, incluido el
+   diseño ya armado. 2400 px alcanza de sobra para el molde de 3150 px de
+   ancho y deja cada foto en menos de 1 MB.
+   Se procesan de a una (no en paralelo) por lo mismo que leerAdjuntos: diez
+   fotos grandes a la vez dejan el celular clavado. */
+const MAX_LADO_TAZA = 2400;
+async function subirFotosTaza(ev) {
     const lienzo = document.getElementById("lienzo-taza");
-    [...ev.target.files].forEach((file, k) => {
-        const reader = new FileReader();
-        reader.onload = e => {
+    const files = [...ev.target.files];
+    ev.target.value = "";
+    if (!files.length) return;
+    /* Mismo contador que los otros adjuntos: agregarTazaAlCarrito no puede
+       llevarse el diseño mientras todavía se están preparando las fotos. */
+    adjuntosEnProceso++;
+    try {
+        for (let k = 0; k < files.length; k++) {
+            const f = await comprimirFoto(files[k], MAX_LADO_TAZA);
+            if (!f) continue;
             const img = document.createElement("img");
-            img.src = e.target.result; img.className = "foto-taza";
+            img.src = f.url; img.className = "foto-taza";
             img.style.left = (12 + k * 18) + "px"; img.style.top = (12 + k * 18) + "px"; img.style.zIndex = ++zTop;
             hacerArrastrable(img); lienzo.appendChild(img); seleccionarFotoTaza(img);
-        };
-        reader.readAsDataURL(file);
-    });
-    ev.target.value = "";
+        }
+    } finally {
+        adjuntosEnProceso--;
+    }
 }
-function subirFondoTaza(ev) {
+async function subirFondoTaza(ev) {
     const file = ev.target.files[0]; ev.target.value = ""; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => agregarFondoElemento("lienzo-taza", e.target.result, "foto-taza");
-    reader.readAsDataURL(file);
+    adjuntosEnProceso++;
+    try {
+        const f = await comprimirFoto(file, MAX_LADO_TAZA);
+        if (f) agregarFondoElemento("lienzo-taza", f.url, "foto-taza");
+    } finally {
+        adjuntosEnProceso--;
+    }
 }
-function subirFondoCollage(ev) {
+async function subirFondoCollage(ev) {
     const file = ev.target.files[0]; ev.target.value = ""; if (!file) return;
     if (document.getElementById("lienzo-collage").classList.contains("oculto")) {
         alert("Primero elegí una plantilla para armar el diseño."); return;
     }
-    const reader = new FileReader();
-    reader.onload = e => agregarFondoElemento("lienzo-collage", e.target.result, "foto-collage");
-    reader.readAsDataURL(file);
+    adjuntosEnProceso++;
+    try {
+        /* El fondo del collage no viaja al pedido (va dentro del diseño que
+           arma snapshotCollage), pero sin comprimir se come la memoria del
+           celular mientras se lo mueve por el lienzo. */
+        const f = await comprimirFoto(file);
+        if (f) agregarFondoElemento("lienzo-collage", f.url, "foto-collage");
+    } finally {
+        adjuntosEnProceso--;
+    }
 }
 function agregarFondoElemento(lienzoId, url, clase) {
     const lienzo = document.getElementById(lienzoId);
@@ -7943,10 +7976,14 @@ function precioTazaActual() {
 function recalcularTaza() { document.getElementById("precio-taza").innerText = formatear(precioTazaActual()); }
 function agregarTazaAlCarrito() {
     if (!taza.tipo) return;
+    if (adjuntosPendientes()) return;
     if (!conDatosCliente(agregarTazaAlCarrito)) return;
     const cant = Math.max(1, parseInt(document.getElementById("in-cant-taza").value) || 1);
     const texto = document.getElementById("taza-texto").value.trim();
-    const fotos = [...document.querySelectorAll(".foto-taza:not(.es-fondo)")].map(img => ({ name: "foto-taza", url: img.src }));
+    /* Numeradas: si todas se llamaran igual, en la carpeta de Drive quedarían
+       cuatro archivos "foto-taza" y no habría forma de saber cuál es cuál. */
+    const fotos = [...document.querySelectorAll(".foto-taza:not(.es-fondo)")]
+        .map((img, i) => ({ name: "foto-taza-" + (i + 1) + ".jpg", url: img.src }));
     const partes = [fotos.length + " foto(s)"];
     if (taza.tieneFondo) partes.push("con fondo");
     if (texto) partes.push('texto: "' + texto + '" (letra ' + FUENTES[+document.getElementById("fuente-taza").value || 0].nombre + ')');
@@ -7997,6 +8034,12 @@ function abrirEventoForm(key) {
 }
 function enviarConsultaEvento() {
     const cfg = EVENTOS[eventoActual];
+    /* A esta pantalla se puede llegar por un enlace compartido (?ver=eventos),
+       que entra derecho sin pasar por el formulario de datos. Sin esta puerta
+       el mensaje salía con "Cliente:" y "WhatsApp:" vacíos y del otro lado no
+       había a quién contestarle. */
+    flujo = "eventos";
+    if (!conDatosCliente(enviarConsultaEvento)) return;
     const datos = [];
     cfg.campos.forEach(c => {
         const val = document.getElementById("ev-" + c.id).value.trim();
@@ -8210,7 +8253,9 @@ function renderThumbs(contId, arr, tipo) {
         '<div class="thumb' + (tipo === "sim" && f.texto ? ' con-texto' : '') + '"><img src="' + f.url + '">' +
         '<button onclick="quitarAdjunto(\'' + tipo + '\',' + i + ')">×</button>' +
         (tipo === "sim"
-            ? '<button class="btn-texto-foto" title="Agregar texto impreso (+$300)" onclick="editarTextoFoto(' + i + ')">📝</button>' +
+            /* El monto sale del catálogo, no escrito a mano: si en la hoja sube
+               el texto impreso, este cartelito quedaba diciendo el precio viejo. */
+            ? '<button class="btn-texto-foto" title="Agregar texto impreso (+' + formatear(COSTO_TEXTO_FOTO) + ')" onclick="editarTextoFoto(' + i + ')">📝</button>' +
               '<button class="btn-crop-foto" title="Recortar esta foto" onclick="recortarAdjunto(' + i + ')">✂</button>'
             : '') +
         (tipo === "promo"
