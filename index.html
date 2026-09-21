@@ -35,12 +35,15 @@ try {
      ensucien las grabaciones; hay que entrar una vez en cada aparato.
      Para deshacerlo: entrar con ?nomedir=0
      Va acá arriba a propósito: la marca tiene que estar puesta ANTES de que el
-     contenedor evalúe sus disparadores. -->
+     contenedor evalúe sus disparadores.
+     La misma marca apaga GA4 (ga-disable, el interruptor oficial de Google):
+     GA4 va directo por gtag y no pasa por la excepción del contenedor. -->
 <script>
 try {
     var _nm = new URLSearchParams(location.search).get('nomedir');
     if (_nm === '1') localStorage.setItem('tf_no_medir', '1');
     if (_nm === '0') localStorage.removeItem('tf_no_medir');
+    if (localStorage.getItem('tf_no_medir') === '1') window['ga-disable-G-7ZGZ6GP56R'] = true;
 } catch (e) { /* navegación privada */ }
 </script>
 
