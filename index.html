@@ -8247,6 +8247,7 @@ function cargarEventos(reintento) {
                                        .map(prepararEvento);
             estadoEventos = "listo";
             pintarEventos();
+            sumarEventosAlCarrusel();
             abrirEventoPendiente();
         })
         .catch(() => {
@@ -8475,6 +8476,27 @@ function cerrarVisorEvento() {
     const f = document.getElementById("evv-visor");
     if (f && f.src) f.src = "about:blank";
 }
+/* Los últimos eventos publicados, en el carrusel de la portada. Salen de la
+   hoja: publicar uno desde el admin lo pone acá solo, y el más viejo de los
+   tres se va. Van AL FINAL del carrusel: llegan unos segundos después de que
+   la portada ya está andando, y agregarlos adelante le correría la tarjeta a
+   quien la esté mirando. */
+const EVENTOS_EN_CARRUSEL = 3;
+let eventosEnCarrusel = false;
+function sumarEventosAlCarrusel() {
+    if (eventosEnCarrusel || !listaEventos || !listaEventos.length) return;
+    eventosEnCarrusel = true;
+    listaEventos.slice(0, EVENTOS_EN_CARRUSEL).forEach(e => NOVEDADES.push({
+        img: portadaEvento(e), imgFallback: miniaturaDrive(e.pdfs[0].id), emoji: "📸",
+        titulo: e.titulo, color: "linear-gradient(135deg,#1f2937,#4a4a00)",
+        accion: "evento", evento: e.id, cta: "Ver las fotos ➜"
+    }));
+    const actual = novIdx;
+    renderNovedades();
+    novIdx = actual; aplicarNov();
+    reiniciarAutoNov();
+}
+
 function volverAEventos() {
     cerrarVisorEvento();
     mostrar("p-eventos");
@@ -9553,9 +9575,10 @@ function aplicarNov() {
    `accion` a una pantalla: agregar un destino nuevo es agregar un `case`. */
 function abrirNovedad(n) {
     if (!n || !n.accion) return;
-    medir("novedad_tocada", { novedad: n.accion });
+    medir("novedad_tocada", { novedad: n.accion, evento: n.evento || "" });
     if (n.accion === "promos") abrirPromos();
     if (n.accion === "recuerdo") abrirRecuerdoEscolar();
+    if (n.accion === "evento") { abrirEventos(); abrirEvento(n.evento); }
 }
 function irNovedad(i) { novIdx = (i + NOVEDADES.length) % NOVEDADES.length; aplicarNov(); }
 function nextNov() { irNovedad(novIdx + 1); reiniciarAutoNov(); }
@@ -9568,6 +9591,10 @@ function reiniciarAutoNov() { clearInterval(novTimer); autoNov(); }
 function pausarAutoNov() { clearInterval(novTimer); novTimer = null; }
 (function initNov() {
     renderNovedades(); autoNov();
+    /* Los eventos del carrusel: se piden un rato después de abrir, cuando el
+       catálogo (que es lo que el cliente usa primero) ya salió. De paso la
+       galería queda cargada si después entra a verla. */
+    setTimeout(cargarEventos, 2500);
     const car = document.getElementById("carrusel-novedades");
     if (!car) return;
 
