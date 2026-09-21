@@ -600,6 +600,56 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .chip-filtro:hover { border-color: var(--color-wa); }
     .chip-filtro.activo { background: #e8f9ef; border-color: var(--color-wa); color: #128C7E; }
     .cat-vacio { font-size: 13.5px; color: #7a7a52; text-align: left; margin: 0; }
+    /* ===== Galería de eventos ===== */
+    .ev-buscador { position: relative; margin: 4px 0 10px; }
+    .ev-buscador input { width: 100%; padding: 12px 40px 12px 14px; font-size: 16px; border: 2px solid var(--gris-borde);
+        border-radius: 12px; background: #fff; font-family: inherit; -webkit-appearance: none; appearance: none; }
+    .ev-buscador input:focus { outline: none; border-color: var(--color-boton); }
+    .ev-buscador input::-webkit-search-cancel-button { display: none; }
+    .ev-limpiar { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px;
+        border: none; border-radius: 50%; background: #f1f1e6; color: #7a7a52; font-size: 14px; cursor: pointer; }
+    .ev-etiquetas { margin-bottom: 4px; }
+    .ev-resumen { font-size: 13px; color: #7a7a52; text-align: left; margin: 6px 0 10px; }
+    .ev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+    .ev-card { background: #fff; border: 2px solid var(--gris-borde); border-radius: 14px; overflow: hidden; padding: 0;
+        display: flex; flex-direction: column; text-align: left; cursor: pointer; font-family: inherit;
+        transition: transform .15s, box-shadow .15s; }
+    .ev-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,.10); }
+    /* La portada automática es la primera página del PDF (una hoja de
+       contactos, vertical): arriba lleva la franja del WhatsApp, así que se
+       recorta un poco más abajo, donde ya están las fotos. */
+    .ev-portada { aspect-ratio: 16 / 10; background: #f1f1e6; display: block; width: 100%;
+        object-fit: cover; object-position: center 40%; }
+    .ev-card .ev-cuerpo { padding: 10px 12px 12px; }
+    .ev-card .ev-tit { font-weight: bold; color: var(--color-principal); font-size: 15px; line-height: 1.25; }
+    .ev-card .ev-fecha { font-size: 12.5px; color: #7a7a52; margin-top: 4px; }
+    .ev-card .ev-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+    .ev-tag { font-size: 11px; font-weight: bold; color: #7a7a52; background: var(--gris-suave);
+        border: 1px solid var(--gris-borde); border-radius: 999px; padding: 2px 8px; }
+    .ev-mas { display: block; margin: 16px auto 0; }
+    .ev-vacio { grid-column: 1 / -1; font-size: 14px; color: #7a7a52; text-align: left; margin: 4px 0; }
+    .ev-planb { margin-top: 22px; padding: 14px; border: 2px dashed var(--gris-borde); border-radius: 14px;
+        background: var(--gris-suave); text-align: left; }
+    .ev-planb p { font-size: 13.5px; margin: 4px 0 10px; }
+    .ev-meta { font-size: 14px; color: #7a7a52; margin-top: -4px; }
+    .ev-pasos { text-align: left; font-size: 14px; line-height: 1.45; background: #fff; border: 2px solid var(--gris-borde);
+        border-radius: 12px; padding: 10px 14px 10px 32px; margin: 12px 0; }
+    .ev-pasos li + li { margin-top: 4px; }
+    /* El visor de Drive tarda varios segundos en pintar y mientras tanto es
+       transparente: el cartel de atrás avisa que viene, y el visor lo tapa. */
+    .ev-visor { position: relative; width: 100%; height: 72vh; min-height: 380px; max-height: 760px; border-radius: 12px;
+        overflow: hidden; background: #f1f1e6; border: 2px solid var(--gris-borde); }
+    .ev-visor::before { content: "⏳ Cargando las fotos…"; position: absolute; inset: 0; display: flex; align-items: center;
+        justify-content: center; color: #7a7a52; font-size: 14px; }
+    .ev-visor iframe { position: relative; width: 100%; height: 100%; border: 0; display: block; }
+    .ev-abrir { display: inline-block; margin: 8px 0 14px; font-size: 14px; color: #128C7E; font-weight: bold; }
+    .ev-wa { display: block; text-align: center; text-decoration: none; }
+    .ev-otros { margin-top: 12px; }
+    .ev-relacionados { margin-top: 22px; text-align: left; }
+    .ev-relacionados h3 { font-size: 16px; color: var(--color-principal); margin: 0 0 10px; }
+    .ev-relacionados .ev-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+    .ev-relacionados .ev-card .ev-tit { font-size: 13.5px; }
+
     /* Fila del botón de compartir, al pie de cada sección. */
     .fila-compartir { justify-content: center; margin: 18px 0 0; padding-top: 14px;
         border-top: 1px dashed var(--gris-borde); }
@@ -3030,7 +3080,7 @@ z"></path></g>
 <button class="btn-menu" onclick="irAPedido()">🛒 Empezar mi pedido</button>
     <button class="btn-menu" onclick="abrirCatalogoCompleto()">🗂️ Ver catálogo completo</button>
     <button class="btn-menu" onclick="abrirRecuerdoEscolar()">🎒 Recuerdo Escolar</button>
-    <button class="btn-menu" onclick="window.location.href='https://digitalflashtw.wordpress.com/eventos/'">🥳 Ver fotos de eventos sociales</button>
+    <button class="btn-menu" onclick="abrirEventos()">🥳 Ver fotos de eventos sociales</button>
     <button class="btn-menu" onclick="abrirDonde()">📍 Dónde estamos y envíos</button>
     </div>
 </div>
@@ -3588,10 +3638,58 @@ z"></path></g>
     <p style="font-size:12px;margin-top:10px;">La vista es una referencia. El local ajusta el diseño final y te envía una muestra antes de imprimir.</p>
 </div>
 
-<!-- EVENTOS: CATEGORÍAS -->
+<!-- EVENTOS: GALERÍA
+     La lista sale de la pestaña Eventos de la hoja (PEDIDOS_URL?accion=eventos),
+     que se carga desde el admin. Acá solo están los contenedores: todo lo que se
+     ve lo arma pintarEventos(). -->
 <div id="p-eventos" class="pantalla oculto">
-    <div class="barra-sup"><button class="btn-volver" onclick="mostrar(&#39;p-cliente&#39;)">⬅ Volver</button></div>
+    <div class="barra-sup"><button class="btn-volver" onclick="mostrar(&#39;p-bienvenida&#39;)">⬅ Volver</button></div>
     <h2>Fotos de eventos sociales</h2>
+    <p>Buscá tu evento, mirá las fotos y mandanos por WhatsApp los números de las que querés.</p>
+    <div class="ev-buscador">
+        <input type="search" id="ev-buscar" placeholder="🔍 Nombre, escuela, lugar o mes…" autocomplete="off"
+               oninput="alBuscarEventos()" aria-label="Buscar un evento">
+        <button type="button" id="ev-limpiar" class="ev-limpiar oculto" onclick="limpiarBusquedaEventos()" aria-label="Borrar la búsqueda">✕</button>
+    </div>
+    <div id="ev-etiquetas" class="cat-filtro-fila ev-etiquetas"></div>
+    <p id="ev-resumen" class="ev-resumen"></p>
+    <div id="ev-lista" class="ev-grid"></div>
+    <button type="button" id="ev-mas" class="btn-volver ev-mas oculto" onclick="verMasEventos()">Ver más eventos</button>
+    <div class="ev-planb">
+        <b>¿No encontrás tu evento?</b>
+        <p>Puede que todavía no esté publicado. Contanos cuál es y te buscamos las fotos.</p>
+        <button type="button" class="chip-filtro" onclick="mostrar(&#39;p-eventos-consulta&#39;)">💬 Consultar por mi evento</button>
+    </div>
+</div>
+
+<!-- EVENTOS: UN EVENTO
+     El visor de Drive del PDF con las fotos numeradas. Si el evento tiene varios
+     PDF (partes, turnos, días), se ve uno a la vez y se cambia con los chips:
+     doce visores de Drive juntos voltean cualquier celular. -->
+<div id="p-evento-ver" class="pantalla oculto">
+    <div class="barra-sup"><button class="btn-volver" onclick="volverAEventos()">⬅ Eventos</button></div>
+    <h2 id="evv-titulo">Evento</h2>
+    <p id="evv-meta" class="ev-meta"></p>
+    <div id="evv-etiquetas" class="cat-filtro-fila"></div>
+    <p id="evv-desc" class="oculto"></p>
+    <ol class="ev-pasos">
+        <li>Mirá las fotos y anotá el <b>número</b> que tiene cada una debajo (por ejemplo <b>DSC_5772</b>).</li>
+        <li>Tocá <b>Pedir por WhatsApp</b> y mandanos la lista.</li>
+    </ol>
+    <div id="evv-partes" class="cat-filtro-fila oculto"></div>
+    <div class="ev-visor"><iframe id="evv-visor" title="Fotos del evento" allow="fullscreen"></iframe></div>
+    <a id="evv-abrir" class="ev-abrir" target="_blank" rel="noopener">↗ Abrir las fotos en pantalla completa</a>
+    <a id="evv-wa" class="btn-agregar ev-wa" target="_blank" rel="noopener" onclick="medirPedidoEvento()">🟢 Pedir por WhatsApp</a>
+    <button type="button" class="btn-menu ev-otros" onclick="buscarOtrosEventos()">🔍 Buscar otros eventos</button>
+    <div id="evv-relacionados"></div>
+</div>
+
+<!-- EVENTOS: CONSULTA (plan B)
+     Para el que no encuentra su evento en la galería: elige el tipo y manda los
+     datos que recuerde por WhatsApp. -->
+<div id="p-eventos-consulta" class="pantalla oculto">
+    <div class="barra-sup"><button class="btn-volver" onclick="mostrar(&#39;p-eventos&#39;)">⬅ Volver</button></div>
+    <h2>Consultar por mi evento</h2>
     <p>Elegí el tipo de evento para que podamos buscar tus fotos.</p>
     <button class="btn-menu" onclick="abrirEventoForm(&#39;danzas&#39;)">💃 Danzas</button>
     <button class="btn-menu" onclick="abrirEventoForm(&#39;actos&#39;)">🎓 Actos escolares</button>
@@ -3601,7 +3699,7 @@ z"></path></g>
 
 <!-- EVENTOS: FORMULARIO -->
 <div id="p-evento-form" class="pantalla oculto">
-    <div class="barra-sup"><button class="btn-volver" onclick="mostrar(&#39;p-eventos&#39;)">⬅ Volver</button></div>
+    <div class="barra-sup"><button class="btn-volver" onclick="mostrar(&#39;p-eventos-consulta&#39;)">⬅ Volver</button></div>
     <h2 id="titulo-evento">Evento</h2>
     <p>Completá los datos que recuerdes; con eso buscamos tus fotos.</p>
     <div id="evento-campos"></div>
@@ -4577,6 +4675,8 @@ const NOMBRE_PANTALLA = {
     "p-ficha":       "Ficha de producto",
     "p-cliente":     "Datos del cliente",
     "p-eventos":     "Fotos de eventos",
+    "p-evento-ver":  "Un evento",
+    "p-eventos-consulta": "Consultar por un evento",
     "p-evento-form": "Consulta de evento",
     "p-carrito":     "Carrito",
     "p-promos":      "Promos",
@@ -5787,10 +5887,10 @@ function mostrar(id) {
 }
 /* El pedido arranca directo en el menú: los datos del cliente se piden recién
    al agregar el primer ítem al carrito (menos fricción, menos rebote).
-   El flujo de eventos sí los pide de entrada, porque no hay carrito: el mensaje
-   de WhatsApp se arma con esos datos y es lo único que se envía. */
+   Los eventos tampoco los piden de entrada: para mirar las fotos no hacen
+   falta. La consulta del plan B los pide al enviar. */
 function irAPedido() { flujo = "pedido"; mostrar("p-menu"); }
-function irAEventos() { flujo = "eventos"; mostrar("p-cliente"); }
+function irAEventos() { abrirEventos(); }
 
 /* ── Puerta de datos del cliente ──
    Devuelve true si ya están cargados. Si no, guarda la acción pendiente,
@@ -6064,6 +6164,7 @@ const BOTON_COMPARTIR = {
     "p-souvenirs":     "📲 Compartir los souvenirs",
     "p-taza":          "📲 Compartir las tazas",
     "p-eventos":       "📲 Compartir esta sección",
+    "p-evento-ver":    "📲 Compartir este evento",
     "p-promos":        "📲 Compartir la promo",
     "p-donde":         "📲 Compartir la dirección",
     "p-recuerdo":      "📲 Compartir la propuesta"
@@ -6088,8 +6189,12 @@ function pintarBotonCompartir(idPantalla) {
 }
 async function compartirSeccion(idPantalla) {
     const url = urlDeSeccion(idPantalla);
-    const titulo = TITULO_SECCION[idPantalla] || "Trelewflash";
-    const texto = titulo + " — mirá todos los diseños y pedí el tuyo";
+    const deEvento = idPantalla === "p-evento-ver" && eventoAbierto;
+    const titulo = deEvento ? "Fotos de «" + eventoAbierto.titulo + "»"
+                 : TITULO_SECCION[idPantalla] || "Trelewflash";
+    const texto = (idPantalla === "p-eventos" || deEvento)
+        ? titulo + " — buscá tus fotos y pedilas por WhatsApp"
+        : titulo + " — mirá todos los diseños y pedí el tuyo";
     medir("compartir_seccion", {
         seccion: SECCION_URL[idPantalla] || idPantalla,
         via: navigator.share ? "nativo" : "copiar"
@@ -6648,7 +6753,8 @@ const SECCION_URL = {
    mejor que volver al principio. */
 function pantallaConUrl(idPantalla) {
     if (idPantalla === "p-souv-modelo") return "p-souvenirs";
-    if (idPantalla === "p-evento-form") return "p-eventos";
+    if (idPantalla === "p-evento-form" || idPantalla === "p-eventos-consulta") return "p-eventos";
+    if (idPantalla === "p-evento-ver") return "p-eventos";
     if (idPantalla === "p-cliente") return (flujo === "eventos") ? "p-eventos" : "p-menu";
     return idPantalla;
 }
@@ -6656,6 +6762,9 @@ function urlDeSeccion(idPantalla) {
     const real = pantallaConUrl(idPantalla);
     const u = new URL(urlBase());
     u.searchParams.set("ver", SECCION_URL[real]);
+    /* Un evento es la galería más el evento abierto: «…?ver=eventos&evento=<id>».
+       Es el link que se manda a las familias. */
+    if (idPantalla === "p-evento-ver" && eventoAbierto) u.searchParams.set("evento", eventoAbierto.id);
     /* El simulador es la única que necesita un dato más para volver a armarse:
        sin el grupo no sabe si mostrar los chicos, los grandes o el collage. */
     if (real === "p-simulador" && grupoActualKey) u.searchParams.set("grupo", grupoActualKey);
@@ -6706,6 +6815,7 @@ function abrirPantallaDeUrl(pantalla, params) {
         case "p-donde":     abrirDonde(); return;
         case "p-promos":    abrirPromos(); return;
         case "p-recuerdo":  abrirRecuerdoEscolar(); return;
+        case "p-eventos":   abrirEventos(String((params && params.get("evento")) || "")); return;
         case "p-simulador": {
             /* Sin grupo válido no hay nada que simular: se queda un paso atrás,
                en la pantalla donde se elige el tamaño. */
@@ -7154,7 +7264,7 @@ function guardarCliente() {
         f();
         return;
     }
-    if (flujo === "eventos") { mostrar("p-eventos"); }
+    if (flujo === "eventos") { mostrar("p-eventos-consulta"); }
     else if (intencionCatalogo) { const ic = intencionCatalogo; intencionCatalogo = null; aplicarIntencionCatalogo(ic); }
     else { mostrar("p-menu"); }
 }
@@ -8087,7 +8197,304 @@ function agregarTazaAlCarrito() {
 }
 
 /* =========================================================
-   6) EVENTOS SOCIALES
+   6) EVENTOS SOCIALES · GALERÍA
+   Cada evento es un PDF de Drive (o varios) con las fotos numeradas. El
+   cliente lo mira acá, anota los números y los manda por WhatsApp.
+   La lista vive en la pestaña Eventos de la hoja y se carga desde el admin;
+   se pide recién cuando alguien entra a la sección, no con cada visita a la
+   tienda. Viene así desde el backend:
+     { id, fecha:"2026-09-21", titulo, etiquetas:[…], pdfs:[{rotulo, id}],
+       lugar?, portada?, descripcion? }
+   ========================================================= */
+const EVENTOS_POR_PAGINA = 24;
+const EVENTOS_CHIPS = 8;          // etiquetas más usadas que salen como botón
+let listaEventos = null;          // null = todavía no llegó
+let estadoEventos = "nuevo";      // nuevo | cargando | listo | error
+let filtroEventos = { texto: "", etiqueta: "" };
+let eventosVisibles = EVENTOS_POR_PAGINA;
+let eventoAbierto = null;
+let parteEvento = 0;
+let eventoPendiente = "";         // id que llegó por link y espera a la lista
+let scrollListaEventos = 0;
+let timerBuscarEventos = null;
+
+/* Puerta de la sección: el botón de la portada, ?ver=eventos y
+   ?ver=eventos&evento=<id>. */
+function abrirEventos(idEvento) {
+    flujo = "eventos";
+    if (idEvento) eventoPendiente = idEvento;
+    const input = document.getElementById("ev-buscar");
+    if (input && input.value !== filtroEventos.texto) input.value = filtroEventos.texto;
+    mostrar("p-eventos");
+    pintarEventos();
+    if (estadoEventos === "listo") abrirEventoPendiente();
+    else cargarEventos();
+}
+
+function cargarEventos(reintento) {
+    if (estadoEventos === "cargando" || estadoEventos === "listo") return;
+    if (!PEDIDOS_URL) { estadoEventos = "error"; pintarEventos(); return; }
+    estadoEventos = "cargando";
+    pintarEventos();
+    const ctrl = ("AbortController" in window) ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), 15000) : null;
+    fetch(PEDIDOS_URL + "?accion=eventos&t=" + Date.now(),
+          Object.assign({ cache: "no-store" }, ctrl ? { signal: ctrl.signal } : {}))
+        .then(r => r.json())
+        .then(data => {
+            if (!data || !data.ok || !Array.isArray(data.eventos)) throw new Error("sin eventos");
+            listaEventos = data.eventos.filter(e => e && e.id && Array.isArray(e.pdfs) && e.pdfs.length)
+                                       .map(prepararEvento);
+            estadoEventos = "listo";
+            pintarEventos();
+            abrirEventoPendiente();
+        })
+        .catch(() => {
+            estadoEventos = "nuevo";
+            /* Un reintento, como el catálogo: Apps Script frío suele fallar la
+               primera vez y andar a los dos segundos. */
+            if (!reintento) { setTimeout(() => cargarEventos(true), 2500); return; }
+            estadoEventos = "error";
+            pintarEventos();
+        })
+        .finally(() => { if (timer) clearTimeout(timer); });
+}
+
+/* Lo que se calcula una vez por evento: el texto donde busca el buscador y
+   la fecha escrita. Busca también por mes y año («agosto», «2025»). */
+function prepararEvento(e) {
+    e.etiquetas = Array.isArray(e.etiquetas) ? e.etiquetas : [];
+    e.fechaTexto = fechaLargaEvento(e.fecha);
+    e.buscar = normalizarTexto([e.titulo, e.lugar, e.etiquetas.join(" "), e.descripcion, e.fechaTexto].join(" "));
+    return e;
+}
+function fechaLargaEvento(iso) {
+    const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return "";
+    return Number(m[3]) + " de " + MESES[Number(m[2]) - 1].toLowerCase() + " de " + m[1];
+}
+function fechaCortaEvento(iso) {
+    const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? m[3] + "/" + m[2] + "/" + m[1] : "";
+}
+
+/* La portada elegida en el admin; si no hay, la primera página del primer PDF,
+   que Drive entrega como imagen a cualquiera si el archivo es público. */
+function miniaturaDrive(id) { return "https://lh3.googleusercontent.com/d/" + id + "=w640-rj"; }
+function portadaEvento(e) { return e.portada || miniaturaDrive(e.pdfs[0].id); }
+/* Si la portada cargada no abre (por ejemplo una foto de WordPress que ya no
+   está), se cae a la del PDF; y si esa tampoco, queda el fondo liso. */
+function portadaEventoFallo(img) {
+    const alt = img.getAttribute("data-alt");
+    if (alt && img.src !== alt) { img.src = alt; return; }
+    img.onerror = null;
+    img.style.visibility = "hidden";
+}
+
+function eventosFiltrados() {
+    if (!listaEventos) return [];
+    const palabras = normalizarTexto(filtroEventos.texto).split(/\s+/).filter(Boolean);
+    const etiqueta = normalizarTexto(filtroEventos.etiqueta);
+    return listaEventos.filter(e =>
+        (!etiqueta || e.etiquetas.some(t => normalizarTexto(t) === etiqueta)) &&
+        palabras.every(p => e.buscar.indexOf(p) !== -1));
+}
+
+function tarjetaEvento(e) {
+    const alt = miniaturaDrive(e.pdfs[0].id);
+    return '<button type="button" class="ev-card" data-id="' + escHtml(e.id) + '" onclick="abrirEvento(this.dataset.id)">' +
+        '<img class="ev-portada" loading="lazy" alt="" src="' + escHtml(portadaEvento(e)) + '"' +
+        (e.portada ? ' data-alt="' + escHtml(alt) + '"' : "") + ' onerror="portadaEventoFallo(this)">' +
+        '<span class="ev-cuerpo"><span class="ev-tit">' + escHtml(e.titulo) + '</span>' +
+        (e.fechaTexto ? '<span class="ev-fecha" style="display:block">' + escHtml(e.fechaTexto) + '</span>' : "") +
+        (e.etiquetas.length ? '<span class="ev-tags">' +
+            e.etiquetas.slice(0, 3).map(t => '<span class="ev-tag">' + escHtml(t) + '</span>').join("") + '</span>' : "") +
+        '</span></button>';
+}
+
+function pintarEventos() {
+    const lista = document.getElementById("ev-lista");
+    const resumen = document.getElementById("ev-resumen");
+    const mas = document.getElementById("ev-mas");
+    if (!lista) return;
+    document.getElementById("ev-limpiar").classList.toggle("oculto", !filtroEventos.texto);
+    pintarChipsEventos();
+    mas.classList.add("oculto");
+    if (!listaEventos) {
+        resumen.innerText = "";
+        lista.innerHTML = estadoEventos === "error"
+            ? '<p class="ev-vacio">No pudimos cargar los eventos. Revisá la conexión y ' +
+              '<button type="button" class="chip-filtro" onclick="cargarEventos()">↻ probá de nuevo</button></p>'
+            : '<p class="ev-vacio">⏳ Buscando eventos…</p>';
+        return;
+    }
+    const encontrados = eventosFiltrados();
+    const filtrando = filtroEventos.texto || filtroEventos.etiqueta;
+    const n = encontrados.length;
+    resumen.innerText = !filtrando
+        ? n + (n === 1 ? " evento publicado" : " eventos publicados") + ", los más nuevos primero."
+        : n ? n + (n === 1 ? " evento" : " eventos") +
+              (filtroEventos.texto ? " para «" + filtroEventos.texto.trim() + "»" : "") +
+              (filtroEventos.etiqueta ? " en " + filtroEventos.etiqueta : "") + "."
+            : "";
+    if (!n) {
+        lista.innerHTML = '<p class="ev-vacio">' + (filtrando
+            ? "No encontramos eventos con eso. Probá con menos palabras, con el número de la escuela o con el mes."
+            : "Todavía no hay eventos publicados.") + '</p>';
+        return;
+    }
+    lista.innerHTML = encontrados.slice(0, eventosVisibles).map(tarjetaEvento).join("");
+    mas.classList.toggle("oculto", n <= eventosVisibles);
+}
+
+/* Las etiquetas más usadas, como atajos. La elegida queda siempre a la vista
+   aunque sea de las raras (llegó tocándola desde un evento). */
+function pintarChipsEventos() {
+    const cont = document.getElementById("ev-etiquetas");
+    if (!listaEventos || !listaEventos.length) { cont.innerHTML = ""; return; }
+    const cuenta = {};
+    listaEventos.forEach(e => e.etiquetas.forEach(t => { cuenta[t] = (cuenta[t] || 0) + 1; }));
+    let top = Object.keys(cuenta).sort((a, b) => cuenta[b] - cuenta[a]).slice(0, EVENTOS_CHIPS);
+    const sel = filtroEventos.etiqueta;
+    if (sel && top.indexOf(sel) === -1) top = [sel].concat(top.slice(0, EVENTOS_CHIPS - 1));
+    cont.innerHTML = ['<button type="button" class="chip-filtro' + (sel ? "" : " activo") + '" data-t="">Todos</button>']
+        .concat(top.map(t => '<button type="button" class="chip-filtro' + (t === sel ? " activo" : "") +
+            '" data-t="' + escHtml(t) + '">' + escHtml(t) + '</button>')).join("");
+    cont.querySelectorAll("button").forEach(b => b.onclick = () => filtrarEventosPorEtiqueta(b.dataset.t));
+}
+
+function filtrarEventosPorEtiqueta(t) {
+    filtroEventos.etiqueta = (t && t !== filtroEventos.etiqueta) ? t : "";
+    eventosVisibles = EVENTOS_POR_PAGINA;
+    if (document.getElementById("p-eventos").classList.contains("oculto")) mostrar("p-eventos");
+    pintarEventos();
+}
+function alBuscarEventos() {
+    clearTimeout(timerBuscarEventos);
+    timerBuscarEventos = setTimeout(() => {
+        filtroEventos.texto = document.getElementById("ev-buscar").value;
+        eventosVisibles = EVENTOS_POR_PAGINA;
+        pintarEventos();
+    }, 150);
+}
+function limpiarBusquedaEventos() {
+    const input = document.getElementById("ev-buscar");
+    input.value = "";
+    filtroEventos.texto = "";
+    eventosVisibles = EVENTOS_POR_PAGINA;
+    pintarEventos();
+    input.focus();
+}
+function verMasEventos() {
+    eventosVisibles += EVENTOS_POR_PAGINA;
+    pintarEventos();
+}
+
+function abrirEventoPendiente() {
+    if (!eventoPendiente) return;
+    const id = eventoPendiente;
+    eventoPendiente = "";
+    if (listaEventos.some(e => e.id === id)) {
+        abrirEvento(id);
+        medir("abrir_evento_compartido", { evento: id });
+    } else {
+        avisoToast("Ese evento ya no está publicado. Buscalo en la lista o consultanos.", 5);
+    }
+}
+
+function abrirEvento(id) {
+    const e = (listaEventos || []).find(x => x.id === id);
+    if (!e) return;
+    const lista = document.getElementById("p-eventos");
+    if (!lista.classList.contains("oculto")) scrollListaEventos = window.scrollY;
+    eventoAbierto = e;
+    document.getElementById("evv-titulo").innerText = e.titulo;
+    document.getElementById("evv-meta").innerText = [e.fechaTexto, e.lugar].filter(Boolean).join(" · ");
+    const tags = document.getElementById("evv-etiquetas");
+    tags.innerHTML = e.etiquetas.map(t => '<button type="button" class="chip-filtro" data-t="' + escHtml(t) + '">' +
+        escHtml(t) + '</button>').join("");
+    tags.querySelectorAll("button").forEach(b => b.onclick = () => {
+        cerrarVisorEvento();
+        filtroEventos.texto = "";
+        document.getElementById("ev-buscar").value = "";
+        filtroEventos.etiqueta = "";
+        filtrarEventosPorEtiqueta(b.dataset.t);
+    });
+    const desc = document.getElementById("evv-desc");
+    desc.innerText = e.descripcion || "";
+    desc.classList.toggle("oculto", !e.descripcion);
+    const partes = document.getElementById("evv-partes");
+    partes.classList.toggle("oculto", e.pdfs.length < 2);
+    partes.innerHTML = e.pdfs.length < 2 ? "" : e.pdfs.map((p, i) =>
+        '<button type="button" class="chip-filtro" data-i="' + i + '">' + escHtml(p.rotulo || "Parte " + (i + 1)) + '</button>').join("");
+    partes.querySelectorAll("button").forEach(b => b.onclick = () => elegirParteEvento(Number(b.dataset.i)));
+    elegirParteEvento(0);
+    pintarRelacionados(e);
+    mostrar("p-evento-ver");
+    medir("ver_evento", { evento: e.id, partes: e.pdfs.length });
+}
+
+function elegirParteEvento(i) {
+    const e = eventoAbierto;
+    if (!e || !e.pdfs[i]) return;
+    parteEvento = i;
+    const pdf = e.pdfs[i];
+    document.getElementById("evv-visor").src = "https://drive.google.com/file/d/" + pdf.id + "/preview";
+    document.getElementById("evv-abrir").href = "https://drive.google.com/file/d/" + pdf.id + "/view";
+    document.querySelectorAll("#evv-partes button").forEach(b => b.classList.toggle("activo", Number(b.dataset.i) === i));
+    const rotulo = e.pdfs.length > 1 ? (pdf.rotulo || "Parte " + (i + 1)) : "";
+    const fecha = fechaCortaEvento(e.fecha);
+    const msg = "¡Hola Trelewflash! Quiero fotos del evento «" + e.titulo + "»" +
+        (fecha ? " (" + fecha + ")" : "") + (rotulo ? " — " + rotulo : "") + ".\n\nNúmeros de las fotos:\n";
+    document.getElementById("evv-wa").href = "https://wa.me/" + TELEFONO_WA + "?text=" + encodeURIComponent(msg);
+}
+function medirPedidoEvento() {
+    if (eventoAbierto) medir("pedir_fotos_evento", { evento: eventoAbierto.id, parte: parteEvento + 1 });
+}
+
+/* «Quizás te interese ver…»: los que comparten más etiquetas y, entre esos,
+   los más cercanos en fecha. */
+function pintarRelacionados(e) {
+    const cont = document.getElementById("evv-relacionados");
+    const propias = e.etiquetas.map(normalizarTexto);
+    const dist = x => Math.abs(new Date(x.fecha) - new Date(e.fecha)) || 0;
+    const otros = (listaEventos || []).filter(x => x.id !== e.id).map(x => ({
+        ev: x, comunes: x.etiquetas.filter(t => propias.indexOf(normalizarTexto(t)) !== -1).length
+    })).filter(o => o.comunes > 0 || !propias.length)
+      .sort((a, b) => (b.comunes - a.comunes) || (dist(a.ev) - dist(b.ev)))
+      .slice(0, 3).map(o => o.ev);
+    cont.className = otros.length ? "ev-relacionados" : "oculto";
+    cont.innerHTML = otros.length
+        ? '<h3>Quizás te interese ver…</h3><div class="ev-grid">' + otros.map(tarjetaEvento).join("") + '</div>'
+        : "";
+}
+
+/* Al salir del evento se apaga el visor: un visor de Drive abierto de fondo
+   sigue gastando memoria y datos del celular. */
+function cerrarVisorEvento() {
+    const f = document.getElementById("evv-visor");
+    if (f && f.src) f.src = "about:blank";
+}
+function volverAEventos() {
+    cerrarVisorEvento();
+    mostrar("p-eventos");
+    pintarEventos();
+    window.scrollTo(0, scrollListaEventos);
+}
+function buscarOtrosEventos() {
+    cerrarVisorEvento();
+    filtroEventos = { texto: "", etiqueta: "" };
+    eventosVisibles = EVENTOS_POR_PAGINA;
+    const input = document.getElementById("ev-buscar");
+    input.value = "";
+    mostrar("p-eventos");
+    pintarEventos();
+    input.focus();
+}
+
+/* =========================================================
+   6) EVENTOS SOCIALES · CONSULTA (plan B)
+   Para quien no encuentra su evento en la galería.
    ========================================================= */
 function abrirEventoForm(key) {
     eventoActual = key;
