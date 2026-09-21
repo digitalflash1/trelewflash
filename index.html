@@ -269,6 +269,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .rec-tit span { display: block; color: #e11d48; font-size: 38px; }
     .rec-sub { display: inline-block; font-family: 'Caveat', cursive; font-size: 22px; font-weight: bold;
         color: #1e3a8a; background: #fde047; padding: 0 14px; border-radius: 6px; margin: 6px 0 16px; }
+    /* Elección de nivel: hasta elegir no se ve el resto, y después solo lo del nivel elegido. */
+    .rec-elegi { margin: 0 0 8px; font-weight: bold; color: #1e3a8a; font-size: 16px; }
+    .rec-niveles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .rec-nivel { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 30px;
+        background: #eff6ff; border: 3px solid #93c5fd; border-radius: 14px; padding: 12px 6px; cursor: pointer;
+        color: #1e3a8a; transition: all .2s; font-family: inherit; }
+    .rec-nivel b { font-family: 'Bebas Neue', system-ui, sans-serif; font-weight: normal; font-size: 26px; letter-spacing: .5px; }
+    .rec-nivel.jardin { background: #fefce8; border-color: #fde047; }
+    .rec-nivel:hover { transform: translateY(-2px); }
+    .rec-nivel.activo { background: #2563eb; border-color: #1e3a8a; color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,.35); }
+    .rec-nivel.jardin.activo { background: #e11d48; border-color: #9f1239; box-shadow: 0 4px 12px rgba(225,29,72,.35); }
+    #p-recuerdo:not(.nivel-primaria):not(.nivel-jardin) .rec-cuerpo { display: none; }
+    #p-recuerdo:not(.nivel-primaria) .solo-primaria,
+    #p-recuerdo:not(.nivel-jardin) .solo-jardin { display: none; }
     .rec-video-tit { font-weight: bold; color: #1e3a8a; font-size: 16px; margin-bottom: 8px; }
     /* Short de YouTube: 9:16. Con max-width no ocupa toda la pantalla de alto en la compu. */
     .rec-video { position: relative; width: 100%; max-width: 300px; aspect-ratio: 9 / 16; margin: 0 auto 16px;
@@ -3104,18 +3118,46 @@ z"></path></g>
     <h2 class="rec-tit">📸 Presupuesto <span>Recuerdo Escolar</span></h2>
     <div class="rec-sub">— Primaria y Jardín —</div>
 
-    <div class="rec-op">
-        <span class="rec-letra">Opción A</span>
-        <div class="rec-prod">Carpeta 15x21 = <span style="white-space:nowrap">$ 14.000</span></div>
-        <div class="rec-diseno">✨ Diseño personalizado</div>
-        <p>Consta de 2 fotografías, una grupal y otra individual, con el nombre del niño / niña, nombre del colegio, año y curso y/o sala.</p>
+    <!-- Primero se elige el nivel; elegirNivelRecuerdo() le pone al panel la
+         clase nivel-primaria o nivel-jardin y el CSS muestra lo que va.
+         Cada nivel tiene sus opciones propias: si un día cambian los precios
+         de uno solo, se toca solo ese bloque. -->
+    <p class="rec-elegi" id="recuerdo-elegi">¿Para qué nivel es?</p>
+    <div class="rec-niveles">
+        <button type="button" class="rec-nivel" data-nivel="primaria" onclick="elegirNivelRecuerdo('primaria')">🏫<b>Primaria</b></button>
+        <button type="button" class="rec-nivel jardin" data-nivel="jardin" onclick="elegirNivelRecuerdo('jardin')">🧸<b>Jardín</b></button>
     </div>
 
-    <div class="rec-op b">
-        <span class="rec-letra">Opción B</span>
-        <div class="rec-prod">Foto 15x21 doble faz = <span style="white-space:nowrap">$ 7.000</span></div>
-        <div class="rec-diseno">✨ Diseño personalizado</div>
-        <p>De un lado, la foto grupal de los alumnos; del otro, los datos del colegio (logo), año y curso.</p>
+    <div class="rec-cuerpo">
+
+    <div class="solo-primaria">
+        <div class="rec-op">
+            <span class="rec-letra">Opción A</span>
+            <div class="rec-prod">Carpeta 15x21 = <span style="white-space:nowrap">$ 14.000</span></div>
+            <div class="rec-diseno">✨ Diseño personalizado</div>
+            <p>Consta de 2 fotografías, una grupal y otra individual, con el nombre del alumno / alumna, nombre de la escuela, año y grado.</p>
+        </div>
+        <div class="rec-op b">
+            <span class="rec-letra">Opción B</span>
+            <div class="rec-prod">Foto 15x21 doble faz = <span style="white-space:nowrap">$ 7.000</span></div>
+            <div class="rec-diseno">✨ Diseño personalizado</div>
+            <p>De un lado, la foto grupal de los alumnos; del otro, los datos de la escuela (logo), año y grado.</p>
+        </div>
+    </div>
+
+    <div class="solo-jardin">
+        <div class="rec-op">
+            <span class="rec-letra">Opción A</span>
+            <div class="rec-prod">Carpeta 15x21 = <span style="white-space:nowrap">$ 14.000</span></div>
+            <div class="rec-diseno">✨ Diseño personalizado</div>
+            <p>Consta de 2 fotografías, una grupal y otra individual, con el nombre del nene / nena, nombre del jardín, año y sala.</p>
+        </div>
+        <div class="rec-op b">
+            <span class="rec-letra">Opción B</span>
+            <div class="rec-prod">Foto 15x21 doble faz = <span style="white-space:nowrap">$ 7.000</span></div>
+            <div class="rec-diseno">✨ Diseño personalizado</div>
+            <p>De un lado, la foto grupal de la sala; del otro, los datos del jardín (logo), año y sala.</p>
+        </div>
     </div>
 
     <div class="rec-nota"><b class="et">NOTA</b> De <b>REGALO</b> un llavero acrílico doble imagen con fotos del alumno/a ❤️</div>
@@ -3139,17 +3181,18 @@ z"></path></g>
        onclick="medir('consulta_recuerdo_escolar', {})">🟢 Consultar por WhatsApp</a>
     <div class="rec-confian">
         <h3>🤝 Confiaron en nosotros</h3>
-        <p>Escuelas y jardines de Trelew que ya tienen su Recuerdo Escolar.</p>
-        <h4>🏫 Escuelas</h4>
-        <ul>
+        <p class="solo-primaria">Escuelas de Trelew que ya tienen su Recuerdo Escolar.</p>
+        <p class="solo-jardin">Jardines de Trelew que ya tienen su Recuerdo Escolar.</p>
+        <h4 class="solo-primaria">🏫 Escuelas</h4>
+        <ul class="solo-primaria">
             <li>Escuela N° 40</li>
             <li>Escuela N° 64</li>
             <li>Escuela N° 195</li>
             <li>Escuela del Sol</li>
             <li>Instituto María Auxiliadora</li>
         </ul>
-        <h4>🧸 Jardines</h4>
-        <ul>
+        <h4 class="solo-jardin">🧸 Jardines</h4>
+        <ul class="solo-jardin">
             <li>Jardín N° 405</li>
             <li>Jardín N° 412</li>
             <li>Jardín N° 425</li>
@@ -3161,6 +3204,8 @@ z"></path></g>
             <li>Jardín del Sol</li>
         </ul>
     </div>
+
+    </div><!-- /rec-cuerpo -->
 
     <p class="rec-pie">Trelew Flash · Belgrano 386 · WhatsApp 2804 69-6961<br>Presupuesto del 02/09/2026</p>
 </div>
@@ -4214,9 +4259,27 @@ function listaLegible(nombres) {
    mapa: YouTube no se carga en la visita de alguien que nunca llega acá. Va por
    youtube-nocookie, que no deja cookies hasta que se le da play. */
 const VIDEO_RECUERDO = "B18_26Qs1g4";
+/* Primaria o jardín: el panel lleva la clase del nivel y el CSS muestra lo que
+   corresponde. El mensaje de WhatsApp ya dice el nivel. */
+const NIVELES_RECUERDO = {
+    primaria: "Hola! Quería consultar por el Recuerdo Escolar para una escuela primaria.",
+    jardin:   "Hola! Quería consultar por el Recuerdo Escolar para un jardín."
+};
+function elegirNivelRecuerdo(nivel) {
+    const panel = document.getElementById("p-recuerdo");
+    if (!panel || !NIVELES_RECUERDO[nivel]) return;
+    panel.classList.remove("nivel-primaria", "nivel-jardin");
+    panel.classList.add("nivel-" + nivel);
+    panel.querySelectorAll(".rec-nivel").forEach(b => b.classList.toggle("activo", b.dataset.nivel === nivel));
+    const elegi = document.getElementById("recuerdo-elegi");
+    if (elegi) elegi.textContent = "Tocá el otro nivel para cambiar";
+    const wa = document.getElementById("recuerdo-wa");
+    if (wa) wa.href = "https://wa.me/" + TELEFONO_WA + "?text=" + encodeURIComponent(NIVELES_RECUERDO[nivel]);
+    medir("recuerdo_escolar_nivel", { nivel: nivel });
+}
 function abrirRecuerdoEscolar() {
     const wa = document.getElementById("recuerdo-wa");
-    if (wa) wa.href = "https://wa.me/" + TELEFONO_WA + "?text=" +
+    if (wa && wa.getAttribute("href") === "#") wa.href = "https://wa.me/" + TELEFONO_WA + "?text=" +
         encodeURIComponent("Hola! Quería consultar por el Recuerdo Escolar para un colegio.");
     const caja = document.getElementById("recuerdo-video");
     if (caja && !caja.querySelector("iframe")) {
