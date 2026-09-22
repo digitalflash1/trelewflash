@@ -6437,6 +6437,7 @@ function renderCarruselStickers() {
         slide.appendChild(img);
         track.appendChild(slide);
         const d = document.createElement("button"); d.type = "button";
+        d.setAttribute("aria-label", "Ir al sticker " + (i + 1));
         if (i === 0) d.className = "activo";
         d.onclick = () => irSticker(i);
         dots.appendChild(d);
@@ -8286,12 +8287,18 @@ function fechaCortaEvento(iso) {
 /* La portada elegida en el admin; si no hay, la primera página del primer PDF,
    que Drive entrega como imagen a cualquiera si el archivo es público. */
 function miniaturaDrive(id) { return "https://lh3.googleusercontent.com/d/" + id + "=w640-rj"; }
+/* La de lh3 falla de a ratos con PDFs pesados; esta otra de Drive suele andar
+   justo cuando aquella no. */
+function miniaturaDrive2(id) { return "https://drive.google.com/thumbnail?id=" + id + "&sz=w640"; }
 function portadaEvento(e) { return e.portada || miniaturaDrive(e.pdfs[0].id); }
 /* Si la portada cargada no abre (por ejemplo una foto de WordPress que ya no
-   está), se cae a la del PDF; y si esa tampoco, queda el fondo liso. */
+   está), se cae a las del PDF, una por una (data-alt, separadas por espacio);
+   si ninguna abre, queda el fondo liso. */
 function portadaEventoFallo(img) {
-    const alt = img.getAttribute("data-alt");
-    if (alt && img.src !== alt) { img.src = alt; return; }
+    const alts = (img.getAttribute("data-alt") || "").split(" ").filter(Boolean);
+    const sig = alts.shift();
+    img.setAttribute("data-alt", alts.join(" "));
+    if (sig) { img.src = sig; return; }
     img.onerror = null;
     img.style.visibility = "hidden";
 }
@@ -8306,10 +8313,11 @@ function eventosFiltrados() {
 }
 
 function tarjetaEvento(e) {
-    const alt = miniaturaDrive(e.pdfs[0].id);
+    const id = e.pdfs[0].id;
+    const alt = (e.portada ? miniaturaDrive(id) + " " : "") + miniaturaDrive2(id);
     return '<button type="button" class="ev-card" data-id="' + escHtml(e.id) + '" onclick="abrirEvento(this.dataset.id)">' +
         '<img class="ev-portada" loading="lazy" alt="" src="' + escHtml(portadaEvento(e)) + '"' +
-        (e.portada ? ' data-alt="' + escHtml(alt) + '"' : "") + ' onerror="portadaEventoFallo(this)">' +
+        ' data-alt="' + escHtml(alt) + '" onerror="portadaEventoFallo(this)">' +
         '<span class="ev-cuerpo"><span class="ev-tit">' + escHtml(e.titulo) + '</span>' +
         (e.fechaTexto ? '<span class="ev-fecha" style="display:block">' + escHtml(e.fechaTexto) + '</span>' : "") +
         (e.etiquetas.length ? '<span class="ev-tags">' +
@@ -9560,6 +9568,7 @@ function renderNovedades() {
         }
         track.appendChild(s);
         const d = document.createElement("button"); d.type = "button";
+        d.setAttribute("aria-label", "Ir a la novedad " + (i + 1));
         if (i === 0) d.className = "activo";
         d.onclick = () => { irNovedad(i); reiniciarAutoNov(); };
         dots.appendChild(d);
