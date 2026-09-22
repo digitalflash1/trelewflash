@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://digitalflash1.github.io/trelewflash/sitemap.xml

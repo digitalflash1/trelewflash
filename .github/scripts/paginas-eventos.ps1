@@ -1,5 +1,8 @@
 ﻿# Arma e/<id>/index.html para cada evento: la página que leen Facebook y
 # WhatsApp para la vista previa (ver .github/workflows/paginas-eventos.yml).
+# De paso arma sitemap.xml (home + una entrada por evento) en la raíz del
+# repo, para que Google encuentre estas páginas: no tienen enlaces internas
+# entre sí, solo se comparten sueltas por WhatsApp.
 # Anda en Windows PowerShell 5.1 y en pwsh 7.
 #   paginas-eventos.ps1 <eventos.json> <carpeta de salida>
 param(
@@ -21,6 +24,10 @@ function Esc([string]$s) { [System.Net.WebUtility]::HtmlEncode($s) }
 
 if (Test-Path $Salida) { Remove-Item -Recurse -Force $Salida }
 New-Item -ItemType Directory -Force $Salida | Out-Null
+
+$hoy = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")
+$urlsSitemap = New-Object System.Collections.Generic.List[string]
+$urlsSitemap.Add("  <url><loc>$(Esc $sitio)</loc><lastmod>$hoy</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>")
 
 $n = 0
 foreach ($e in @($data.eventos)) {
@@ -69,7 +76,8 @@ foreach ($e in @($data.eventos)) {
 <script>location.replace("$destino" + location.hash);</script>
 </head>
 <body style="font-family:sans-serif;text-align:center;padding:40px 16px;">
-<p>Abriendo las fotos de <b>$(Esc $titulo)</b>…</p>
+<h1 style="font-size:1.1em;">$(Esc $titulo)</h1>
+<p>Abriendo las fotos…</p>
 <p><a href="$(Esc $destino)">Tocá acá si no se abre solo</a></p>
 </body>
 </html>
@@ -77,6 +85,13 @@ foreach ($e in @($data.eventos)) {
     $dir = Join-Path $Salida $id
     New-Item -ItemType Directory -Force $dir | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $dir "index.html"), ($html -replace "`r`n", "`n"), $utf8)
+    $urlsSitemap.Add("  <url><loc>$(Esc $url)</loc><lastmod>$hoy</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>")
     $n++
 }
+
+$sitemap = "<?xml version=`"1.0`" encoding=`"UTF-8`"?>`n" +
+    "<urlset xmlns=`"http://www.sitemaps.org/schemas/sitemap/0.9`">`n" +
+    ($urlsSitemap -join "`n") + "`n</urlset>`n"
+[System.IO.File]::WriteAllText("sitemap.xml", $sitemap, $utf8)
+
 "Páginas: $n"

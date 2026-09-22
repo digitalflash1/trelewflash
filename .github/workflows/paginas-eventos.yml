@@ -4,7 +4,9 @@
 # etiquetas og: del HTML tal como llega. Como la tienda es una sola página,
 # todo enlace mostraba la vista previa general. Cada e/<id>/index.html trae
 # el título y la portada de SU evento y, al abrirla una persona, la manda a
-# «?ver=eventos&evento=<id>». Las arma .github/scripts/paginas-eventos.ps1.
+# «?ver=eventos&evento=<id>». Las arma .github/scripts/paginas-eventos.ps1,
+# que de paso rearma sitemap.xml (home + una entrada por evento) para que
+# Google las encuentre: no tienen enlaces internas entre sí.
 #
 # Los eventos viven en la hoja, así que las páginas se rearman solas cada
 # hora (y a mano desde Actions → «Páginas de eventos» → Run workflow).
@@ -56,7 +58,7 @@ jobs:
 
       - name: Subir si cambió algo
         run: |
-          git add -A e
+          git add -A e sitemap.xml
           if git diff --cached --quiet; then
             echo "Sin cambios"
             exit 0
