@@ -20,7 +20,29 @@ if (-not $data.ok -or -not $data.eventos -or @($data.eventos).Count -eq 0) {
     throw "La lista de eventos vino vacía o con error"
 }
 
+# Instagram/Facebook de escuelas, jardines y academias identificados a mano
+# (investigación de septiembre 2026). Si el título del evento menciona a una
+# de estas instituciones, se agrega un enlace real a su cuenta — da contenido
+# indexable de verdad y ayuda a que la propia institución encuentre sus fotos
+# buscándose a sí misma. Solo hay entradas de confianza alta: mejor faltar un
+# enlace que arriesgar uno de una institución equivocada.
+$institucionesPath = Join-Path $PSScriptRoot "instituciones.json"
+$instituciones = [System.IO.File]::ReadAllText($institucionesPath, $utf8) | ConvertFrom-Json
+
 function Esc([string]$s) { [System.Net.WebUtility]::HtmlEncode($s) }
+
+function BloqueInstitucion([string]$titulo) {
+    foreach ($inst in $instituciones) {
+        if ($titulo -match $inst.re) {
+            $links = @()
+            if ($inst.instagram) { $links += "<a href=`"$(Esc $inst.instagram)`" target=`"_blank`" rel=`"noopener`">Instagram</a>" }
+            if ($inst.facebook) { $links += "<a href=`"$(Esc $inst.facebook)`" target=`"_blank`" rel=`"noopener`">Facebook</a>" }
+            if ($links.Count -eq 0) { return "" }
+            return "`n<div class=`"trelewflash-institucion`"><p style=`"font-size:0.9em;color:#666;`">$(Esc $inst.nombre) · $($links -join ' · ')</p></div>"
+        }
+    }
+    return ""
+}
 
 if (Test-Path $Salida) { Remove-Item -Recurse -Force $Salida }
 New-Item -ItemType Directory -Force $Salida | Out-Null
@@ -50,6 +72,7 @@ foreach ($e in @($data.eventos)) {
     $titulo = [string]$e.titulo
     $url = $sitio + "e/" + $id + "/"
     $destino = $sitio + "?ver=eventos&evento=" + $id
+    $bloqueInst = BloqueInstitucion $titulo
 
     $html = @"
 <!DOCTYPE html>
@@ -76,7 +99,7 @@ foreach ($e in @($data.eventos)) {
 <script>location.replace("$destino" + location.hash);</script>
 </head>
 <body style="font-family:sans-serif;text-align:center;padding:40px 16px;">
-<h1 style="font-size:1.1em;">$(Esc $titulo)</h1>
+<h1 style="font-size:1.1em;">$(Esc $titulo)</h1>$bloqueInst
 <p>Abriendo las fotos…</p>
 <p><a href="$(Esc $destino)">Tocá acá si no se abre solo</a></p>
 </body>
