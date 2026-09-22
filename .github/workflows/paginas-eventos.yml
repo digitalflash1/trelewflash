@@ -1,0 +1,118 @@
+# Una página por evento en e/<id>/, solo para la vista previa al compartir.
+#
+# Facebook y WhatsApp no ejecutan el JavaScript de la tienda: leen las
+# etiquetas og: del HTML tal como llega. Como la tienda es una sola página,
+# todo enlace mostraba la vista previa general. Cada e/<id>/index.html trae
+# el título y la portada de SU evento y, al abrirla una persona, la manda a
+# «?ver=eventos&evento=<id>».
+#
+# Los eventos viven en la hoja, así que las páginas se rearman solas cada
+# hora (y a mano desde la pestaña Actions → «Páginas de eventos» → Run
+# workflow). Mientras un evento nuevo no tiene su página, el enlace igual
+# anda: lo resuelve 404.html, con la vista previa general.
+#
+# ⚠️ Este workflow sube commits a main: antes de hacer push desde la compu,
+# «git pull --rebase --autostash».
+
+name: Páginas de eventos
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: paginas-eventos
+  cancel-in-progress: false
+
+jobs:
+  generar:
+    runs-on: ubuntu-latest
+    env:
+      FEED: "https://script.google.com/macros/s/AKfycbxxkTt_esCqor3id4ZTcbav0uB7chR7QBFqwuxLPTmg_6pe6HfcPX4f0r0QBDrI0YkL5Q/exec?accion=eventos"
+      SITIO: "https://digitalflash1.github.io/trelewflash/"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bajar los eventos de la hoja
+        run: |
+          # Apps Script frío suele fallar la primera vez: tres intentos.
+          for i in 1 2 3; do
+            if curl -fsSL --max-time 60 "$FEED" -o eventos.json \
+               && jq -e '.ok == true and (.eventos | type == "array") and (.eventos | length > 0)' eventos.json >/dev/null; then
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "No se pudo leer la lista de eventos" >&2
+          exit 1
+
+      - name: Armar las páginas
+        run: |
+          rm -rf e
+          mkdir -p e
+          # Solo ids «seguros» (los slugs de la hoja): van en una carpeta y en la URL.
+          jq -c '.eventos[] | select((.id // "") | test("^[a-z0-9][a-z0-9-]{0,150}$"))' eventos.json |
+          while IFS= read -r ev; do
+            id=$(jq -r '.id' <<<"$ev")
+            mkdir -p "e/$id"
+            jq -r --arg sitio "$SITIO" '
+              def mes: ["enero","febrero","marzo","abril","mayo","junio","julio",
+                        "agosto","septiembre","octubre","noviembre","diciembre"];
+              (.fecha // "" | capture("^(?<a>\\d{4})-(?<m>\\d{2})-(?<d>\\d{2})")? //
+                 null) as $f
+              | ($f | if . then "\(.d | tonumber) de \(mes[(.m | tonumber) - 1]) de \(.a)" else "" end) as $fecha
+              | ([$fecha, (.lugar // "")] | map(select(. != "")) | join(" · ")) as $cuando
+              | (if (.portada // "") | test("^https://") then .portada
+                 else "https://lh3.googleusercontent.com/d/\(.pdfs[0].id)=w1200" end) as $img
+              | ($sitio + "e/" + .id + "/") as $url
+              | ($sitio + "?ver=eventos&evento=" + .id) as $destino
+              | ((if $cuando != "" then $cuando + ". " else "" end)
+                 + "Mirá las fotos, anotá los números y pedilas por WhatsApp.") as $desc
+              | "<!DOCTYPE html>
+<html lang=\"es\">
+<head>
+<meta charset=\"utf-8\">
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+<title>\(.titulo | @html) · Trelewflash</title>
+<meta name=\"description\" content=\"\($desc | @html)\">
+<meta property=\"og:type\" content=\"website\">
+<meta property=\"og:site_name\" content=\"Trelewflash\">
+<meta property=\"og:locale\" content=\"es_AR\">
+<meta property=\"og:url\" content=\"\($url | @html)\">
+<link rel=\"canonical\" href=\"\($url | @html)\">
+<meta property=\"og:title\" content=\"Fotos de «\(.titulo | @html)»\">
+<meta property=\"og:description\" content=\"\($desc | @html)\">
+<meta property=\"og:image\" content=\"\($img | @html)\">
+<meta property=\"og:image:alt\" content=\"\(.titulo | @html)\">
+<meta name=\"twitter:card\" content=\"summary_large_image\">
+<meta name=\"theme-color\" content=\"#FCFC14\">
+<link rel=\"icon\" href=\"../../assets/favicon.ico\" sizes=\"any\">
+<!-- Sin meta refresh a propósito: Facebook lo sigue y se quedaría con la
+     vista previa general de la tienda. Las personas pasan por el script. -->
+<script>location.replace(\($destino | tojson) + location.hash);</script>
+</head>
+<body style=\"font-family:sans-serif;text-align:center;padding:40px 16px;\">
+<p>Abriendo las fotos de <b>\(.titulo | @html)</b>…</p>
+<p><a href=\"\($destino | @html)\">Tocá acá si no se abre solo</a></p>
+</body>
+</html>"' <<<"$ev" > "e/$id/index.html"
+          done
+          echo "Páginas: $(ls e | wc -l)"
+          rm eventos.json
+
+      - name: Subir si cambió algo
+        run: |
+          git add -A e
+          if git diff --cached --quiet; then
+            echo "Sin cambios"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Páginas de vista previa de los eventos"
+          git pull --rebase
+          git push

@@ -6188,8 +6188,12 @@ function pintarBotonCompartir(idPantalla) {
     panel.appendChild(fila);
 }
 async function compartirSeccion(idPantalla) {
-    const url = urlDeSeccion(idPantalla);
     const deEvento = idPantalla === "p-evento-ver" && eventoAbierto;
+    /* El evento se comparte por su página propia (e/<id>/), que es la que
+       tiene su título y su portada para la vista previa de Facebook y
+       WhatsApp. Si todavía no está armada, la resuelve 404.html. */
+    const url = deEvento ? new URL("e/" + eventoAbierto.id + "/", urlBase()).toString()
+                         : urlDeSeccion(idPantalla);
     const titulo = deEvento ? "Fotos de «" + eventoAbierto.titulo + "»"
                  : TITULO_SECCION[idPantalla] || "Trelewflash";
     const texto = (idPantalla === "p-eventos" || deEvento)

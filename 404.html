@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trelewflash</title>
+<meta name="robots" content="noindex">
+<!-- GitHub Pages muestra esta página para cualquier dirección que no existe.
+     Un enlace e/<id>/ de un evento que todavía no tiene su página (se arman
+     cada hora, ver .github/workflows/paginas-eventos.yml) va directo al
+     evento; cualquier otra cosa, a la tienda. -->
+<script>
+(function () {
+    var ruta = location.pathname;
+    var i = ruta.indexOf("/e/");
+    var base = (i >= 0) ? ruta.slice(0, i + 1) : "/trelewflash/";
+    var m = (i >= 0) ? ruta.slice(i + 3).match(/^([a-z0-9-]+)\/?(index\.html)?$/) : null;
+    location.replace(base + (m ? "?ver=eventos&evento=" + m[1] : "") + location.hash);
+})();
+</script>
+</head>
+<body style="font-family:sans-serif;text-align:center;padding:40px 16px;">
+<p><a href="/trelewflash/">Ir a Trelewflash</a></p>
+</body>
+</html>
