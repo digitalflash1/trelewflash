@@ -25,6 +25,8 @@ LEEME-DEMO.md
 CONECTAR-HOJA.md
 README-despliegue-v4_3.md
 *.gs
+# Backend del Apps Script, sus instrucciones y la clave para cargar eventos.
+apps-script/
 
 # Archivos de la versión vieja que la tienda ya no usa.
 assets/_sin-uso/
