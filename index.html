@@ -230,6 +230,62 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .portada-catalogo .caja-titulo { font-size: 20px; font-weight: bold; color: var(--color-principal); margin: 0 0 12px; }
     .carrusel-catalogo { flex: none; aspect-ratio: 4 / 5; max-height: calc(100vh - 70px); max-height: calc(100svh - 70px); }
     @media (orientation: landscape) { .carrusel-catalogo { aspect-ratio: 16 / 9; max-height: 80vh; max-height: 80svh; } }
+    /* ===== Compu: taller del pedido y pantallas anchas =====
+       Ver "VERSIÓN DE ESCRITORIO" en el script. Nada de esto aplica en el
+       celular: la barra del taller y la foto del souvenir quedan ocultas. */
+    .taller-nav, .souv-vista { display: none; }
+    @media (min-width: 1024px) {
+        /* Pantallas de grillas y lectura: más anchas que la tarjeta de 560 px. */
+        #p-catalogo, #p-albumes, #p-stickers, #p-eventos, #p-evento-ver { max-width: 1180px; }
+        #p-promos, #p-donde, #p-recuerdo, #p-catalogo-menu { max-width: 980px; }
+        #p-carrito { max-width: 780px; }
+        #p-catalogo-menu { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+        #p-catalogo-menu > :not(.menu-cat) { grid-column: 1 / -1; }
+        #p-catalogo-menu .menu-cat { margin: 0; height: 100%; }
+
+        /* Taller: sin tarjeta de fondo; cada columna es su propia tarjeta. */
+        body.en-taller { padding: 18px 24px; }
+        .pantalla.taller { max-width: 1320px; padding: 0; background: transparent; border: 0; box-shadow: none; text-align: left; }
+        body.en-taller .pantalla.taller > .barra-sup { display: none; }
+        .taller-cols { display: grid; grid-template-columns: minmax(380px, 5fr) minmax(0, 7fr); gap: 24px; align-items: start; }
+        .taller-ctrl, .taller-vista { background: #fff; border: 2px solid var(--gris-borde); border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.06); padding: 22px; }
+        .taller-ctrl h2 { margin-bottom: 12px; }
+        .taller-ctrl .instruccion:first-of-type { margin-top: 6px; }
+        /* La vista acompaña mientras se baja por las opciones. */
+        .taller-vista { position: sticky; top: 16px; }
+        .taller-vista .escena { margin: 0 0 16px; }
+        .taller-vista .caja-precio { margin-top: 16px !important; }
+        .taller-vista .lienzo-collage { width: auto; height: min(60vh, 620px); margin: 12px auto; }
+        .taller-vista .plantillas { grid-template-columns: repeat(5, 76px); justify-content: center; }
+        /* Collage: cuando aparece el diseñador, ocupa el lugar de la escena. */
+        .taller-vista:has(#lienzo-collage:not(.oculto)) #sim-vista { display: none; }
+        #p-ficha .taller-vista .ficha-foto-caja { aspect-ratio: 1.25; }
+
+        /* Barra de pestañas: producto arriba, tamaño/tipo abajo. */
+        .taller-nav.visible { display: block; margin: 0 0 18px; }
+        .tn-fila { display: flex; align-items: center; gap: 16px; }
+        .tn-inicio { background: none; border: 0; color: var(--color-principal); font-weight: bold; font-size: 15px; cursor: pointer; padding: 8px 4px; }
+        .tn-inicio:hover { text-decoration: underline; }
+        .tn-tabs { flex: 1; display: flex; justify-content: center; gap: 6px; background: #fff; border: 2px solid var(--gris-borde);
+            border-radius: 999px; padding: 5px; box-shadow: 0 4px 14px rgba(0,0,0,.05); }
+        .tn-tabs button { border: 0; background: none; padding: 11px 22px; border-radius: 999px; font-size: 16px; font-weight: bold;
+            color: #475569; cursor: pointer; font-family: inherit; transition: background-color .15s, color .15s; }
+        .tn-tabs button:hover { background: var(--gris-suave); color: var(--color-principal); }
+        .tn-tabs button.activo { background: var(--color-boton); color: var(--color-boton-texto); box-shadow: 0 2px 8px rgba(74,74,0,.18); }
+        .tn-sub { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .tn-sub button { border: 2px solid var(--gris-borde); background: #fff; padding: 8px 16px; border-radius: 999px; font-size: 14px;
+            font-weight: bold; color: #475569; cursor: pointer; font-family: inherit; }
+        .tn-sub button:hover { border-color: var(--color-wa); }
+        .tn-sub button.activo { background: #e8f9ef; border-color: var(--color-wa); color: #128C7E; }
+
+        /* Foto del souvenir elegido. */
+        .souv-vista { display: block; }
+        .souv-foto { display: block; width: 100%; max-height: 62vh; object-fit: contain; border-radius: 12px; background: var(--gris-suave); }
+        .souv-sinfoto { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; aspect-ratio: 4 / 3;
+            border-radius: 12px; background: linear-gradient(135deg, var(--gris-suave), #fff59d); color: var(--color-principal); font-size: 20px; text-align: center; padding: 20px; }
+        .souv-emoji { font-size: 96px; line-height: 1; }
+    }
     /* Compu: mitad y mitad. Los botones a la izquierda y el carrusel del
        catálogo a la derecha, pegado al borde, con el mismo alto que la
        columna de botones. */
@@ -3462,7 +3518,7 @@ z"></path></g>
 </div>
 
 <!-- FICHA DE PRODUCTO (cuadro) -->
-<div id="p-ficha" class="pantalla oculto">
+<div id="p-ficha" class="pantalla taller oculto">
     <div class="barra-sup">
         <button class="btn-volver" id="btn-volver-ficha" onclick="volverDeFicha()">⬅ Volver al catálogo</button>
         <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-ficha">0</span>)</button>
@@ -3562,7 +3618,7 @@ z"></path></g>
 </div>
 
 <!-- SIMULADOR DE FOTO -->
-<div id="p-simulador" class="pantalla oculto">
+<div id="p-simulador" class="pantalla taller oculto">
     <div class="barra-sup">
         <button class="btn-volver" onclick="mostrar(&#39;p-categorias&#39;)">⬅ Volver</button>
         <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-sim">0</span>)</button>
@@ -3571,12 +3627,14 @@ z"></path></g>
     <div id="nota-collage" class="nota-info oculto">🧩 El armado del collage (<strong id="lbl-monto-armado">$ 11.500</strong>) y las fotos extra se cobran <strong>una sola vez por diseño</strong>; cada copia adicional del mismo diseño paga solo la impresión. Incluye hasta <strong id="lbl-fotos-incluidas">5</strong> fotos; cada foto extra <strong>+<span id="lbl-monto-foto-extra">$ 300</span></strong>.</div>
 
     <p class="instruccion">1. Tocá una medida para ver cómo queda:</p>
+    <div id="sim-vista">
     <div id="toggle-vista" class="oculto" style="display:flex;gap:8px;margin:0 0 10px;">
         <button type="button" id="btn-vista-living" class="btn-medida activo" onclick="setVistaMediano('living')">🛋 Living</button>
         <button type="button" id="btn-vista-celular" class="btn-medida" onclick="setVistaMediano('celular')">📱 Celular</button>
     </div>
     <div id="escena" class="escena">
         <div id="cuadro" class="cuadro sin-borde"><span id="etiqueta">-</span></div>
+    </div>
     </div>
     <div id="botones-medida" class="grid-botones"></div>
 
@@ -3643,6 +3701,23 @@ z"></path></g>
     </div>
 </div>
 
+<!-- BARRA DEL TALLER (solo compu)
+     Pestañas para pasar de revelado a taza o souvenirs sin volver a menús
+     intermedios. Hay una sola: mostrar() la ubica arriba de la pantalla del
+     pedido que se esté viendo y pintarTallerNav() arma las sub-pestañas. -->
+<nav id="taller-nav" class="taller-nav" aria-label="Qué querés pedir">
+    <div class="tn-fila">
+        <button type="button" class="tn-inicio" onclick="mostrar('p-bienvenida')">⬅ Inicio</button>
+        <div class="tn-tabs">
+            <button type="button" data-tab="revelado" onclick="irATaller('revelado')">📸 Revelar fotos</button>
+            <button type="button" data-tab="taza" onclick="irATaller('taza')">☕ Taza personalizada</button>
+            <button type="button" data-tab="souvenirs" onclick="irATaller('souvenirs')">🎁 Souvenirs</button>
+        </div>
+        <button type="button" class="chip-carrito tn-carrito" onclick="mostrar('p-carrito')">🛒 Carrito (<span id="badge-taller">0</span>)</button>
+    </div>
+    <div class="tn-sub" id="tn-sub"></div>
+</nav>
+
 <!-- SOUVENIRS -->
 <div id="p-souvenirs" class="pantalla oculto">
     <div class="barra-sup">
@@ -3656,12 +3731,13 @@ z"></path></g>
 </div>
 
 <!-- SOUVENIRS: MODELO Y OPCIONES -->
-<div id="p-souv-modelo" class="pantalla oculto">
+<div id="p-souv-modelo" class="pantalla taller oculto">
     <div class="barra-sup">
         <button class="btn-volver" onclick="mostrar(&#39;p-souvenirs&#39;)">⬅ Volver</button>
         <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-souv-2">0</span>)</button>
     </div>
     <h2 id="souv-modelo-titulo">Souvenir</h2>
+    <div id="souv-vista" class="souv-vista"></div>
     <p class="instruccion">1. Elegí el modelo:</p>
     <div id="souv-items" class="grid-botones"></div>
 
@@ -3681,7 +3757,7 @@ z"></path></g>
 </div>
 
 <!-- ARMADOR DE TAZA -->
-<div id="p-taza" class="pantalla oculto">
+<div id="p-taza" class="pantalla taller oculto">
     <div class="barra-sup">
         <button class="btn-volver" onclick="mostrar(&#39;p-menu&#39;)">⬅ Volver</button>
         <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-taza">0</span>)</button>
@@ -3690,6 +3766,7 @@ z"></path></g>
     <p class="instruccion">1. Tipo de taza:</p>
     <div id="taza-tipos" class="taza-tipos"></div>
 
+    <div id="taza-disenador">
     <p class="instruccion">2. Diseño (arrastrá las fotos para ubicarlas):</p>
     <div id="lienzo-taza" class="lienzo-taza"></div>
     <div class="herramientas">
@@ -3717,6 +3794,7 @@ z"></path></g>
         <input type="range" id="slider-borde" min="0" max="14" value="0" oninput="bordeSel(this.value)">
         <label class="btn-tool" style="padding:4px 8px;" title="Color del borde">🎨<input type="color" id="color-borde" value="#ffffff" style="display:none" oninput="bordeColorSel(this.value)"></label>
     </div>
+    </div>
 
     <div class="campo" style="margin-top:6px;">
         <label>3. Texto que llevará el diseño (opcional):</label>
@@ -3737,7 +3815,7 @@ z"></path></g>
         <div class="monto">Subtotal de este ítem: <strong id="precio-taza">$ 0</strong></div>
         <button class="btn-agregar" onclick="agregarTazaAlCarrito()">➕ Agregar al carrito</button>
     </div>
-    <p style="font-size:12px;margin-top:10px;">La vista es una referencia. El local ajusta el diseño final y te envía una muestra antes de imprimir.</p>
+    <p id="taza-nota" style="font-size:12px;margin-top:10px;">La vista es una referencia. El local ajusta el diseño final y te envía una muestra antes de imprimir.</p>
 </div>
 
 <!-- EVENTOS: GALERÍA
@@ -5963,11 +6041,16 @@ let eventoActual = null;
    2) NAVEGACIÓN
    ========================================================= */
 function mostrar(id) {
+    /* En la compu los menús intermedios (qué pedir, qué tamaño, qué souvenir)
+       no hacen falta: esas opciones son pestañas del taller. */
+    if (escritorio.matches && SALTEA_EN_ESCRITORIO[id] && SALTEA_EN_ESCRITORIO[id]()) return;
     const bienv = document.getElementById("p-bienvenida");
     if (bienv) bienv.classList.remove("intro");
     document.querySelectorAll(".pantalla").forEach(p => p.classList.add("oculto"));
     document.getElementById(id).classList.remove("oculto");
     document.body.classList.toggle("en-portada", id === "p-bienvenida");
+    document.body.classList.toggle("en-taller", !!TALLER_NAV[id]);
+    ubicarTallerNav(id);
     pintarBotonCompartir(id);
     window.scrollTo(0, 0);
     /* La URL acompaña a la pantalla: el catálogo lleva sus filtros y el resto
@@ -5988,6 +6071,157 @@ function mostrar(id) {
         medir("iniciar_checkout", { value: totalCarrito(), items: carrito.length, currency: "ARS" });
     }
 }
+/* =========================================================
+   VERSIÓN DE ESCRITORIO: el taller del pedido
+   En la compu, revelado, taza y souvenirs son una sola pantalla de trabajo:
+   arriba pestañas (qué producto → qué tamaño o tipo) y abajo dos columnas,
+   las opciones a la izquierda y a la derecha la vista (living/celular, el
+   diseñador de la taza o del collage, la foto del producto) con el precio y
+   el botón de agregar. En el celular nada de esto se activa.
+   ========================================================= */
+const escritorio = window.matchMedia("(min-width: 1024px)");
+/* Pantallas que llevan la barra de pestañas del taller. */
+const TALLER_NAV = { "p-simulador": "revelado", "p-taza": "taza", "p-souv-modelo": "souvenirs" };
+/* Qué va a la columna derecha de cada pantalla de dos columnas. */
+const TALLER_VISTA = {
+    "p-simulador":   ["#sim-vista", "#sec-collage", "#p-simulador > .caja-precio"],
+    "p-taza":        ["#taza-disenador", "#p-taza > .caja-precio", "#taza-nota"],
+    "p-souv-modelo": ["#souv-vista", "#p-souv-modelo > .caja-precio"],
+    "p-ficha":       ["#ficha-foto-caja", "#ficha-thumbs", "#p-ficha > .caja-precio"]
+};
+/* Menús que en la compu se saltean: devuelven true si pudieron ir directo
+   al taller (si el catálogo todavía no cargó, se muestra el menú común). */
+const SALTEA_EN_ESCRITORIO = {
+    "p-menu":       () => abrirRevelado(),
+    "p-categorias": () => abrirRevelado(),
+    "p-souvenirs":  () => abrirSouvenirDirecto()
+};
+function abrirRevelado(key) {
+    const k = key || (CATALOGO_FOTOS[grupoActualKey] ? grupoActualKey : "medianos");
+    if (!CATALOGO_FOTOS[k]) return false;
+    cargarSimulador(k);
+    return true;
+}
+function abrirSouvenirDirecto(key) {
+    const keys = Object.keys(CATALOGO_SOUVENIRS);
+    const k = key || (CATALOGO_SOUVENIRS[selTipoSouv] ? selTipoSouv : keys[0]);
+    if (!k) return false;
+    elegirTipoSouv(k);
+    return true;
+}
+/* Cambiar de producto o de tamaño rearma la pantalla y se pierden las fotos
+   que todavía no se agregaron al carrito: se avisa antes. */
+function hayTrabajoSinGuardar() {
+    const visible = document.querySelector(".pantalla:not(.oculto)");
+    const id = visible && visible.id;
+    if (id === "p-simulador") return adjuntosSim.length > 0;
+    if (id === "p-taza") return document.querySelectorAll("#lienzo-taza img").length > 0;
+    if (id === "p-souv-modelo") return adjuntosSouv.length > 0;
+    return false;
+}
+function confirmarCambio() {
+    return !hayTrabajoSinGuardar() ||
+        confirm("Tenés fotos o un diseño que todavía no agregaste al carrito. Si cambiás, se pierden.\n\n¿Cambiar igual?");
+}
+function irATaller(tab, sub) {
+    const actual = TALLER_NAV[(document.querySelector(".pantalla:not(.oculto)") || {}).id];
+    const mismo = actual === tab && (sub === undefined ||
+        (tab === "revelado" ? sub === grupoActualKey : sub === selTipoSouv));
+    if (mismo || !confirmarCambio()) return;
+    if (tab === "revelado") { flujo = "pedido"; abrirRevelado(sub); }
+    if (tab === "taza") abrirTaza();
+    if (tab === "souvenirs") { if (!abrirSouvenirDirecto(sub)) abrirSouvenirs(); }
+}
+function ubicarTallerNav(id) {
+    const nav = document.getElementById("taller-nav");
+    if (!nav) return;
+    if (!TALLER_NAV[id]) { nav.classList.remove("visible"); return; }
+    const pant = document.getElementById(id);
+    const barra = pant.querySelector(".barra-sup");
+    if (barra) barra.after(nav); else pant.prepend(nav);
+    nav.classList.add("visible");
+    pintarTallerNav(TALLER_NAV[id]);
+}
+function pintarTallerNav(tab) {
+    document.querySelectorAll("#taller-nav .tn-tabs button").forEach(b =>
+        b.classList.toggle("activo", b.dataset.tab === tab));
+    const sub = document.getElementById("tn-sub");
+    let opciones = [], activa = null;
+    if (tab === "revelado") {
+        opciones = Object.keys(CATALOGO_FOTOS).map(k => [k, CATALOGO_FOTOS[k].titulo]);
+        activa = grupoActualKey;
+    } else if (tab === "souvenirs") {
+        opciones = Object.keys(CATALOGO_SOUVENIRS).map(k => [k, CATALOGO_SOUVENIRS[k].titulo]);
+        activa = selTipoSouv;
+    }
+    sub.innerHTML = "";
+    sub.classList.toggle("oculto", !opciones.length);
+    opciones.forEach(([k, titulo]) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.textContent = titulo;
+        if (k === activa) b.className = "activo";
+        b.onclick = () => irATaller(tab, k);
+        sub.appendChild(b);
+    });
+}
+/* Dos columnas: lo de TALLER_VISTA pasa a la derecha y el resto a la
+   izquierda. Cada nodo que se mueve deja una marca en su lugar, así al volver
+   a una pantalla angosta todo regresa exactamente adonde estaba. */
+function armarTaller(id) {
+    const pant = document.getElementById(id);
+    if (!pant || pant.__taller) return;
+    const cols = document.createElement("div"); cols.className = "taller-cols";
+    const ctrl = document.createElement("div"); ctrl.className = "taller-ctrl";
+    const vista = document.createElement("div"); vista.className = "taller-vista";
+    const movidos = TALLER_VISTA[id].map(sel => document.querySelector(sel)).filter(Boolean).map(n => {
+        const marca = document.createComment("taller");
+        n.before(marca); vista.appendChild(n);
+        return [n, marca];
+    });
+    const quedan = [...pant.childNodes].filter(n => !(n.nodeType === 1 &&
+        (n.classList.contains("barra-sup") || n.id === "taller-nav")));
+    quedan.forEach(n => ctrl.appendChild(n));
+    cols.append(ctrl, vista);
+    pant.appendChild(cols);
+    pant.__taller = { cols, movidos, quedan };
+}
+function desarmarTaller(id) {
+    const pant = document.getElementById(id), t = pant && pant.__taller;
+    if (!t) return;
+    t.quedan.forEach(n => pant.insertBefore(n, t.cols));
+    t.movidos.forEach(([n, marca]) => marca.replaceWith(n));
+    t.cols.remove();
+    pant.__taller = null;
+}
+function acomodarEscritorio() {
+    Object.keys(TALLER_VISTA).forEach(id => escritorio.matches ? armarTaller(id) : desarmarTaller(id));
+}
+acomodarEscritorio();
+if (escritorio.addEventListener) escritorio.addEventListener("change", acomodarEscritorio);
+else if (escritorio.addListener) escritorio.addListener(acomodarEscritorio);
+
+/* Foto del souvenir elegido, para la columna derecha. Sin fotos cargadas en
+   el catálogo se muestra un cartel con el nombre. */
+const EMOJI_SOUV = { tarjeta: "📇", iman: "🧲", llaveros: "🔑", pines: "📌" };
+function pintarVistaSouv(item) {
+    const caja = document.getElementById("souv-vista");
+    if (!caja) return;
+    const fotos = (item.fotos || []).filter(Boolean);
+    caja.innerHTML = "";
+    if (fotos.length) {
+        const im = document.createElement("img");
+        im.src = fotos[0]; im.alt = item.nombre; im.className = "souv-foto";
+        caja.appendChild(im);
+    } else {
+        const ph = document.createElement("div"); ph.className = "souv-sinfoto";
+        const e = document.createElement("span"); e.className = "souv-emoji"; e.textContent = EMOJI_SOUV[selTipoSouv] || "🎁";
+        const grupo = CATALOGO_SOUVENIRS[selTipoSouv];
+        const t = document.createElement("strong");
+        t.textContent = (grupo ? grupo.titulo + " · " : "") + item.nombre;
+        ph.append(e, t); caja.appendChild(ph);
+    }
+}
+
 /* El pedido arranca directo en el menú: los datos del cliente se piden recién
    al agregar el primer ítem al carrito (menos fricción, menos rebote).
    Los eventos tampoco los piden de entrada: para mirar las fotos no hacen
@@ -7991,6 +8225,7 @@ function continuarSouv() {
     if (selTipoSouv) elegirTipoSouv(selTipoSouv);
 }
 function elegirTipoSouv(key) {
+    selTipoSouv = key;
     const grupo = CATALOGO_SOUVENIRS[key];
     const tit = document.getElementById("souv-modelo-titulo");
     if (tit) tit.innerText = grupo.titulo;
@@ -8011,6 +8246,7 @@ function elegirTipoSouv(key) {
 }
 function elegirSouv(item, subtitulo, botonEl) {
     selSouv = { sku: item.sku || "", nombre: item.nombre, precio: item.precio, subtitulo: subtitulo };
+    pintarVistaSouv(item);
     if (botonEl) {
         document.querySelectorAll("#souv-items .btn-medida").forEach(b => b.classList.remove("activo"));
         botonEl.classList.add("activo");
@@ -8984,7 +9220,7 @@ function quitarAdjunto(tipo, i) {
    8) CARRITO Y ENVÍO
    ========================================================= */
 function actualizarBadges() {
-    ["badge-menu", "badge-cat", "badge-sim", "badge-souv", "badge-souv-2", "badge-taza", "badge-catmenu",
+    ["badge-taller", "badge-menu", "badge-cat", "badge-sim", "badge-souv", "badge-souv-2", "badge-taza", "badge-catmenu",
      "badge-catalogo", "badge-albumes", "badge-stickers", "badge-ficha", "badge-donde",
      "badge-promos", "badge-recuerdo"].forEach(id => {
         const el = document.getElementById(id); if (el) el.innerText = carrito.length;
