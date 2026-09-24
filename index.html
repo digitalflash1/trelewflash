@@ -256,8 +256,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .taller-vista { position: sticky; top: 16px; }
         .taller-vista .escena { margin: 0 0 16px; }
         .taller-vista .caja-precio { margin-top: 16px !important; }
-        .taller-vista .lienzo-collage { width: auto; height: min(60vh, 620px); margin: 12px auto; }
-        .taller-vista .plantillas { grid-template-columns: repeat(5, 76px); justify-content: center; }
+        /* Alto de la pantalla menos pestañas, márgenes y la caja del precio. */
+        .taller-vista .lienzo-collage { width: auto; height: max(280px, calc(100vh - 350px)); margin: 0 auto; }
         /* Collage: cuando aparece el diseñador, ocupa el lugar de la escena. */
         .taller-vista:has(#lienzo-collage:not(.oculto)) #sim-vista { display: none; }
         #p-ficha .taller-vista .ficha-foto-caja { aspect-ratio: 1.25; }
@@ -3769,6 +3769,7 @@ z"></path></g>
     <div id="taza-disenador">
     <p class="instruccion">2. Diseño (arrastrá las fotos para ubicarlas):</p>
     <div id="lienzo-taza" class="lienzo-taza"></div>
+    </div>
     <div class="herramientas">
         <label class="btn-tool">📷 Agregar fotos<input type="file" accept="image/*" multiple="" style="display:none" onchange="subirFotosTaza(event)"></label>
         <label class="btn-tool">🖼 Fondo<input type="file" accept="image/*" style="display:none" onchange="subirFondoTaza(event)"></label>
@@ -3793,7 +3794,6 @@ z"></path></g>
         <span style="font-size:13px;color:#475569;font-weight:bold;min-width:52px;">Borde</span>
         <input type="range" id="slider-borde" min="0" max="14" value="0" oninput="bordeSel(this.value)">
         <label class="btn-tool" style="padding:4px 8px;" title="Color del borde">🎨<input type="color" id="color-borde" value="#ffffff" style="display:none" oninput="bordeColorSel(this.value)"></label>
-    </div>
     </div>
 
     <div class="campo" style="margin-top:6px;">
@@ -6051,6 +6051,7 @@ function mostrar(id) {
     document.body.classList.toggle("en-portada", id === "p-bienvenida");
     document.body.classList.toggle("en-taller", !!TALLER_NAV[id]);
     ubicarTallerNav(id);
+    setTimeout(ajustarAltoVista, 0);
     pintarBotonCompartir(id);
     window.scrollTo(0, 0);
     /* La URL acompaña a la pantalla: el catálogo lleva sus filtros y el resto
@@ -6084,8 +6085,10 @@ const escritorio = window.matchMedia("(min-width: 1024px)");
 const TALLER_NAV = { "p-simulador": "revelado", "p-taza": "taza", "p-souv-modelo": "souvenirs" };
 /* Qué va a la columna derecha de cada pantalla de dos columnas. */
 const TALLER_VISTA = {
-    "p-simulador":   ["#sim-vista", "#sec-collage", "#p-simulador > .caja-precio"],
-    "p-taza":        ["#taza-disenador", "#p-taza > .caja-precio", "#taza-nota"],
+    /* Del collage y la taza pasa a la derecha solo el lienzo: sus herramientas
+       quedan a la izquierda, así la columna de la vista entra en la pantalla. */
+    "p-simulador":   ["#sim-vista", "#lienzo-collage", "#p-simulador > .caja-precio"],
+    "p-taza":        ["#taza-disenador", "#p-taza > .caja-precio"],
     "p-souv-modelo": ["#souv-vista", "#p-souv-modelo > .caja-precio"],
     "p-ficha":       ["#ficha-foto-caja", "#ficha-thumbs", "#p-ficha > .caja-precio"]
 };
@@ -6191,11 +6194,46 @@ function desarmarTaller(id) {
     t.quedan.forEach(n => pant.insertBefore(n, t.cols));
     t.movidos.forEach(([n, marca]) => marca.replaceWith(n));
     t.cols.remove();
+    /* Sin el achique de ajustarAltoVista(): en el celular va a lo ancho. */
+    const vis = pant.querySelector(VISUAL_TALLER[id]);
+    if (vis) { vis.style.width = ""; vis.style.maxHeight = ""; vis.style.marginLeft = ""; vis.style.marginRight = ""; }
     pant.__taller = null;
 }
 function acomodarEscritorio() {
     Object.keys(TALLER_VISTA).forEach(id => escritorio.matches ? armarTaller(id) : desarmarTaller(id));
 }
+/* La columna derecha entra entera en la pantalla: si con la vista a su
+   tamaño natural el precio y el botón quedan abajo del borde, la vista se
+   achica (conservando su proporción) lo justo para que entren.
+   El lienzo de la taza solo se ajusta vacío: las fotos van ubicadas en
+   píxeles y cambiarle el tamaño después las correría. */
+const VISUAL_TALLER = {
+    "p-simulador":   "#escena",
+    "p-taza":        "#lienzo-taza",
+    "p-souv-modelo": "#souv-vista > *",
+    "p-ficha":       "#ficha-foto-caja"
+};
+function topDoc(el) { let t = 0; while (el) { t += el.offsetTop; el = el.offsetParent; } return t; }
+function ajustarAltoVista() {
+    const pant = document.querySelector(".pantalla.taller:not(.oculto)");
+    if (!escritorio.matches || !pant || !pant.__taller) return;
+    const vis = pant.querySelector(VISUAL_TALLER[pant.id]);
+    if (!vis || !vis.offsetHeight) return;
+    if (pant.id === "p-taza" && vis.children.length) return;
+    vis.style.width = ""; vis.style.maxHeight = ""; vis.style.marginLeft = ""; vis.style.marginRight = "";
+    const cols = pant.__taller.cols, vista = cols.querySelector(".taller-vista");
+    /* offsetTop y no getBoundingClientRect: la pantalla entra con una
+       animación que la desplaza y la columna es sticky. */
+    const sobra = topDoc(cols) + vista.offsetHeight + 16 - window.innerHeight;
+    if (sobra <= 0) return;
+    const h = vis.offsetHeight, w = vis.offsetWidth;
+    const nuevoH = Math.max(200, h - sobra);
+    if (vis.tagName === "IMG") { vis.style.maxHeight = nuevoH + "px"; return; }
+    vis.style.width = Math.round(w * nuevoH / h) + "px";
+    vis.style.marginLeft = vis.style.marginRight = "auto";
+}
+window.addEventListener("resize", () => setTimeout(ajustarAltoVista, 0));
+
 acomodarEscritorio();
 if (escritorio.addEventListener) escritorio.addEventListener("change", acomodarEscritorio);
 else if (escritorio.addListener) escritorio.addListener(acomodarEscritorio);
@@ -6210,6 +6248,7 @@ function pintarVistaSouv(item) {
     caja.innerHTML = "";
     if (fotos.length) {
         const im = document.createElement("img");
+        im.onload = () => setTimeout(ajustarAltoVista, 0);
         im.src = fotos[0]; im.alt = item.nombre; im.className = "souv-foto";
         caja.appendChild(im);
     } else {
@@ -6219,6 +6258,7 @@ function pintarVistaSouv(item) {
         const t = document.createElement("strong");
         t.textContent = (grupo ? grupo.titulo + " · " : "") + item.nombre;
         ph.append(e, t); caja.appendChild(ph);
+        setTimeout(ajustarAltoVista, 0);
     }
 }
 
@@ -7713,6 +7753,7 @@ function renderCuadro(wcm, hcm, estilo, label) {
     const top = cfg.anchor === "bottom" ? (cfg.baseFracY - hFrac) : (cfg.baseFracY - hFrac / 2);
     cuadro.style.top = (top * 100) + "%";
     et.innerText = label;
+    setTimeout(ajustarAltoVista, 0);
 }
 
 function cargarSimulador(categoria) {
