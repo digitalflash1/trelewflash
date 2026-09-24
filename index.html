@@ -3195,7 +3195,7 @@ z"></path></g>
      La versión que se toca del flyer de la promo. Todo lo que dice (opciones,
      medidas, precios de antes y de ahora, textos) sale de PROMOS, allá abajo en
      el bloque de configuración del script; acá solo están los contenedores.
-     Se llega tocando la primera tarjeta del carrusel de la portada o con
+     Se llega tocando su tarjeta en el carrusel de la portada o con
      ?ver=promos. -->
 <div id="p-promos" class="pantalla oculto">
     <div class="barra-sup">
@@ -9481,6 +9481,12 @@ function inyectarSticker(url) {
    (una versión 4:5 o 9:16 del mismo diseño) y ahí se usa esa. */
 const pantallaParada = window.matchMedia("(orientation: portrait)");
 const NOVEDADES = [
+    /* Revelado desde el celular. Tiene versión vertical para el celular
+       parado. Lleva directo a elegir el tamaño, como Empezar mi pedido →
+       Revelar fotos. */
+    { img: "assets/revela-celular.webp", imgFallback: "assets/revela-celular.jpg",
+      imgVertical: "assets/revela-celular-vertical.webp", emoji: "📸",
+      color: "#fcfc14", accion: "revelar", cta: "Elegí el tamaño ➜" },
     /* Promo del mes. Es la única novedad que lleva a algún lado: `accion` la
        hace tocable y `cta` es lo que dice el cartelito de la esquina. El texto
        ya viene dentro del banner, por eso no lleva titulo/texto. */
@@ -9756,6 +9762,7 @@ function abrirNovedad(n) {
     medir("novedad_tocada", { novedad: n.souvenir || n.accion, evento: n.evento || "" });
     if (n.accion === "promos") abrirPromos();
     if (n.accion === "recuerdo") abrirRecuerdoEscolar();
+    if (n.accion === "revelar") { flujo = "pedido"; mostrar("p-categorias"); }
     if (n.accion === "evento") { abrirEventos(); abrirEvento(n.evento); }
     /* Los del carrusel del catálogo. Si el souvenir todavía no cargó (o se
        ocultó desde el admin) se cae a la lista de souvenirs. */
