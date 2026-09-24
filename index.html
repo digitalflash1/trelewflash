@@ -210,9 +210,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     /* 100svh: el alto con la barra del navegador visible, para que el
        carrusel no quede debajo de ella en el celular. Los 58px que se restan
        son lo que se asoma de la sección de los botones. */
-    .portada-hero { display: flex; flex-direction: column; height: calc(100vh - 58px); height: calc(100svh - 58px); }
-    .portada-hero .ftf-logo { flex: 0 0 auto; margin: 0 auto; padding: 8px .5em 6px; }
-    .portada-hero .ftf-svg { width: min(150px, 40vw); }
+    .portada-hero { position: relative; display: flex; flex-direction: column; height: calc(100vh - 58px); height: calc(100svh - 58px); }
+    /* El logo flota sobre el carrusel, arriba a la izquierda, y crece con el
+       ancho de la pantalla. Va en la portada y no dentro del carrusel para
+       que tocarlo repita la animación en vez de abrir la novedad. El fondo
+       crema translúcido lo hace legible sobre cualquier banner. */
+    .portada-hero .ftf-logo { position: absolute; z-index: 6; margin: 0; padding: 5px 9px;
+        top: clamp(8px, 1.6vw, 20px); left: clamp(8px, 1.6vw, 20px);
+        border-radius: 12px; background: rgba(255,249,196,.82); box-shadow: 0 3px 12px rgba(0,0,0,.22);
+        -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+    .portada-hero .ftf-svg { width: clamp(100px, 12vw, 170px); }
     #p-bienvenida .caja-inicio { width: 100%; max-width: 560px; margin: 0 auto; padding: 18px 16px 8px; background: none; border: 0; border-radius: 0; }
     #p-bienvenida .caja-inicio .caja-titulo { font-size: 20px; margin: 0 0 2px; }
     #p-bienvenida .caja-inicio .caja-bajada { margin: 0 0 16px; font-size: 14px; }
