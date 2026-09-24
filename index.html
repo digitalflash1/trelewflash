@@ -8272,7 +8272,8 @@ const EVENTOS_REINTENTOS = [3000, 8000];
 function cargarEventos(intento) {
     intento = Number(intento) || 0;
     if (estadoEventos === "cargando" || estadoEventos === "listo") return;
-    if (!listaEventos) { const g = eventosGuardados(); if (g) recibirEventos(g, true); }
+    // Pase lo que pase con la copia guardada, la lista del backend se pide igual.
+    if (!listaEventos) { try { const g = eventosGuardados(); if (g) recibirEventos(g, true); } catch (e) {} }
     if (!PEDIDOS_URL) { estadoEventos = listaEventos ? "listo" : "error"; pintarEventos(); return; }
     estadoEventos = "cargando";
     pintarEventos();
@@ -8531,8 +8532,12 @@ function cerrarVisorEvento() {
    quien la esté mirando. */
 const EVENTOS_EN_CARRUSEL = 3;
 let eventosEnCarrusel = false;
+/* Con la copia guardada la lista puede llegar mientras la página todavía se
+   está armando (link directo a ?ver=eventos), antes que el carrusel: en ese
+   caso los suma initNov cuando arranca. */
+let carruselIniciado = false;
 function sumarEventosAlCarrusel() {
-    if (eventosEnCarrusel || !listaEventos || !listaEventos.length) return;
+    if (!carruselIniciado || eventosEnCarrusel || !listaEventos || !listaEventos.length) return;
     eventosEnCarrusel = true;
     listaEventos.slice(0, EVENTOS_EN_CARRUSEL).forEach(e => NOVEDADES.push({
         img: portadaEvento(e), imgFallback: miniaturaDrive(e.pdfs[0].id), emoji: "📸",
@@ -9640,6 +9645,8 @@ function reiniciarAutoNov() { clearInterval(novTimer); autoNov(); }
 function pausarAutoNov() { clearInterval(novTimer); novTimer = null; }
 (function initNov() {
     renderNovedades(); autoNov();
+    carruselIniciado = true;
+    sumarEventosAlCarrusel();
     /* Los eventos del carrusel: se piden un rato después de abrir, cuando el
        catálogo (que es lo que el cliente usa primero) ya salió. De paso la
        galería queda cargada si después entra a verla. */
