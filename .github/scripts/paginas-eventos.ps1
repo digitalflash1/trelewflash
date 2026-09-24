@@ -10,7 +10,7 @@ param(
     [Parameter(Mandatory = $true)][string]$Salida
 )
 $ErrorActionPreference = "Stop"
-$sitio = "https://digitalflash1.github.io/trelewflash/"
+$sitio = "https://trelewflash.com.ar/"
 $meses = "enero","febrero","marzo","abril","mayo","junio","julio",
          "agosto","septiembre","octubre","noviembre","diciembre"
 $utf8 = New-Object System.Text.UTF8Encoding($false)

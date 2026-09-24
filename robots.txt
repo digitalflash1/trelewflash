@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://digitalflash1.github.io/trelewflash/sitemap.xml
+Sitemap: https://trelewflash.com.ar/sitemap.xml

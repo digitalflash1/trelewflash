@@ -13,13 +13,13 @@
 (function () {
     var ruta = location.pathname;
     var i = ruta.indexOf("/e/");
-    var base = (i >= 0) ? ruta.slice(0, i + 1) : "/trelewflash/";
+    var base = (i >= 0) ? ruta.slice(0, i + 1) : "/";
     var m = (i >= 0) ? ruta.slice(i + 3).match(/^([a-z0-9-]+)\/?(index\.html)?$/) : null;
     location.replace(base + (m ? "?ver=eventos&evento=" + m[1] : "") + location.hash);
 })();
 </script>
 </head>
 <body style="font-family:sans-serif;text-align:center;padding:40px 16px;">
-<p><a href="/trelewflash/">Ir a Trelewflash</a></p>
+<p><a href="/">Ir a Trelewflash</a></p>
 </body>
 </html>
