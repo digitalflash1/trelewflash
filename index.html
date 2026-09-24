@@ -8242,32 +8242,62 @@ function abrirEventos(idEvento) {
     else cargarEventos();
 }
 
-function cargarEventos(reintento) {
+/* La última lista que llegó bien queda en el navegador del cliente: se muestra
+   al toque y la del backend la reemplaza cuando llega. Si Apps Script está
+   frío o caído, el cliente igual ve los eventos (a lo sumo sin el más nuevo). */
+const EVENTOS_LS = "tf_eventos";
+let eventosCrudos = "";           // el JSON que se está mostrando, para no repintar igual
+function eventosGuardados() {
+    try { return localStorage.getItem(EVENTOS_LS) || ""; } catch (e) { return ""; }
+}
+function recibirEventos(json, deGuardado) {
+    if (json === eventosCrudos) return;
+    let eventos;
+    try { eventos = JSON.parse(json); } catch (e) { return; }
+    if (!Array.isArray(eventos)) return;
+    eventosCrudos = json;
+    listaEventos = eventos.filter(e => e && e.id && Array.isArray(e.pdfs) && e.pdfs.length)
+                          .map(prepararEvento);
+    pintarEventos();
+    sumarEventosAlCarrusel();
+    /* Un link a un evento que la copia guardada no tiene puede ser uno recién
+       publicado: se espera a la lista del backend antes de decir que no está. */
+    if (deGuardado && eventoPendiente && !listaEventos.some(e => e.id === eventoPendiente)) return;
+    abrirEventoPendiente();
+}
+
+/* Esperas antes de cada reintento. Apps Script frío puede tardar 10-20 s y
+   a veces falla la primera vez aunque a los segundos ande. */
+const EVENTOS_REINTENTOS = [3000, 8000];
+function cargarEventos(intento) {
+    intento = Number(intento) || 0;
     if (estadoEventos === "cargando" || estadoEventos === "listo") return;
-    if (!PEDIDOS_URL) { estadoEventos = "error"; pintarEventos(); return; }
+    if (!listaEventos) { const g = eventosGuardados(); if (g) recibirEventos(g, true); }
+    if (!PEDIDOS_URL) { estadoEventos = listaEventos ? "listo" : "error"; pintarEventos(); return; }
     estadoEventos = "cargando";
     pintarEventos();
     const ctrl = ("AbortController" in window) ? new AbortController() : null;
-    const timer = ctrl ? setTimeout(() => ctrl.abort(), 15000) : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), 25000) : null;
     fetch(PEDIDOS_URL + "?accion=eventos&t=" + Date.now(),
           Object.assign({ cache: "no-store" }, ctrl ? { signal: ctrl.signal } : {}))
         .then(r => r.json())
         .then(data => {
             if (!data || !data.ok || !Array.isArray(data.eventos)) throw new Error("sin eventos");
-            listaEventos = data.eventos.filter(e => e && e.id && Array.isArray(e.pdfs) && e.pdfs.length)
-                                       .map(prepararEvento);
+            const json = JSON.stringify(data.eventos);
+            try { localStorage.setItem(EVENTOS_LS, json); } catch (e) { /* navegación privada o sin lugar */ }
             estadoEventos = "listo";
-            pintarEventos();
-            sumarEventosAlCarrusel();
-            abrirEventoPendiente();
+            recibirEventos(json, false);
         })
         .catch(() => {
             estadoEventos = "nuevo";
-            /* Un reintento, como el catálogo: Apps Script frío suele fallar la
-               primera vez y andar a los dos segundos. */
-            if (!reintento) { setTimeout(() => cargarEventos(true), 2500); return; }
-            estadoEventos = "error";
+            if (intento < EVENTOS_REINTENTOS.length) {
+                setTimeout(() => cargarEventos(intento + 1), EVENTOS_REINTENTOS[intento]);
+                return;
+            }
+            // Con la copia guardada en pantalla no hace falta mostrar el error.
+            estadoEventos = listaEventos ? "listo" : "error";
             pintarEventos();
+            if (listaEventos) abrirEventoPendiente();
         })
         .finally(() => { if (timer) clearTimeout(timer); });
 }
