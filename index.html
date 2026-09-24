@@ -223,6 +223,29 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     #p-bienvenida .caja-inicio { width: 100%; max-width: 560px; margin: 0 auto; padding: 18px 16px 8px; background: none; border: 0; border-radius: 0; }
     #p-bienvenida .caja-inicio .caja-titulo { font-size: 20px; margin: 0 0 2px; }
     #p-bienvenida .caja-inicio .caja-bajada { margin: 0 0 16px; font-size: 14px; }
+    /* Carrusel del catálogo: de borde a borde como el de arriba. Vertical 4:5
+       en el celular (sin pasarse del alto de la pantalla) y apaisado en la
+       compu. */
+    .portada-catalogo { margin-top: 22px; }
+    .portada-catalogo .caja-titulo { font-size: 20px; font-weight: bold; color: var(--color-principal); margin: 0 0 12px; }
+    .carrusel-catalogo { flex: none; aspect-ratio: 4 / 5; max-height: calc(100vh - 70px); max-height: calc(100svh - 70px); }
+    @media (orientation: landscape) { .carrusel-catalogo { aspect-ratio: 16 / 9; max-height: 80vh; max-height: 80svh; } }
+    /* Compu: mitad y mitad. Los botones a la izquierda y el carrusel del
+       catálogo a la derecha, pegado al borde, con el mismo alto que la
+       columna de botones. */
+    @media (min-width: 900px) {
+        .portada-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; margin-top: 28px; }
+        #p-bienvenida .caja-inicio { max-width: none; margin: 0; padding: 0 clamp(24px, 4vw, 64px); }
+        #p-bienvenida .caja-inicio .btn-menu:last-of-type { margin-bottom: 0; }
+        .portada-catalogo { margin-top: 0; display: flex; flex-direction: column; }
+        .carrusel-catalogo { flex: 1 1 auto; aspect-ratio: auto; max-height: none; min-height: 440px; }
+    }
+    .carrusel-catalogo .slide-nov { position: relative; gap: 14px; padding: 24px 28px 44px; }
+    /* Sin foto, el botón va centrado debajo del texto en vez de en la esquina. */
+    .carrusel-catalogo .slide-nov:not(.con-img) .nov-cta { position: static; margin-top: 6px; padding: 11px 20px; font-size: 16px; }
+    .carrusel-catalogo .slide-nov .nov-emoji { font-size: clamp(64px, 20vw, 120px); }
+    .carrusel-catalogo .slide-nov h3 { font-size: clamp(26px, 7.5vw, 42px); }
+    .carrusel-catalogo .slide-nov p { font-size: clamp(15px, 4.2vw, 20px); max-width: 30ch; }
 
     /* Botones con foto: amarillo translúcido encima de una foto de lo que
        abre. Más opaco a la izquierda, donde va el texto, y más claro a la
@@ -308,10 +331,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .carrusel-dots button.activo { background: #fff; }
     .carrusel-flecha { position: absolute; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; border: none; border-radius: 50%; background: rgba(0,0,0,.28); color: #fff; font-size: 18px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .carrusel-flecha.izq { left: 6px; } .carrusel-flecha.der { right: 6px; }
-    #carrusel-novedades .carrusel-flecha { z-index: 5; width: 40px; height: 40px; font-size: 24px; background: rgba(0,0,0,.35); }
-    #carrusel-novedades .carrusel-flecha.izq { left: 10px; } #carrusel-novedades .carrusel-flecha.der { right: 10px; }
-    #carrusel-novedades .carrusel-dots { z-index: 5; bottom: 14px; }
-    #carrusel-novedades .carrusel-dots button { width: 9px; height: 9px; }
+    #p-bienvenida .carrusel-flecha { z-index: 5; width: 40px; height: 40px; font-size: 24px; background: rgba(0,0,0,.35); }
+    #p-bienvenida .carrusel-flecha.izq { left: 10px; } #p-bienvenida .carrusel-flecha.der { right: 10px; }
+    #p-bienvenida .carrusel-dots { z-index: 5; bottom: 14px; }
+    #p-bienvenida .carrusel-dots button { width: 9px; height: 9px; }
     /* Mientras se pellizca para acercar, las flechas y los puntitos se apartan
        para no tapar la imagen. Vuelven al soltar los dedos. */
     .carrusel-flecha, .carrusel-dots { transition: opacity .2s; }
@@ -3135,6 +3158,9 @@ z"></path></g>
     </div>
 </div>
 
+<!-- Lo que sigue al carrusel de arriba. En el celular va uno debajo del otro;
+     en la compu, botones a la izquierda y carrusel del catálogo a la derecha. -->
+<div class="portada-cuerpo">
 <!-- Botones de la portada. La foto de fondo de cada uno va en --foto
      (las recortadas para esto están en assets/botones/). -->
 <div class="caja-inicio" id="caja-inicio">
@@ -3145,6 +3171,19 @@ z"></path></g>
     <button class="btn-menu con-foto" style="--foto:url(assets/botones/recuerdo.jpg)" onclick="abrirRecuerdoEscolar()">🎒 Recuerdo Escolar<span class="btn-flecha" aria-hidden="true">›</span></button>
     <button class="btn-menu con-foto" style="--foto:url(assets/botones/eventos.jpg)" onclick="abrirEventos()">🥳 Ver fotos de eventos sociales<span class="btn-flecha" aria-hidden="true">›</span></button>
     <button class="btn-menu con-foto" style="--foto:url(assets/botones/donde.svg)" onclick="abrirDonde()">📍 Dónde estamos y envíos<span class="btn-flecha" aria-hidden="true">›</span></button>
+</div>
+
+<!-- Segundo carrusel: productos del catálogo. Las tarjetas salen de
+     CARRUSEL_CATALOGO, en el script. -->
+<section class="portada-catalogo" aria-label="Productos del catálogo">
+    <p class="caja-titulo">Mirá el catálogo</p>
+    <div id="carrusel-catalogo" class="carrusel carrusel-catalogo">
+        <div class="carrusel-track"></div>
+        <button type="button" class="carrusel-flecha izq" aria-label="Anterior">‹</button>
+        <button type="button" class="carrusel-flecha der" aria-label="Siguiente">›</button>
+        <div class="carrusel-dots"></div>
+    </div>
+</section>
 </div>
 </div>
 
@@ -9612,82 +9651,87 @@ function armarSlideVista(s, n) {
     });
 }
 let novIdx = 0, novTimer = null;
+/* Arma una tarjeta del carrusel a partir de un item como los de NOVEDADES.
+   La usan los dos carruseles de la portada. */
+function armarSlideNovedad(n) {
+    const s = document.createElement("div");
+    s.className = "slide-nov";
+    if (n.demo === "vista") {
+        armarSlideVista(s, n);
+        if (n.titulo || n.texto) {
+            const cap = document.createElement("div"); cap.className = "nov-cap";
+            if (n.titulo) { const h = document.createElement("h3"); h.textContent = n.titulo; cap.appendChild(h); }
+            if (n.texto) { const p = document.createElement("p"); p.textContent = n.texto; cap.appendChild(p); }
+            s.appendChild(cap);
+        }
+    } else if (n.img) {
+        s.classList.add("con-img");
+        /* Celular parado: si la novedad tiene versión vertical (imgVertical)
+           va esa, llenando la pantalla; si no, el banner horizontal entero. */
+        const vertical = n.imgVertical && pantallaParada.matches;
+        const cubrir = vertical || n.ajuste === "cubrir";
+        if (cubrir) s.classList.add("cubrir");
+        s.style.background = n.color || "linear-gradient(135deg,#111,#333)";
+        const fb = document.createElement("div"); fb.className = "nov-fallback"; fb.textContent = n.emoji || "\u2728";
+        const im = document.createElement("img"); im.className = "nov-img"; im.alt = n.titulo || ""; im.loading = "lazy";
+        /* Si hay versi\u00f3n liviana (webp animado) se usa esa; ante cualquier
+           falla se cae al formato original y, si tampoco carga, al emoji. */
+        im.onerror = function () {
+            if (n.imgFallback && im.src.indexOf(n.imgFallback) === -1) { im.src = n.imgFallback; return; }
+            im.style.display = "none";
+        };
+        im.src = vertical ? n.imgVertical : n.img;
+        s.appendChild(fb);
+        /* Copia desenfocada de fondo, para que el banner entero no deje
+           franjas lisas arriba y abajo. Si no carga, queda el color. */
+        if (!cubrir) {
+            const fo = document.createElement("img"); fo.className = "nov-fondo"; fo.alt = ""; fo.loading = "lazy";
+            fo.setAttribute("aria-hidden", "true");
+            fo.onerror = function () {
+                if (n.imgFallback && fo.src.indexOf(n.imgFallback) === -1) { fo.src = n.imgFallback; return; }
+                fo.style.display = "none";
+            };
+            fo.src = n.img;
+            s.appendChild(fo);
+        }
+        s.appendChild(im);
+        if (n.titulo || n.texto) {
+            const cap = document.createElement("div"); cap.className = "nov-cap";
+            if (n.titulo) { const h = document.createElement("h3"); h.textContent = n.titulo; cap.appendChild(h); }
+            if (n.texto) { const p = document.createElement("p"); p.textContent = n.texto; cap.appendChild(p); }
+            s.appendChild(cap);
+        }
+    } else {
+        s.style.background = n.color || "#4a4a00";
+        const e = document.createElement("div"); e.className = "nov-emoji"; e.textContent = n.emoji || "";
+        const h = document.createElement("h3"); h.textContent = n.titulo || "";
+        const p = document.createElement("p"); p.textContent = n.texto || "";
+        s.appendChild(e); s.appendChild(h); s.appendChild(p);
+    }
+    /* Novedad que lleva a una pantalla: además del cartelito, la
+       tarjeta entera responde al toque (ver `levantar`, más abajo). */
+    if (n.accion) {
+        s.classList.add("nov-accion");
+        const cta = document.createElement("button");
+        cta.type = "button"; cta.className = "nov-cta";
+        cta.textContent = n.cta || "Ver más ➜";
+        cta.onclick = ev => { ev.stopPropagation(); abrirNovedad(n); };
+        /* Si la novedad tiene leyenda, el botón va adentro: flotando abajo
+           a la izquierda le quedaba encima del texto. Sin leyenda (los
+           banners, que ya traen todo dibujado) sigue flotando. */
+        const cap = s.querySelector(".nov-cap");
+        if (cap) cap.classList.add("con-cta");
+        (cap || s).appendChild(cta);
+    }
+    return s;
+}
 function renderNovedades() {
     const track = document.getElementById("carrusel-track");
     const dots = document.getElementById("carrusel-dots");
     if (!track || !dots) return;
     track.innerHTML = ""; dots.innerHTML = "";
     NOVEDADES.forEach((n, i) => {
-        const s = document.createElement("div");
-        s.className = "slide-nov";
-        if (n.demo === "vista") {
-            armarSlideVista(s, n);
-            if (n.titulo || n.texto) {
-                const cap = document.createElement("div"); cap.className = "nov-cap";
-                if (n.titulo) { const h = document.createElement("h3"); h.textContent = n.titulo; cap.appendChild(h); }
-                if (n.texto) { const p = document.createElement("p"); p.textContent = n.texto; cap.appendChild(p); }
-                s.appendChild(cap);
-            }
-        } else if (n.img) {
-            s.classList.add("con-img");
-            /* Celular parado: si la novedad tiene versión vertical (imgVertical)
-               va esa, llenando la pantalla; si no, el banner horizontal entero. */
-            const vertical = n.imgVertical && pantallaParada.matches;
-            const cubrir = vertical || n.ajuste === "cubrir";
-            if (cubrir) s.classList.add("cubrir");
-            s.style.background = n.color || "linear-gradient(135deg,#111,#333)";
-            const fb = document.createElement("div"); fb.className = "nov-fallback"; fb.textContent = n.emoji || "\u2728";
-            const im = document.createElement("img"); im.className = "nov-img"; im.alt = n.titulo || ""; im.loading = "lazy";
-            /* Si hay versi\u00f3n liviana (webp animado) se usa esa; ante cualquier
-               falla se cae al formato original y, si tampoco carga, al emoji. */
-            im.onerror = function () {
-                if (n.imgFallback && im.src.indexOf(n.imgFallback) === -1) { im.src = n.imgFallback; return; }
-                im.style.display = "none";
-            };
-            im.src = vertical ? n.imgVertical : n.img;
-            s.appendChild(fb);
-            /* Copia desenfocada de fondo, para que el banner entero no deje
-               franjas lisas arriba y abajo. Si no carga, queda el color. */
-            if (!cubrir) {
-                const fo = document.createElement("img"); fo.className = "nov-fondo"; fo.alt = ""; fo.loading = "lazy";
-                fo.setAttribute("aria-hidden", "true");
-                fo.onerror = function () {
-                    if (n.imgFallback && fo.src.indexOf(n.imgFallback) === -1) { fo.src = n.imgFallback; return; }
-                    fo.style.display = "none";
-                };
-                fo.src = n.img;
-                s.appendChild(fo);
-            }
-            s.appendChild(im);
-            if (n.titulo || n.texto) {
-                const cap = document.createElement("div"); cap.className = "nov-cap";
-                if (n.titulo) { const h = document.createElement("h3"); h.textContent = n.titulo; cap.appendChild(h); }
-                if (n.texto) { const p = document.createElement("p"); p.textContent = n.texto; cap.appendChild(p); }
-                s.appendChild(cap);
-            }
-        } else {
-            s.style.background = n.color || "#4a4a00";
-            const e = document.createElement("div"); e.className = "nov-emoji"; e.textContent = n.emoji || "";
-            const h = document.createElement("h3"); h.textContent = n.titulo || "";
-            const p = document.createElement("p"); p.textContent = n.texto || "";
-            s.appendChild(e); s.appendChild(h); s.appendChild(p);
-        }
-        /* Novedad que lleva a una pantalla: además del cartelito, la
-           tarjeta entera responde al toque (ver `levantar`, más abajo). */
-        if (n.accion) {
-            s.classList.add("nov-accion");
-            const cta = document.createElement("button");
-            cta.type = "button"; cta.className = "nov-cta";
-            cta.textContent = n.cta || "Ver más ➜";
-            cta.onclick = ev => { ev.stopPropagation(); abrirNovedad(n); };
-            /* Si la novedad tiene leyenda, el botón va adentro: flotando abajo
-               a la izquierda le quedaba encima del texto. Sin leyenda (los
-               banners, que ya traen todo dibujado) sigue flotando. */
-            const cap = s.querySelector(".nov-cap");
-            if (cap) cap.classList.add("con-cta");
-            (cap || s).appendChild(cta);
-        }
-        track.appendChild(s);
+        track.appendChild(armarSlideNovedad(n));
         const d = document.createElement("button"); d.type = "button";
         d.setAttribute("aria-label", "Ir a la novedad " + (i + 1));
         if (i === 0) d.className = "activo";
@@ -9709,10 +9753,20 @@ function aplicarNov() {
    `accion` a una pantalla: agregar un destino nuevo es agregar un `case`. */
 function abrirNovedad(n) {
     if (!n || !n.accion) return;
-    medir("novedad_tocada", { novedad: n.accion, evento: n.evento || "" });
+    medir("novedad_tocada", { novedad: n.souvenir || n.accion, evento: n.evento || "" });
     if (n.accion === "promos") abrirPromos();
     if (n.accion === "recuerdo") abrirRecuerdoEscolar();
     if (n.accion === "evento") { abrirEventos(); abrirEvento(n.evento); }
+    /* Los del carrusel del catálogo. Si el souvenir todavía no cargó (o se
+       ocultó desde el admin) se cae a la lista de souvenirs. */
+    if (n.accion === "souvenir") {
+        if (CATALOGO_SOUVENIRS[n.souvenir]) elegirTipoSouv(n.souvenir); else abrirSouvenirs();
+    }
+    if (n.accion === "cuadros") abrirCatalogo();
+    if (n.accion === "albumes") abrirAlbumes();
+    if (n.accion === "consulta") {
+        window.open("https://wa.me/" + TELEFONO_WA + "?text=" + encodeURIComponent(n.consulta || ""), "_blank", "noopener");
+    }
 }
 function irNovedad(i) { novIdx = (i + NOVEDADES.length) % NOVEDADES.length; aplicarNov(); }
 function nextNov() { irNovedad(novIdx + 1); reiniciarAutoNov(); }
@@ -9723,6 +9777,62 @@ const NOV_ESPERA = 7000;
 function autoNov() { if (NOVEDADES.length > 1) novTimer = setInterval(() => irNovedad(novIdx + 1), NOV_ESPERA); }
 function reiniciarAutoNov() { clearInterval(novTimer); autoNov(); }
 function pausarAutoNov() { clearInterval(novTimer); novTimer = null; }
+/* ===== Segundo carrusel de la portada: productos del catálogo =====
+   Va debajo de los botones, con el mismo aspecto que el de novedades, y cada
+   tarjeta lleva a su sección. Para ponerle foto a una se le agrega `img` (y si
+   hay versión vertical, `imgVertical`), igual que en NOVEDADES. Las fotos
+   conviene que sean verticales 4:5 (por ejemplo 1080x1350): así llenan la
+   tarjeta en el celular. Sin foto se ve el emoji con el texto sobre el color. */
+const CARRUSEL_CATALOGO = [
+    { emoji: "📌", titulo: "Pines", texto: "Con tu foto o tu diseño, para la mochila o la campera.",
+      color: "linear-gradient(135deg,#e11d48,#f59e0b)", accion: "souvenir", souvenir: "pines", cta: "Ver pines ➜" },
+    { emoji: "🔑", titulo: "Llaveros acrílicos", texto: "Tu foto para llevar siempre encima.",
+      color: "linear-gradient(135deg,#0ea5e9,#6366f1)", accion: "souvenir", souvenir: "llaveros", cta: "Ver llaveros ➜" },
+    { emoji: "🖼️", titulo: "Cuadros", texto: "Para colgar o para el escritorio, en madera, aluminio o vidrio.",
+      color: "linear-gradient(135deg,#78350f,#d97706)", accion: "cuadros", cta: "Ver cuadros ➜" },
+    { emoji: "📖", titulo: "Álbumes de fotos", texto: "Para guardar tus fotos impresas todas juntas.",
+      color: "linear-gradient(135deg,#4a4a00,#65a30d)", accion: "albumes", cta: "Ver álbumes ➜" },
+    /* El mate todavía no está en el catálogo: por ahora abre una consulta por
+       WhatsApp. Cuando se cargue, cambiarle `accion`. */
+    { emoji: "🧉", titulo: "Mate de polímero", texto: "Personalizado con tu foto o tu diseño.",
+      color: "linear-gradient(135deg,#14532d,#16a34a)", accion: "consulta",
+      consulta: "Hola! Quería consultar por un mate de polímero personalizado.", cta: "Consultar ➜" }
+];
+/* Carrusel sencillo: flechas, puntitos, deslizar con el dedo, pasa solo y
+   tocar la tarjeta abre su sección. (El de novedades tiene además la lupa.) */
+function montarCarrusel(car, items, espera) {
+    if (!car || !items.length) return;
+    const track = car.querySelector(".carrusel-track"), dots = car.querySelector(".carrusel-dots");
+    let idx = 0, timer = null;
+    items.forEach((n, i) => {
+        track.appendChild(armarSlideNovedad(n));
+        const d = document.createElement("button"); d.type = "button";
+        d.setAttribute("aria-label", "Ir a la tarjeta " + (i + 1));
+        d.onclick = () => { ir(i); reiniciar(); };
+        dots.appendChild(d);
+    });
+    function ir(i) {
+        idx = (i + items.length) % items.length;
+        track.style.transform = "translateX(" + (-idx * 100) + "%)";
+        [...dots.children].forEach((d, j) => d.classList.toggle("activo", j === idx));
+    }
+    function reiniciar() { clearInterval(timer); if (items.length > 1) timer = setInterval(() => ir(idx + 1), espera); }
+    car.querySelector(".carrusel-flecha.izq").onclick = () => { ir(idx - 1); reiniciar(); };
+    car.querySelector(".carrusel-flecha.der").onclick = () => { ir(idx + 1); reiniciar(); };
+    let sx = null;
+    car.addEventListener("pointerdown", e => { sx = e.isPrimary ? e.clientX : null; });
+    car.addEventListener("pointercancel", () => { sx = null; });
+    car.addEventListener("pointerup", e => {
+        if (sx === null || !e.isPrimary) return;
+        const dx = e.clientX - sx; sx = null;
+        if (dx < -40) { ir(idx + 1); reiniciar(); }
+        else if (dx > 40) { ir(idx - 1); reiniciar(); }
+        else if (Math.abs(dx) <= 8 && !e.target.closest(".carrusel-flecha, .carrusel-dots, .nov-cta")) abrirNovedad(items[idx]);
+    });
+    ir(0); reiniciar();
+}
+montarCarrusel(document.getElementById("carrusel-catalogo"), CARRUSEL_CATALOGO, 5000);
+
 /* Los botones de la portada aparecen a medida que se baja hasta ellos. Si
    entran varios juntos, salen de a uno con un pequeño escalonado. */
 (function revelarBotonesInicio() {
