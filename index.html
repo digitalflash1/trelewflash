@@ -8934,8 +8934,12 @@ let carruselIniciado = false;
 function sumarEventosAlCarrusel() {
     if (!carruselIniciado || eventosEnCarrusel || !listaEventos || !listaEventos.length) return;
     eventosEnCarrusel = true;
+    /* Las portadas subidas a assets/eventos/ pueden tener versión vertical para
+       el celular con el mismo nombre terminado en "-vertical.jpg". Si no está,
+       renderNovedades() cae a la portada normal. */
     listaEventos.slice(0, EVENTOS_EN_CARRUSEL).forEach(e => NOVEDADES.push({
         img: portadaEvento(e), imgFallback: miniaturaDrive(e.pdfs[0].id), emoji: "📸",
+        imgVertical: /\/assets\/eventos\/[^\/]+\.jpg$/.test(e.portada || "") ? e.portada.replace(/\.jpg$/, "-vertical.jpg") : undefined,
         titulo: e.titulo, color: "linear-gradient(135deg,#1f2937,#4a4a00)", ajuste: "cubrir",
         accion: "evento", evento: e.id, cta: "Ver las fotos ➜"
     }));
@@ -9985,6 +9989,7 @@ function armarSlideNovedad(n) {
         /* Si hay versi\u00f3n liviana (webp animado) se usa esa; ante cualquier
            falla se cae al formato original y, si tampoco carga, al emoji. */
         im.onerror = function () {
+            if (vertical && im.src.indexOf(n.imgVertical) !== -1) { im.src = n.img; return; }
             if (n.imgFallback && im.src.indexOf(n.imgFallback) === -1) { im.src = n.imgFallback; return; }
             im.style.display = "none";
         };
