@@ -39,6 +39,16 @@ try {
      La misma marca apaga GA4 (ga-disable, el interruptor oficial de Google):
      GA4 va directo por gtag y no pasa por la excepción del contenedor. -->
 <script>
+/* Etiquetas de campaña con las que se llegó (utm_*, fbclid, gclid): links de
+   Instagram, QR impresos, anuncios. La tienda reescribe la dirección apenas
+   carga (sincronizarUrl) y sin esto Analytics y Clarity ya no las verían:
+   se guardan acá, antes que nada, y conCampania() las vuelve a poner. */
+try {
+    window.PARAMS_CAMPANIA = [];
+    new URLSearchParams(location.search).forEach(function (v, k) {
+        if (/^utm_|^(fbclid|gclid)$/.test(k)) window.PARAMS_CAMPANIA.push([k, v]);
+    });
+} catch (e) { window.PARAMS_CAMPANIA = []; }
 try {
     var _nm = new URLSearchParams(location.search).get('nomedir');
     if (_nm === '1') localStorage.setItem('tf_no_medir', '1');
@@ -54,7 +64,9 @@ try {
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-7ZGZ6GP56R"></script>
 <script>
 gtag('js', new Date());
-gtag('config', 'G-7ZGZ6GP56R');
+/* page_location explícita: acá la dirección todavía es la original, con sus
+   etiquetas de campaña; cuando gtag.js termina de cargar ya fue reescrita. */
+gtag('config', 'G-7ZGZ6GP56R', { page_location: location.href });
 </script>
 <!-- End Google tag -->
 
@@ -7077,6 +7089,15 @@ function urlDeFicha(fam, medida) {
     if (medida) u.searchParams.set("medida", medida);
     return u.toString();
 }
+/* Solo para la barra de direcciones: le devuelve las etiquetas de campaña con
+   las que se llegó. Los links que el cliente comparte NO las llevan (urlBase,
+   urlDeSeccion y urlDeFicha salen limpias), si no la visita del amigo se le
+   contaría a la historia de Instagram por la que entró el primero. */
+function conCampania(url) {
+    const u = new URL(url);
+    (window.PARAMS_CAMPANIA || []).forEach(([k, v]) => { if (!u.searchParams.has(k)) u.searchParams.set(k, v); });
+    return u.toString();
+}
 function urlBase() {
     const u = new URL(location.href);
     u.hash = ""; u.search = "";
@@ -7102,8 +7123,8 @@ function tituloSeleccion() {
 function sincronizarUrl(idPantalla) {
     if (!window.history || !history.replaceState) return;
     if (idPantalla === "p-ficha") return;
-    const destino = (idPantalla === "p-catalogo") ? urlDelCatalogo()
-                  : (SECCION_URL[pantallaConUrl(idPantalla)] ? urlDeSeccion(idPantalla) : urlBase());
+    const destino = conCampania((idPantalla === "p-catalogo") ? urlDelCatalogo()
+                  : (SECCION_URL[pantallaConUrl(idPantalla)] ? urlDeSeccion(idPantalla) : urlBase()));
     if (location.href !== destino) history.replaceState(null, "", destino);
 }
 
@@ -7295,7 +7316,7 @@ function abrirFicha(clave, medidaPedida, sinHistorial) {
     if (!sinHistorial && window.history && history.pushState) {
         const med = medidaDeFicha();
         history.pushState({ cuadro: fichaFamilia.id, medida: med }, "",
-            urlDeFicha(fichaFamilia, med));
+            conCampania(urlDeFicha(fichaFamilia, med)));
     }
 }
 
@@ -7379,7 +7400,7 @@ function aplicarOpcionFicha() {
         location.search.indexOf("cuadro=") >= 0) {
         const med = medidaDeFicha();
         history.replaceState({ cuadro: fichaFamilia.id, medida: med }, "",
-            urlDeFicha(fichaFamilia, med));
+            conCampania(urlDeFicha(fichaFamilia, med)));
     }
 }
 /* Material y medida de lo que está elegido, más el precio arriba de todo: son
