@@ -70,6 +70,29 @@ gtag('config', 'G-7ZGZ6GP56R', { page_location: location.href });
 </script>
 <!-- End Google tag -->
 
+<!-- Píxel de Meta (anuncios de Facebook e Instagram)
+     Con META_PIXEL_ID vacío no carga nada. El número sale del Administrador de
+     eventos de Meta (Orígenes de datos → el píxel/conjunto de datos → ID).
+     Respeta lo mismo que GA4: arranca "revocado" hasta que el cliente acepta
+     las cookies (decidirCookies) y no mide en los navegadores marcados con
+     ?nomedir=1. Los eventos de la compra los manda medir(), ver EVENTOS_META. -->
+<script>
+var META_PIXEL_ID = "1078009228474659";
+try {
+    if (META_PIXEL_ID && localStorage.getItem('tf_no_medir') !== '1') {
+        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+        n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+        document,'script','https://connect.facebook.net/en_US/fbevents.js');
+        fbq('consent', localStorage.getItem('tf_cookies') === 'ok' ? 'grant' : 'revoke');
+        fbq('init', META_PIXEL_ID);
+        fbq('track', 'PageView');
+    }
+} catch (e) { /* navegación privada o bloqueador: la tienda sigue igual */ }
+</script>
+<!-- End Píxel de Meta -->
+
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -4848,8 +4871,31 @@ function medir(evento, datos) {
             }
             gtag('event', evento, p);
         }
+        /* Y a Meta, solo los pasos de la compra y con sus nombres estándar:
+           son los que usan los anuncios para optimizar y contar ventas. */
+        if (typeof fbq === 'function' && EVENTOS_META[evento]) {
+            var d = datos || {}, m = {};
+            if (typeof d.value === 'number') { m.value = d.value; m.currency = d.currency || "ARS"; }
+            if (Array.isArray(d.items)) {
+                m.contents = d.items.map(function (it) { return { id: String(it.item_id), quantity: it.quantity }; });
+                m.content_type = "product";
+                m.num_items = d.items.reduce(function (s, it) { return s + (it.quantity || 1); }, 0);
+            } else if (typeof d.items === 'number') {
+                m.num_items = d.items;
+            }
+            /* eventID con el número de pedido: si la misma compra llega dos
+               veces (por ejemplo, el cliente recarga), Meta la cuenta una. */
+            fbq('track', EVENTOS_META[evento], m, d.transaction_id ? { eventID: String(d.transaction_id) } : undefined);
+        }
     } catch (e) { /* la medición nunca debe romper la tienda */ }
 }
+/* Nuestro nombre de evento → el evento estándar de Meta. */
+var EVENTOS_META = {
+    agregar_al_carrito: "AddToCart",
+    iniciar_checkout:   "InitiateCheckout",
+    purchase:           "Purchase",
+    clic_whatsapp:      "Contact"
+};
 
 /* Nombres legibles para los informes (en vez de "p-menu", "p-carrito"). */
 const NOMBRE_PANTALLA = {
@@ -10348,6 +10394,7 @@ function decidirCookies(acepta) {
             ad_personalization: 'granted', analytics_storage: 'granted'
         });
     }
+    if (acepta && typeof fbq === 'function') fbq('consent', 'grant');
     medir('consentimiento_cookies', { decision: acepta ? 'aceptado' : 'rechazado' });
     document.getElementById('aviso-cookies').classList.add('oculto');
     document.body.classList.remove('con-cookies');
