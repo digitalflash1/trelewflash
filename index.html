@@ -9780,8 +9780,15 @@ function inyectarSticker(url) {
    Para editar, cambia los items de NOVEDADES (emoji, titulo, texto, color).
    En la compu el carrusel es apaisado y los banners 16:9 lo llenan. En el
    celular parado es alto y angosto: un banner puede sumar `imgVertical`
-   (una versión 4:5 o 9:16 del mismo diseño) y ahí se usa esa. */
+   (una versión 3:5 o 9:16 del mismo diseño, por ejemplo 1080x1800) y ahí se
+   usa esa. En una compu con pantalla ancha el carrusel queda más apaisado que
+   16:9 (unos 2,3:1) y el banner deja franjas desenfocadas a los costados: puede
+   sumar `imgAncha` (21:9, por ejemplo 2560x1100, con lo importante en el
+   centro) y ahí se usa esa. Si una versión no carga, va la `img` de siempre. */
 const pantallaParada = window.matchMedia("(orientation: portrait)");
+/* 19/10 de la ventana deja el carrusel (ventana menos la barra de arriba) en
+   unos 2:1: a partir de ahí el 21:9 entero llena más que el 16:9. */
+const pantallaAncha = window.matchMedia("(min-aspect-ratio: 19/10)");
 const NOVEDADES = [
     /* Revelado desde el celular. Tiene versión vertical para el celular
        parado. Lleva directo a elegir el tamaño, como Empezar mi pedido →
@@ -9979,9 +9986,12 @@ function armarSlideNovedad(n) {
     } else if (n.img) {
         s.classList.add("con-img");
         /* Celular parado: si la novedad tiene versión vertical (imgVertical)
-           va esa, llenando la pantalla; si no, el banner horizontal entero. */
+           va esa, llenando la pantalla; si no, el banner horizontal entero.
+           Compu con pantalla ancha: la versión 21:9 (imgAncha), si la tiene. */
         const vertical = n.imgVertical && pantallaParada.matches;
+        const ancha = !vertical && n.imgAncha && pantallaAncha.matches;
         const cubrir = vertical || n.ajuste === "cubrir";
+        const fuente = vertical ? n.imgVertical : ancha ? n.imgAncha : n.img;
         if (cubrir) s.classList.add("cubrir");
         s.style.background = n.color || "linear-gradient(135deg,#111,#333)";
         const fb = document.createElement("div"); fb.className = "nov-fallback"; fb.textContent = n.emoji || "\u2728";
@@ -9989,11 +9999,11 @@ function armarSlideNovedad(n) {
         /* Si hay versi\u00f3n liviana (webp animado) se usa esa; ante cualquier
            falla se cae al formato original y, si tampoco carga, al emoji. */
         im.onerror = function () {
-            if (vertical && im.src.indexOf(n.imgVertical) !== -1) { im.src = n.img; return; }
+            if (fuente !== n.img && im.src.indexOf(fuente) !== -1) { im.src = n.img; return; }
             if (n.imgFallback && im.src.indexOf(n.imgFallback) === -1) { im.src = n.imgFallback; return; }
             im.style.display = "none";
         };
-        im.src = vertical ? n.imgVertical : n.img;
+        im.src = fuente;
         s.appendChild(fb);
         /* Copia desenfocada de fondo, para que el banner entero no deje
            franjas lisas arriba y abajo. Si no carga, queda el color. */
@@ -10001,10 +10011,11 @@ function armarSlideNovedad(n) {
             const fo = document.createElement("img"); fo.className = "nov-fondo"; fo.alt = ""; fo.loading = "lazy";
             fo.setAttribute("aria-hidden", "true");
             fo.onerror = function () {
+                if (fuente !== n.img && fo.src.indexOf(fuente) !== -1) { fo.src = n.img; return; }
                 if (n.imgFallback && fo.src.indexOf(n.imgFallback) === -1) { fo.src = n.imgFallback; return; }
                 fo.style.display = "none";
             };
-            fo.src = n.img;
+            fo.src = fuente;
             s.appendChild(fo);
         }
         s.appendChild(im);
@@ -10167,13 +10178,16 @@ montarCarrusel(document.getElementById("carrusel-catalogo"), CARRUSEL_CATALOGO, 
 (function initNov() {
     renderNovedades(); autoNov();
     carruselIniciado = true;
-    /* Al girar el celular se cambia entre la versión vertical y la apaisada. */
+    /* Al girar el celular (o ensanchar la ventana) se cambia entre la versión
+       vertical, la 16:9 y la ancha. */
     const alGirar = () => {
-        if (!NOVEDADES.some(n => n.imgVertical)) return;
+        if (!NOVEDADES.some(n => n.imgVertical || n.imgAncha)) return;
         const actual = novIdx; renderNovedades(); novIdx = actual; aplicarNov();
     };
-    if (pantallaParada.addEventListener) pantallaParada.addEventListener("change", alGirar);
-    else if (pantallaParada.addListener) pantallaParada.addListener(alGirar);
+    [pantallaParada, pantallaAncha].forEach(mq => {
+        if (mq.addEventListener) mq.addEventListener("change", alGirar);
+        else if (mq.addListener) mq.addListener(alGirar);
+    });
     sumarEventosAlCarrusel();
     /* Los eventos del carrusel: se piden un rato después de abrir, cuando el
        catálogo (que es lo que el cliente usa primero) ya salió. De paso la
