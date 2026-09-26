@@ -337,6 +337,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .carrusel-catalogo .slide-nov .nov-emoji { font-size: clamp(64px, 20vw, 120px); }
     .carrusel-catalogo .slide-nov h3 { font-size: clamp(26px, 7.5vw, 42px); }
     .carrusel-catalogo .slide-nov p { font-size: clamp(15px, 4.2vw, 20px); max-width: 30ch; }
+    /* Con foto: título arriba, texto abajo y el botón a la derecha de los dos.
+       En fila (como en novedades) el título quedaba aplastado encima del texto. */
+    .carrusel-catalogo .slide-nov.con-img { padding: 0; }
+    .carrusel-catalogo .slide-nov .nov-cap.con-cta { display: grid; grid-template-columns: 1fr auto; column-gap: 12px; row-gap: 2px; align-items: center; margin-bottom: 34px; }
+    .carrusel-catalogo .slide-nov .nov-cap h3 { grid-column: 1; font-size: clamp(20px, 5.5vw, 26px); }
+    .carrusel-catalogo .slide-nov .nov-cap p { grid-column: 1; font-size: clamp(13px, 3.6vw, 15px); max-width: none; }
+    .carrusel-catalogo .slide-nov .nov-cap .nov-cta { grid-column: 2; grid-row: 1 / span 2; }
 
     /* Botones con foto: amarillo translúcido encima de una foto de lo que
        abre. Más opaco a la izquierda, donde va el texto, y más claro a la
@@ -10159,7 +10166,8 @@ const CARRUSEL_CATALOGO = [
       color: "linear-gradient(135deg,#e11d48,#f59e0b)", accion: "souvenir", souvenir: "pines", cta: "Ver pines ➜" },
     { emoji: "🔑", titulo: "Llaveros acrílicos", texto: "Tu foto para llevar siempre encima.",
       color: "linear-gradient(135deg,#0ea5e9,#6366f1)", accion: "souvenir", souvenir: "llaveros", cta: "Ver llaveros ➜" },
-    { emoji: "🖼️", titulo: "Cuadros", texto: "Para colgar o para el escritorio, en madera, aluminio o vidrio.",
+    { img: "assets/catalogo/cuadros.webp", imgFallback: "assets/catalogo/cuadros.jpg",
+      emoji: "🖼️", titulo: "Cuadros", texto: "Para colgar o para el escritorio, en madera, aluminio o vidrio.",
       color: "linear-gradient(135deg,#78350f,#d97706)", accion: "cuadros", cta: "Ver cuadros ➜" },
     { emoji: "📖", titulo: "Álbumes de fotos", texto: "Para guardar tus fotos impresas todas juntas.",
       color: "linear-gradient(135deg,#4a4a00,#65a30d)", accion: "albumes", cta: "Ver álbumes ➜" },
