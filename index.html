@@ -10164,7 +10164,8 @@ function pausarAutoNov() { clearInterval(novTimer); novTimer = null; }
 const CARRUSEL_CATALOGO = [
     { emoji: "📌", titulo: "Pines", texto: "Con tu foto o tu diseño, para la mochila o la campera.",
       color: "linear-gradient(135deg,#e11d48,#f59e0b)", accion: "souvenir", souvenir: "pines", cta: "Ver pines ➜" },
-    { emoji: "🔑", titulo: "Llaveros acrílicos", texto: "Tu foto para llevar siempre encima.",
+    { img: "assets/catalogo/llaveros.webp", imgFallback: "assets/catalogo/llaveros.jpg",
+      emoji: "🔑", titulo: "Llaveros acrílicos", texto: "Tu foto para llevar siempre encima.",
       color: "linear-gradient(135deg,#0ea5e9,#6366f1)", accion: "souvenir", souvenir: "llaveros", cta: "Ver llaveros ➜" },
     { img: "assets/catalogo/cuadros.webp", imgFallback: "assets/catalogo/cuadros.jpg",
       emoji: "🖼️", titulo: "Cuadros", texto: "Para colgar o para el escritorio, en madera, aluminio o vidrio.",
