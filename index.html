@@ -504,6 +504,57 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .rec-confian li { background: #fff; border: 1px solid #bfdbfe; border-radius: 999px; padding: 5px 12px;
         font-size: 14px; font-weight: bold; color: #1e3a8a; }
     .rec-pie { font-size: 13px; color: #64748b; margin: 10px 0 0; }
+
+    /* ===== ¿Imprimir o revelar? (a donde llega el anuncio) =====
+       Repite el cartel del anuncio (fondo oscuro, IMPRIMIR tachado, REVELAR en
+       caja amarilla, las dos fotos comparadas) para que el que toca sienta que
+       llegó a lo mismo que vio, y abajo los precios de verdad. */
+    .rv-hero { background: radial-gradient(ellipse at 50% 30%, #2a2618 0%, #111 70%); color: #fff;
+        border-radius: 16px; padding: 12px 12px 14px; margin: 4px 0 14px; text-align: center; }
+    .rv-aviso { font-family: 'Anton', 'Bebas Neue', sans-serif; color: #FFE81A; font-size: 13px;
+        letter-spacing: .04em; text-align: right; line-height: 1.15; }
+    .rv-tit { font-family: 'Anton', 'Bebas Neue', sans-serif; font-weight: 400; line-height: 1; margin: 4px 0 0; color: #fff; }
+    .rv-tit .l1 { display: block; font-size: clamp(30px, 9.5vw, 52px); }
+    .rv-tit .l2 { display: block; font-size: clamp(36px, 11.5vw, 60px); margin-top: 2px; }
+    .rv-tachado { color: #8a857a; position: relative; display: inline-block; }
+    .rv-tachado::after { content: ""; position: absolute; left: -3%; right: -3%; top: 46%; height: 6px;
+        background: #e53935; border-radius: 99px; transform: rotate(-3deg); }
+    .rv-caja { background: #FFE81A; color: #111; padding: 0 8px; display: inline-block; }
+    .rv-sub { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 800; color: #FFE81A;
+        font-size: 17px; margin: 4px 0 8px; }
+    .rv-fotos { display: flex; justify-content: center; gap: 14px; margin: 0 0 18px; }
+    .rv-foto { position: relative; width: 38%; max-width: 180px; padding: 6px; box-shadow: 0 6px 16px rgba(0,0,0,.55); }
+    .rv-foto svg { display: block; width: 100%; height: auto; }
+    .rv-foto.vieja { background: #e9dfc6; transform: rotate(-4deg); }
+    .rv-foto.vieja svg { filter: sepia(.75) saturate(.35) contrast(.62) brightness(1.18); }
+    .rv-foto.nueva { background: #fff; transform: rotate(3deg); }
+    .rv-etq { position: absolute; bottom: -12px; font-family: 'Anton', sans-serif; font-size: 13px; padding: 2px 8px;
+        border-radius: 5px; white-space: nowrap; letter-spacing: .03em; }
+    .vieja .rv-etq { left: 10px; background: #fff; color: #e53935; border: 2px solid #e53935; transform: rotate(-4deg); }
+    .nueva .rv-etq { right: 10px; background: #FFE81A; color: #111; transform: rotate(3deg); }
+    .rv-listas { display: flex; justify-content: center; gap: 12px; text-align: left; font-size: 13px; line-height: 1.6; white-space: nowrap; }
+    .rv-listas ul { list-style: none; margin: 0; padding: 0; }
+    .rv-listas .malo { color: #c9c4ba; }
+    .rv-listas .bueno { color: #fff; font-weight: 800; }
+    .rv-porque { font-size: 15px; line-height: 1.5; margin: 0 0 16px; }
+    .rv-h3 { margin: 18px 0 8px; font-size: 18px; }
+    .rv-medidas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .rv-medida { border: 2px solid var(--gris-borde); background: var(--gris-suave); border-radius: 14px; padding: 12px 8px;
+        cursor: pointer; font: inherit; color: var(--color-principal); text-align: center; }
+    .rv-medida:hover { border-color: var(--color-boton-hover); }
+    .rv-medida b { display: block; font-size: 20px; }
+    .rv-medida .rv-precio { display: block; font-size: 17px; font-weight: 800; color: #1a1a00; margin-top: 2px; }
+    .rv-medida small { display: block; color: #7a7a52; font-size: 12px; margin-top: 2px; }
+    .rv-medida.destacada { border-color: #1a1a00; background: #FFE81A; }
+    .rv-medida.destacada small { color: #4a4a00; }
+    .rv-nota { font-size: 13px; color: #7a7a52; margin: 8px 0 0; text-align: center; }
+    .rv-pasos { list-style: none; margin: 0; padding: 0; }
+    .rv-pasos li { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 8px; font-size: 15px; line-height: 1.4; text-align: left; }
+    .rv-pasos .n { flex: 0 0 26px; height: 26px; border-radius: 50%; background: #FFE81A; color: #1a1a00;
+        font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .rv-lema { font-family: 'Anton', 'Bebas Neue', sans-serif; font-size: 22px; text-align: center; margin: 18px 0 10px; color: #1a1a00; }
+    .rv-promo { display: block; width: 100%; margin-top: 10px; background: #fff; border: 2px dashed #f59e0b; border-radius: 12px;
+        padding: 10px; font: inherit; font-size: 15px; color: #92400e; cursor: pointer; }
     .btn-agregar.rec-wa { text-decoration: none; display: block; box-sizing: border-box; }
 
     .btn-secundario { background: #64748b; box-shadow: 0 4px 6px rgba(100,116,139,.2); }
@@ -1438,6 +1489,83 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div><!-- /rec-cuerpo -->
 
     <p class="rec-pie">Trelew Flash · Belgrano 386 · WhatsApp 2804 69-6961<br>Presupuesto del 02/09/2026</p>
+</div>
+
+<!-- ¿IMPRIMIR O REVELAR?: a donde llega el anuncio del mismo nombre
+     (?ver=revelar). Antes el anuncio caía en «Elegí el tamaño», que es solo
+     un menú, y la gente se iba en segundos sin tocar nada. Los precios de las
+     medidas los pinta renderRevelar() desde el catálogo, no están acá. -->
+<div id="p-revelar" class="pantalla oculto">
+    <div class="barra-sup">
+        <button class="btn-volver" onclick="mostrar(&#39;p-bienvenida&#39;)">🏠 Inicio</button>
+        <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-revelar">0</span>)</button>
+    </div>
+
+    <div class="rv-hero">
+        <div class="rv-aviso">LA MISMA FOTO<br>10 AÑOS DESPUÉS</div>
+        <h2 class="rv-tit"><span class="l1">¿<span class="rv-tachado">IMPRIMIR</span></span>
+            <span class="l2">O <span class="rv-caja">REVELAR</span>?</span></h2>
+        <div class="rv-sub">¿Qué es mejor?</div>
+        <div class="rv-fotos" aria-hidden="true">
+            <div class="rv-foto vieja"><svg viewBox="0 0 400 280"><use href="#rv-paisaje"/></svg><span class="rv-etq">✕ IMPRESA</span></div>
+            <div class="rv-foto nueva"><svg viewBox="0 0 400 280"><use href="#rv-paisaje"/></svg><span class="rv-etq">✓ REVELADA</span></div>
+        </div>
+        <div class="rv-listas">
+            <ul class="malo"><li>✕ Tinta de impresora</li><li>✕ Se destiñe con el sol</li><li>✕ Dura pocos años</li></ul>
+            <ul class="bueno"><li>✓ Papel fotográfico</li><li>✓ Colores intensos</li><li>✓ Dura décadas</li></ul>
+        </div>
+    </div>
+
+    <h3 class="rv-h3">📸 Elegí la medida</h3>
+    <div class="rv-medidas" id="rv-medidas"></div>
+    <p class="rv-nota">Tocá una medida, subí las fotos desde el celu y listo.</p>
+
+    <h3 class="rv-h3">¿Por qué revelar?</h3>
+    <p class="rv-porque">La impresora deja la tinta <b>arriba</b> del papel, y con la luz y los años se
+        destiñe. Al revelar, el color se forma <b>dentro</b> del papel fotográfico: tus fotos
+        duran décadas.</p>
+
+
+    <h3 class="rv-h3">¿Cómo es?</h3>
+    <ol class="rv-pasos">
+        <li><span class="n">1</span><span>Elegí la medida y cuántas copias querés.</span></li>
+        <li><span class="n">2</span><span>Subí las fotos desde el celular, acá mismo.</span></li>
+        <li><span class="n">3</span><span>Mandás el pedido por WhatsApp y lo retirás en <b>Belgrano 386, Trelew</b>, o te lo enviamos.</span></li>
+    </ol>
+
+    <button type="button" class="rv-promo" onclick="medir('landing_revelar', { accion: 'promo' }); abrirPromos()">🔥 ¿Son muchas fotos? Mirá la <b>promo de 30 fotos</b></button>
+
+    <div class="rv-lema">NO IMPRIMIMOS. REVELAMOS.</div>
+    <button type="button" class="btn-menu" onclick="elegirMedidaRevelar('medianos', '')">📸 Empezar mi pedido</button>
+    <a class="btn-agregar rec-wa" id="rv-wa" href="#" target="_blank" rel="noopener noreferrer"
+       onclick="medir('clic_whatsapp', { origen: 'landing_revelar' })">🟢 Consultar por WhatsApp</a>
+
+    <!-- El paisaje de las dos fotos: el mismo dibujo del cartel, la «impresa»
+         con filtro de desteñido. -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <defs>
+            <linearGradient id="rv-cielo" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#3b2d8f"/><stop offset=".45" stop-color="#e0529c"/><stop offset=".62" stop-color="#ff9f43"/>
+            </linearGradient>
+            <linearGradient id="rv-agua" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#ff8a4c"/><stop offset=".5" stop-color="#d9468f"/><stop offset="1" stop-color="#2b1f6b"/>
+            </linearGradient>
+            <symbol id="rv-paisaje" viewBox="0 0 400 280">
+                <rect width="400" height="165" fill="url(#rv-cielo)"/>
+                <circle cx="265" cy="140" r="26" fill="#ffd166" opacity=".9"/>
+                <polygon points="0,165 70,85 120,130 185,60 250,125 300,80 360,130 400,105 400,165" fill="#5b3fa8"/>
+                <polygon points="185,60 170,78 180,76 188,86 196,76 204,80" fill="#fff"/>
+                <polygon points="300,80 288,94 297,92 303,100 310,93 316,96" fill="#fff"/>
+                <polygon points="70,85 60,97 69,95 74,102 80,96" fill="#fff"/>
+                <polygon points="0,165 50,130 110,150 160,120 230,150 290,125 350,148 400,135 400,165" fill="#3a2a7d"/>
+                <rect y="165" width="400" height="115" fill="url(#rv-agua)"/>
+                <ellipse cx="265" cy="200" rx="10" ry="38" fill="#ffd166" opacity=".55"/>
+                <g stroke="#fff" stroke-opacity=".45" stroke-width="2"><path d="M235 190h60M245 205h40M230 222h70"/></g>
+                <path d="M0 280V215l20-4 8-40 8 38 18 6 10-30 9 34 30 20 30 45z" fill="#150e33"/>
+                <path d="M400 280v-70l-22 6-9-46-9 44-20 8-8-28-8 32-34 22-30 32z" fill="#150e33"/>
+            </symbol>
+        </defs>
+    </svg>
 </div>
 
 <!-- CATÁLOGO (market) -->
@@ -2594,6 +2722,55 @@ function abrirRecuerdoEscolar() {
     }
     mostrar("p-recuerdo");
 }
+
+/* ── ¿Imprimir o revelar? (a donde llega el anuncio) ──
+   Las medidas que se muestran, en orden. El precio sale del catálogo: si
+   cambia en la hoja, cambia acá solo. Una medida que no está a la venta en la
+   web no aparece. */
+const MEDIDAS_REVELAR = [
+    { grupo: "medianos", medida: "10x15", nota: "La clásica", destacada: true },
+    { grupo: "medianos", medida: "13x18", nota: "Un poco más grande" },
+    { grupo: "medianos", medida: "15x21", nota: "Para portarretrato" },
+    { grupo: "grandes",  medida: "20x30", nota: "Para cuadro" }
+];
+function itemRevelar(grupo, medida) {
+    const g = CATALOGO_FOTOS[grupo];
+    if (!g || !medida) return null;
+    return g.items.find(i => !i.especial && medidasCm(i.nombre).w + "x" + medidasCm(i.nombre).h === medida) || null;
+}
+function renderRevelar() {
+    const cont = document.getElementById("rv-medidas");
+    if (!cont) return;
+    cont.innerHTML = MEDIDAS_REVELAR.map(m => {
+        const it = itemRevelar(m.grupo, m.medida);
+        if (!it) return "";
+        const precio = precioDe(it);
+        return '<button type="button" class="rv-medida' + (m.destacada ? " destacada" : "") +
+            '" onclick="elegirMedidaRevelar(\'' + m.grupo + '\',\'' + m.medida + '\')">' +
+            '<b>' + escHtml(m.medida) + ' cm</b>' +
+            '<span class="rv-precio">' + (precio != null ? formatear(precio) : "A cotizar") + '</span>' +
+            '<small>' + escHtml(m.nota) + '</small></button>';
+    }).join("");
+}
+function abrirRevelar() {
+    const wa = document.getElementById("rv-wa");
+    if (wa && wa.getAttribute("href") === "#") wa.href = "https://wa.me/" + TELEFONO_WA + "?text=" +
+        encodeURIComponent("Hola! Vi lo de revelar fotos y quería consultar.");
+    renderRevelar();
+    mostrar("p-revelar");
+}
+/* Abre el simulador de ese grupo con la medida ya elegida (sin medida, la
+   primera del grupo). */
+function elegirMedidaRevelar(grupo, medida) {
+    if (!CATALOGO_FOTOS[grupo]) { mostrar("p-categorias"); return; }
+    medir("landing_revelar", { accion: "medida", medida: medida || "sin elegir" });
+    cargarSimulador(grupo);
+    const it = itemRevelar(grupo, medida);
+    if (!it) return;
+    const i = CATALOGO_FOTOS[grupo].items.indexOf(it);
+    const btn = document.querySelectorAll("#botones-medida .btn-medida")[i];
+    elegirMedida(it, btn || null);
+}
 /* Arma la pantalla con lo de arriba. El mapa se inserta recién acá (y una sola
    vez) para no cargar Google en la visita de alguien que nunca entra a verlo. */
 function abrirDonde() {
@@ -2903,7 +3080,8 @@ const NOMBRE_PANTALLA = {
     "p-carrito":     "Carrito",
     "p-promos":      "Promos",
     "p-donde":       "Dónde estamos y envíos",
-    "p-recuerdo":    "Recuerdo escolar"
+    "p-recuerdo":    "Recuerdo escolar",
+    "p-revelar":     "Imprimir o revelar"
 };
 
 /* =========================================================
@@ -3957,6 +4135,7 @@ function refrescarCatalogoAbierto() {
     /* Los stickers se repintan enteros (carrusel + plancha): si llegaron recién,
        la pantalla estaba mostrando el cartel de "buscando". */
     if (abierta("p-stickers")) renderSeccionStickers();
+    if (abierta("p-revelar")) renderRevelar();
 }
 function reintentarCatalogo() {
     estadoCatalogo = "cargando";
@@ -4567,7 +4746,8 @@ const TITULO_SECCION = {
     "p-eventos":       "Fotos de eventos de Trelewflash",
     "p-promos":        "La promo de 30 fotos de Trelewflash",
     "p-donde":         "Dónde estamos y a dónde enviamos",
-    "p-recuerdo":      "Recuerdo Escolar de Trelewflash"
+    "p-recuerdo":      "Recuerdo Escolar de Trelewflash",
+    "p-revelar":       "¿Imprimir o revelar? Revelado de fotos en Trelewflash"
 };
 /* Qué dice el botón en cada pantalla. El carrito no está: compartir el enlace
    no comparte el pedido (el carrito vive en la memoria del navegador de cada
@@ -4586,7 +4766,8 @@ const BOTON_COMPARTIR = {
     "p-evento-ver":    "📲 Compartir este evento",
     "p-promos":        "📲 Compartir la promo",
     "p-donde":         "📲 Compartir la dirección",
-    "p-recuerdo":      "📲 Compartir la propuesta"
+    "p-recuerdo":      "📲 Compartir la propuesta",
+    "p-revelar":       "📲 Compartir"
 };
 /* Lo pone mostrar() al final de la pantalla, una sola vez. Antes estaba escrito
    a mano en el HTML de cada una, que era la forma segura de que a la próxima
@@ -5177,7 +5358,8 @@ const SECCION_URL = {
     "p-carrito":       "carrito",
     "p-promos":        "promos",
     "p-donde":         "donde",
-    "p-recuerdo":      "recuerdo-escolar"
+    "p-recuerdo":      "recuerdo-escolar",
+    "p-revelar":       "revelar"
 };
 /* Pantallas que son un PASO adentro de otra: no tienen dirección propia porque
    dependen de algo que el cliente eligió un momento antes y que al refrescar ya
@@ -5248,6 +5430,7 @@ function abrirPantallaDeUrl(pantalla, params) {
         case "p-donde":     abrirDonde(); return;
         case "p-promos":    abrirPromos(); return;
         case "p-recuerdo":  abrirRecuerdoEscolar(); return;
+        case "p-revelar":   abrirRevelar(); return;
         case "p-eventos":   abrirEventos(String((params && params.get("evento")) || "")); return;
         case "p-simulador": {
             /* Sin grupo válido no hay nada que simular: se queda un paso atrás,
@@ -7318,7 +7501,7 @@ function quitarAdjunto(tipo, i) {
 function actualizarBadges() {
     ["badge-taller", "badge-menu", "badge-cat", "badge-sim", "badge-souv", "badge-souv-2", "badge-taza", "badge-catmenu",
      "badge-catalogo", "badge-albumes", "badge-stickers", "badge-ficha", "badge-donde",
-     "badge-promos", "badge-recuerdo"].forEach(id => {
+     "badge-promos", "badge-recuerdo", "badge-revelar"].forEach(id => {
         const el = document.getElementById(id); if (el) el.innerText = carrito.length;
     });
 }
