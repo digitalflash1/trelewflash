@@ -505,10 +505,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         font-size: 14px; font-weight: bold; color: #1e3a8a; }
     .rec-pie { font-size: 13px; color: #64748b; margin: 10px 0 0; }
 
-    /* ===== ¿Imprimir o revelar? (a donde llega el anuncio) =====
-       Repite el cartel del anuncio (fondo oscuro, IMPRIMIR tachado, REVELAR en
-       caja amarilla, las dos fotos comparadas) para que el que toca sienta que
-       llegó a lo mismo que vio, y abajo los precios de verdad. */
+    /* ===== Revelar (a donde llega el anuncio) =====
+       Arriba el cartel con el que abre el anuncio y enseguida las medidas con
+       precio y WhatsApp a mano. Más abajo, en «¿Por qué revelar?», el cartel
+       «¿Imprimir o revelar?» (fondo oscuro, IMPRIMIR tachado, REVELAR en caja
+       amarilla, las dos fotos comparadas). */
+    .rv-cartel { display: block; width: 100%; height: auto; border-radius: 16px; margin: 4px 0 0; }
+    .rv-wa-arriba { display: flex; align-items: center; gap: 10px; margin: 12px 0 0; padding: 12px 14px;
+        border: 2px solid #25D366; border-radius: 14px; background: #ecfdf3; color: #14532d;
+        text-decoration: none; font-size: 15px; line-height: 1.3; text-align: left; }
+    .rv-wa-arriba .ico { font-size: 22px; }
+    .rv-wa-arriba:hover { background: #d1fae5; }
     .rv-hero { background: radial-gradient(ellipse at 50% 30%, #2a2618 0%, #111 70%); color: #fff;
         border-radius: 16px; padding: 12px 12px 14px; margin: 4px 0 14px; text-align: center; }
     .rv-aviso { font-family: 'Anton', 'Bebas Neue', sans-serif; color: #FFE81A; font-size: 13px;
@@ -1501,6 +1508,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-revelar">0</span>)</button>
     </div>
 
+    <!-- Arriba va el mismo cartel con el que abre el anuncio («Revelá tu
+         foto», v2 del 02/10/2026): el que llega lo reconoce. Sin la franja de
+         abajo del cartel, porque su botón de WhatsApp es dibujo y no se toca. -->
+    <picture>
+        <source srcset="assets/revela-tu-foto.webp" type="image/webp">
+        <img class="rv-cartel" src="assets/revela-tu-foto.jpg" width="720" height="643" fetchpriority="high"
+             alt="Revelá tu foto desde cualquier lugar y en cualquier momento">
+    </picture>
+
+    <h3 class="rv-h3">📸 Elegí la medida</h3>
+    <div class="rv-medidas" id="rv-medidas"></div>
+    <p class="rv-nota">Tocá una medida, subí las fotos desde el celu y listo.</p>
+    <a class="rv-wa-arriba" id="rv-wa-arriba" href="#" target="_blank" rel="noopener noreferrer"
+       onclick="medir('clic_whatsapp', { origen: 'landing_revelar', posicion: 'arriba' })">
+        <span class="ico">💬</span><span><b>¿Tenés dudas?</b> Preguntanos por WhatsApp</span></a>
+
+    <h3 class="rv-h3">¿Por qué revelar?</h3>
     <div class="rv-hero">
         <div class="rv-aviso">LA MISMA FOTO<br>10 AÑOS DESPUÉS</div>
         <h2 class="rv-tit"><span class="l1">¿<span class="rv-tachado">IMPRIMIR</span></span>
@@ -1516,11 +1540,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
     </div>
 
-    <h3 class="rv-h3">📸 Elegí la medida</h3>
-    <div class="rv-medidas" id="rv-medidas"></div>
-    <p class="rv-nota">Tocá una medida, subí las fotos desde el celu y listo.</p>
-
-    <h3 class="rv-h3">¿Por qué revelar?</h3>
     <p class="rv-porque">La impresora deja la tinta <b>arriba</b> del papel, y con la luz y los años se
         destiñe. Al revelar, el color se forma <b>dentro</b> del papel fotográfico: tus fotos
         duran décadas.</p>
@@ -1538,7 +1557,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="rv-lema">NO IMPRIMIMOS. REVELAMOS.</div>
     <button type="button" class="btn-menu" onclick="elegirMedidaRevelar('medianos', '')">📸 Empezar mi pedido</button>
     <a class="btn-agregar rec-wa" id="rv-wa" href="#" target="_blank" rel="noopener noreferrer"
-       onclick="medir('clic_whatsapp', { origen: 'landing_revelar' })">🟢 Consultar por WhatsApp</a>
+       onclick="medir('clic_whatsapp', { origen: 'landing_revelar', posicion: 'abajo' })">🟢 Consultar por WhatsApp</a>
 
     <!-- El paisaje de las dos fotos: el mismo dibujo del cartel, la «impresa»
          con filtro de desteñido. -->
@@ -2753,9 +2772,11 @@ function renderRevelar() {
     }).join("");
 }
 function abrirRevelar() {
-    const wa = document.getElementById("rv-wa");
-    if (wa && wa.getAttribute("href") === "#") wa.href = "https://wa.me/" + TELEFONO_WA + "?text=" +
-        encodeURIComponent("Hola! Vi lo de revelar fotos y quería consultar.");
+    ["rv-wa", "rv-wa-arriba"].forEach(id => {
+        const wa = document.getElementById(id);
+        if (wa && wa.getAttribute("href") === "#") wa.href = "https://wa.me/" + TELEFONO_WA + "?text=" +
+            encodeURIComponent("Hola! Vi lo de revelar fotos y quería consultar.");
+    });
     renderRevelar();
     mostrar("p-revelar");
 }
