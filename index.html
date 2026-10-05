@@ -8025,11 +8025,11 @@ const pantallaParada = window.matchMedia("(orientation: portrait)");
 const pantallaAncha = window.matchMedia("(min-aspect-ratio: 19/10)");
 const NOVEDADES = [
     /* Revelado desde el celular. Tiene versión vertical para el celular
-       parado. Lleva directo a elegir el tamaño, como Empezar mi pedido →
-       Revelar fotos. */
+       parado. Lleva a la página del anuncio (?ver=revelar): las medidas con
+       precio y WhatsApp a mano, en vez de «Elegí el tamaño», que es solo un menú. */
     { img: "assets/revela-celular.webp", imgFallback: "assets/revela-celular.jpg",
       imgVertical: "assets/revela-celular-vertical.webp", emoji: "📸",
-      color: "#fcfc14", accion: "revelar", cta: "Elegí el tamaño ➜" },
+      color: "#fcfc14", accion: "revelar", cta: "Ver medidas y precios ➜" },
     /* Bajamos las fotos del celu a un pendrive (servicio en el local, no está
        en el catálogo): abre WhatsApp con el mismo mensaje del anuncio de Meta.
        Fuente editable en trelewflash-taller/carteles/banner-bajamos-fotos/. */
@@ -8316,7 +8316,7 @@ function abrirNovedad(n) {
     medir("novedad_tocada", { novedad: n.souvenir || n.accion, evento: n.evento || "" });
     if (n.accion === "promos") abrirPromos();
     if (n.accion === "recuerdo") abrirRecuerdoEscolar();
-    if (n.accion === "revelar") { flujo = "pedido"; mostrar("p-categorias"); }
+    if (n.accion === "revelar") { flujo = "pedido"; abrirRevelar(); }
     if (n.accion === "evento") { abrirEventos(); abrirEvento(n.evento); }
     /* Los del carrusel del catálogo. Si el souvenir todavía no cargó (o se
        ocultó desde el admin) se cae a la lista de souvenirs. */
