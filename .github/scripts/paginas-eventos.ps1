@@ -4,7 +4,7 @@
 # repo, para que Google encuentre estas páginas: no tienen enlaces internas
 # entre sí, solo se comparten sueltas por WhatsApp.
 # Anda en Windows PowerShell 5.1 y en pwsh 7.
-#   paginas-eventos.ps1 <eventos.json> <carpeta de salida>
+#   paginas-eventos.ps1 <eventos.json> e (solo se permite la carpeta e del repo)
 param(
     [Parameter(Mandatory = $true)][string]$Json,
     [Parameter(Mandatory = $true)][string]$Salida
@@ -44,8 +44,24 @@ function BloqueInstitucion([string]$titulo) {
     return ""
 }
 
-if (Test-Path $Salida) { Remove-Item -Recurse -Force $Salida }
-New-Item -ItemType Directory -Force $Salida | Out-Null
+$repo = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
+$salidaEsperada = [System.IO.Path]::GetFullPath((Join-Path $repo "e"))
+$salidaAbsoluta = [System.IO.Path]::GetFullPath((Join-Path (Get-Location).Path $Salida))
+if (-not [string]::Equals($salidaAbsoluta, $salidaEsperada, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "La salida debe ser exactamente la carpeta e del repositorio ($salidaEsperada). No se modificó ningún archivo."
+}
+if (Test-Path -LiteralPath $salidaEsperada) {
+    $atributosSalida = [System.IO.File]::GetAttributes($salidaEsperada)
+    if (($atributosSalida -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw "La carpeta e es un enlace o punto de reanálisis; se cancela el borrado."
+    }
+    $salidaReal = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath $salidaEsperada).Path)
+    if (-not [string]::Equals($salidaReal, $salidaEsperada, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "La carpeta e resuelve fuera de su ruta esperada; se cancela el borrado."
+    }
+    Remove-Item -LiteralPath $salidaEsperada -Recurse -Force
+}
+New-Item -ItemType Directory -Force -Path $salidaEsperada | Out-Null
 
 $hoy = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")
 $urlsSitemap = New-Object System.Collections.Generic.List[string]
@@ -105,7 +121,7 @@ foreach ($e in @($data.eventos)) {
 </body>
 </html>
 "@
-    $dir = Join-Path $Salida $id
+    $dir = Join-Path $salidaEsperada $id
     New-Item -ItemType Directory -Force $dir | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $dir "index.html"), ($html -replace "`r`n", "`n"), $utf8)
     $urlsSitemap.Add("  <url><loc>$(Esc $url)</loc><lastmod>$hoy</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>")
@@ -115,6 +131,6 @@ foreach ($e in @($data.eventos)) {
 $sitemap = "<?xml version=`"1.0`" encoding=`"UTF-8`"?>`n" +
     "<urlset xmlns=`"http://www.sitemaps.org/schemas/sitemap/0.9`">`n" +
     ($urlsSitemap -join "`n") + "`n</urlset>`n"
-[System.IO.File]::WriteAllText("sitemap.xml", $sitemap, $utf8)
+[System.IO.File]::WriteAllText((Join-Path $repo "sitemap.xml"), $sitemap, $utf8)
 
 "Páginas: $n"
