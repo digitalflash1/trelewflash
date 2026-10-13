@@ -271,11 +271,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     @media (min-width: 1024px) {
         /* Pantallas de grillas y lectura: más anchas que la tarjeta de 560 px. */
         #p-catalogo, #p-albumes, #p-stickers, #p-eventos, #p-evento-ver { max-width: 1180px; }
-        #p-promos, #p-donde, #p-recuerdo, #p-catalogo-menu { max-width: 980px; }
+        #p-promos, #p-donde, #p-recuerdo, #p-sociales, #p-catalogo-menu, #p-servicios { max-width: 980px; }
         #p-carrito { max-width: 780px; }
-        #p-catalogo-menu { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
-        #p-catalogo-menu > :not(.menu-cat) { grid-column: 1 / -1; }
-        #p-catalogo-menu .menu-cat { margin: 0; height: 100%; }
+        #p-catalogo-menu, #p-servicios { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+        #p-servicios { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        #p-catalogo-menu > :not(.menu-cat), #p-servicios > :not(.menu-cat) { grid-column: 1 / -1; }
+        #p-catalogo-menu .menu-cat, #p-servicios .menu-cat { margin: 0; height: 100%; }
 
         /* Taller: sin tarjeta de fondo; cada columna es su propia tarjeta. */
         body.en-taller { padding: 18px 24px; }
@@ -1301,7 +1302,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <p class="caja-bajada">Armá tu pedido paso a paso y nos lo enviás por WhatsApp.</p>
     <button class="btn-menu con-foto" style="--foto:url(assets/botones/pedido.jpg)" onclick="irAPedido()">🛒 Empezar mi pedido<span class="btn-flecha" aria-hidden="true">›</span></button>
     <button class="btn-menu con-foto" style="--foto:url(assets/botones/catalogo.jpg)" onclick="abrirCatalogoCompleto()">🗂️ Ver catálogo completo<span class="btn-flecha" aria-hidden="true">›</span></button>
-    <button class="btn-menu con-foto" style="--foto:url(assets/botones/recuerdo.jpg)" onclick="abrirRecuerdoEscolar()">🎒 Recuerdo Escolar<span class="btn-flecha" aria-hidden="true">›</span></button>
+    <button class="btn-menu con-foto" style="--foto:url(assets/botones/recuerdo.jpg)" onclick="abrirServicios()">📸 Servicios<span class="btn-flecha" aria-hidden="true">›</span></button>
     <button class="btn-menu con-foto" style="--foto:url(assets/botones/eventos.jpg)" onclick="abrirEventos()">🥳 Ver fotos de eventos sociales<span class="btn-flecha" aria-hidden="true">›</span></button>
     <button class="btn-menu con-foto" style="--foto:url(assets/botones/donde.svg)" onclick="abrirDonde()">📍 Dónde estamos y envíos<span class="btn-flecha" aria-hidden="true">›</span></button>
 </div>
@@ -1395,12 +1396,81 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
 </div>
 
+<!-- SERVICIOS: el desvío a lo que hacemos fuera del mostrador (colegios y
+     eventos sociales). Mismo armado que el menú del catálogo. -->
+<div id="p-servicios" class="pantalla oculto">
+    <div class="barra-sup">
+        <button class="btn-volver" onclick="mostrar(&#39;p-bienvenida&#39;)">⬅ Volver</button>
+        <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-servicios">0</span>)</button>
+    </div>
+    <h2>Nuestros servicios</h2>
+    <p>Elegí qué te interesa.</p>
+
+    <button type="button" class="menu-cat" onclick="abrirRecuerdoEscolar()">
+        <span class="mc-fila"><span class="mc-emoji">🎒</span>
+        <span><span class="mc-tit">Recuerdo Escolar</span>
+        <span class="mc-sub">Carpetas y fotos con diseño personalizado para escuelas y jardines.</span></span>
+        <span class="mc-flecha">›</span></span>
+    </button>
+    <button type="button" class="menu-cat" onclick="abrirSociales()">
+        <span class="mc-fila"><span class="mc-emoji">💍</span>
+        <span><span class="mc-tit">Fotografía profesional</span>
+        <span class="mc-sub">Para cumpleaños de 15, casamientos y eventos sociales en general.</span></span>
+        <span class="mc-flecha">›</span></span>
+    </button>
+</div>
+
+<!-- FOTOGRAFÍA PROFESIONAL PARA EVENTOS SOCIALES: el presupuesto impreso
+     pasado a la web (mismo estilo que el Recuerdo Escolar). Si cambian los
+     precios, se cambian acá a mano: no salen de la hoja. -->
+<div id="p-sociales" class="pantalla oculto">
+    <div class="barra-sup">
+        <button class="btn-volver" onclick="mostrar(&#39;p-servicios&#39;)">⬅ Volver</button>
+        <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-sociales">0</span>)</button>
+    </div>
+    <h2 class="rec-tit">📸 Fotografía profesional <span>Eventos sociales</span></h2>
+    <div class="rec-sub">— Cumples de 15, casamientos y más —</div>
+
+    <div class="rec-nota">📷 El fotógrafo cubre <b>todo el evento</b>: desde el parque (fotos exteriores) hasta el final — vals, torta, familiares y todo lo que pase. Saca aprox. <b>entre 250 y 600 fotos</b>, según el evento.</div>
+
+    <div class="rec-pago">
+        <h3>🧭 Cómo funciona</h3>
+        <div class="rec-paso"><span class="n">1</span><span>Se contrata el fotógrafo con el <u>pago de 100 fotos</u>.</span></div>
+        <div class="rec-paso"><span class="n">2</span><span>Después del evento, pasan por el local <b>Foto Flash</b> a ver las fotos en la compu y eligen las que más les gusten.</span></div>
+        <div class="rec-paso"><span class="n v">3</span><span>Se las entregamos reveladas en <b>15x21</b>.</span></div>
+    </div>
+
+    <div class="rec-op">
+        <span class="rec-letra">Fotos en papel</span>
+        <div class="rec-prod">Foto 15x21 = <span style="white-space:nowrap">$ 4.000</span> c/u</div>
+        <div class="rec-diseno">Mínimo a encargar: 100 fotos</div>
+        <p>Elegís en el local las que más te gusten, a partir de las 100.</p>
+    </div>
+    <div class="rec-op b">
+        <span class="rec-letra">Extra opcional</span>
+        <div class="rec-prod">DVD con todas las fotos = <span style="white-space:nowrap">$ 200.000</span></div>
+        <p>Además de las fotos en papel: todas las que haya sacado el fotógrafo, con los archivos en su tamaño original (grandes).</p>
+    </div>
+    <div class="rec-op">
+        <span class="rec-letra">Solo digital</span>
+        <div class="rec-prod">Todas las fotos en archivo digital = <span style="white-space:nowrap">$ 500.000</span></div>
+        <p>Sin fotos en papel: te llevás todo el evento en archivo.</p>
+    </div>
+
+    <div class="rec-aviso">Precio a la fecha del presupuesto. El costo se congela solo con el pago total anticipado.</div>
+
+    <a class="btn-agregar rec-wa" id="sociales-wa" href="#" target="_blank" rel="noopener noreferrer"
+       onclick="medir('consulta_fotografia_social', {})">🟢 Consultar fecha por WhatsApp</a>
+
+    <p class="rec-pie">Trelew Flash · Belgrano 386 · WhatsApp 2804 69-6961<br>Presupuesto del 07/08/2026</p>
+</div>
+
 <!-- RECUERDO ESCOLAR: la propuesta para colegios (primaria y jardín).
      Es el volante impreso pasado a la web. Si cambian los precios, se cambian
      acá a mano: no salen de la hoja. -->
 <div id="p-recuerdo" class="pantalla oculto">
     <div class="barra-sup">
-        <button class="btn-volver" onclick="mostrar(&#39;p-bienvenida&#39;)">⬅ Volver</button>
+        <button class="btn-volver" onclick="mostrar(&#39;p-servicios&#39;)">⬅ Volver</button>
         <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-recuerdo">0</span>)</button>
     </div>
     <h2 class="rec-tit">📸 Presupuesto <span>Recuerdo Escolar</span></h2>
@@ -2741,6 +2811,13 @@ function abrirRecuerdoEscolar() {
     }
     mostrar("p-recuerdo");
 }
+function abrirServicios() { mostrar("p-servicios"); }
+function abrirSociales() {
+    const wa = document.getElementById("sociales-wa");
+    if (wa && wa.getAttribute("href") === "#") wa.href = "https://wa.me/" + TELEFONO_WA + "?text=" +
+        encodeURIComponent("Hola! Quería consultar por el servicio de fotografía para un evento.");
+    mostrar("p-sociales");
+}
 
 /* ── ¿Imprimir o revelar? (a donde llega el anuncio) ──
    Las medidas que se muestran, en orden. El precio sale del catálogo: si
@@ -3101,6 +3178,8 @@ const NOMBRE_PANTALLA = {
     "p-carrito":     "Carrito",
     "p-promos":      "Promos",
     "p-donde":       "Dónde estamos y envíos",
+    "p-servicios":   "Servicios",
+    "p-sociales":    "Fotografía de eventos sociales",
     "p-recuerdo":    "Recuerdo escolar",
     "p-revelar":     "Imprimir o revelar"
 };
@@ -4767,6 +4846,8 @@ const TITULO_SECCION = {
     "p-eventos":       "Fotos de eventos de Trelewflash",
     "p-promos":        "La promo de 30 fotos de Trelewflash",
     "p-donde":         "Dónde estamos y a dónde enviamos",
+    "p-servicios":     "Los servicios de Trelewflash",
+    "p-sociales":      "Fotografía profesional para eventos en Trelewflash",
     "p-recuerdo":      "Recuerdo Escolar de Trelewflash",
     "p-revelar":       "¿Imprimir o revelar? Revelado de fotos en Trelewflash"
 };
@@ -4787,6 +4868,8 @@ const BOTON_COMPARTIR = {
     "p-evento-ver":    "📲 Compartir este evento",
     "p-promos":        "📲 Compartir la promo",
     "p-donde":         "📲 Compartir la dirección",
+    "p-servicios":     "📲 Compartir los servicios",
+    "p-sociales":      "📲 Compartir el presupuesto",
     "p-recuerdo":      "📲 Compartir la propuesta",
     "p-revelar":       "📲 Compartir"
 };
@@ -5379,6 +5462,8 @@ const SECCION_URL = {
     "p-carrito":       "carrito",
     "p-promos":        "promos",
     "p-donde":         "donde",
+    "p-servicios":     "servicios",
+    "p-sociales":      "fotografia-eventos",
     "p-recuerdo":      "recuerdo-escolar",
     "p-revelar":       "revelar"
 };
@@ -5451,6 +5536,8 @@ function abrirPantallaDeUrl(pantalla, params) {
         case "p-donde":     abrirDonde(); return;
         case "p-promos":    abrirPromos(); return;
         case "p-recuerdo":  abrirRecuerdoEscolar(); return;
+        case "p-servicios": abrirServicios(); return;
+        case "p-sociales":  abrirSociales(); return;
         case "p-revelar":   abrirRevelar(); return;
         case "p-eventos":   abrirEventos(String((params && params.get("evento")) || "")); return;
         case "p-simulador": {
@@ -7522,7 +7609,7 @@ function quitarAdjunto(tipo, i) {
 function actualizarBadges() {
     ["badge-taller", "badge-menu", "badge-cat", "badge-sim", "badge-souv", "badge-souv-2", "badge-taza", "badge-catmenu",
      "badge-catalogo", "badge-albumes", "badge-stickers", "badge-ficha", "badge-donde",
-     "badge-promos", "badge-recuerdo", "badge-revelar"].forEach(id => {
+     "badge-promos", "badge-recuerdo", "badge-servicios", "badge-sociales","badge-revelar"].forEach(id => {
         const el = document.getElementById(id); if (el) el.innerText = carrito.length;
     });
 }
