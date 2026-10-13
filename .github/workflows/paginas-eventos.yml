@@ -1,10 +1,11 @@
-# Una página por evento en e/<id>/, solo para la vista previa al compartir.
+# Una página por evento en e/<id>/: la vista previa al compartir y la página
+# que indexa Google (más e/index.html con todos los eventos).
 #
 # Facebook y WhatsApp no ejecutan el JavaScript de la tienda: leen las
 # etiquetas og: del HTML tal como llega. Como la tienda es una sola página,
 # todo enlace mostraba la vista previa general. Cada e/<id>/index.html trae
-# el título y la portada de SU evento y, al abrirla una persona, la manda a
-# «?ver=eventos&evento=<id>». Las arma .github/scripts/paginas-eventos.ps1,
+# el título y la portada de SU evento; si el enlace trae #fotos (así lo
+# comparte la tienda) manda a la persona a «?ver=eventos&evento=<id>». Las arma .github/scripts/paginas-eventos.ps1,
 # que de paso rearma sitemap.xml (home + una entrada por evento) para que
 # Google las encuentre: no tienen enlaces internas entre sí.
 #

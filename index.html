@@ -4895,8 +4895,10 @@ async function compartirSeccion(idPantalla) {
     const deEvento = idPantalla === "p-evento-ver" && eventoAbierto;
     /* El evento se comparte por su página propia (e/<id>/), que es la que
        tiene su título y su portada para la vista previa de Facebook y
-       WhatsApp. Si todavía no está armada, la resuelve 404.html. */
-    const url = deEvento ? new URL("e/" + eventoAbierto.id + "/", urlBase()).toString()
+       WhatsApp. Si todavía no está armada, la resuelve 404.html. El #fotos
+       hace que quien lo toca vaya derecho a las fotos; sin él, la página
+       muestra el evento (es la versión que indexa Google). */
+    const url = deEvento ? new URL("e/" + eventoAbierto.id + "/#fotos", urlBase()).toString()
                          : urlDeSeccion(idPantalla);
     const titulo = deEvento ? "Fotos de «" + eventoAbierto.titulo + "»"
                  : TITULO_SECCION[idPantalla] || "Trelewflash";
@@ -8629,6 +8631,9 @@ montarCarrusel(document.getElementById("carrusel-catalogo"), CARRUSEL_CATALOGO, 
     </div>
     <!-- "Dónde estamos y envíos" va como botón amarillo en el menú de la portada
          (buscá abrirDonde() en la caja-inicio), no acá: en el pie quedaba repetido. -->
+    <!-- Enlace común (no un botón con onclick) para que Google llegue a la
+         lista de eventos y desde ahí a la página de cada uno. -->
+    <div><a href="e/">📸 Fotos de eventos en Trelew</a></div>
     Diseñado por <a class="cred-mr" href="https://marceloriffo81.github.io/?utm_source=trelewflash&amp;utm_medium=referral&amp;utm_campaign=credito-pie"
         target="_blank" rel="noopener" title="Marcelo Riffo · webs y sistemas">MR</a>
     <!-- Acceso administrativo deshabilitado (el panel de precios no se publica acá).
