@@ -260,6 +260,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     /* Carrusel del catálogo: de borde a borde como el de arriba. Vertical 4:5
        en el celular (sin pasarse del alto de la pantalla) y apaisado en la
        compu. */
+    #p-bienvenida [hidden] { display: none !important; }
     .portada-catalogo { margin-top: 22px; }
     .portada-catalogo .caja-titulo { font-size: 20px; font-weight: bold; color: var(--color-principal); margin: 0 0 12px; }
     .carrusel-catalogo { flex: none; aspect-ratio: 4 / 5; max-height: calc(100vh - 70px); max-height: calc(100svh - 70px); }
@@ -330,6 +331,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         #p-bienvenida .caja-inicio .btn-menu:last-of-type { margin-bottom: 0; }
         .portada-catalogo { margin-top: 0; display: flex; flex-direction: column; }
         .carrusel-catalogo { flex: 1 1 auto; aspect-ratio: auto; max-height: none; min-height: 440px; }
+        /* Con el catálogo oculto (MOSTRAR_CATALOGO), los botones solos y centrados. */
+        .portada-cuerpo.sin-catalogo { grid-template-columns: minmax(0, 760px); justify-content: center; }
     }
     .carrusel-catalogo .slide-nov { position: relative; gap: 14px; padding: 24px 28px 44px; }
     /* Sin foto, el botón va centrado debajo del texto en vez de en la esquina. */
@@ -1301,7 +1304,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <p class="caja-titulo">¿Qué querés hacer?</p>
     <p class="caja-bajada">Armá tu pedido paso a paso y nos lo enviás por WhatsApp.</p>
     <button class="btn-menu con-foto" style="--foto:url(assets/botones/pedido.jpg)" onclick="irAPedido()">🛒 Empezar mi pedido<span class="btn-flecha" aria-hidden="true">›</span></button>
-    <button class="btn-menu con-foto" style="--foto:url(assets/botones/catalogo.jpg)" onclick="abrirCatalogoCompleto()">🗂️ Ver catálogo completo<span class="btn-flecha" aria-hidden="true">›</span></button>
+    <button class="btn-menu con-foto" id="btn-catalogo" style="--foto:url(assets/botones/catalogo.jpg)" onclick="abrirCatalogoCompleto()">🗂️ Ver catálogo completo<span class="btn-flecha" aria-hidden="true">›</span></button>
     <button class="btn-menu con-foto" style="--foto:url(assets/botones/recuerdo.jpg)" onclick="abrirServicios()">📸 Servicios<span class="btn-flecha" aria-hidden="true">›</span></button>
     <button class="btn-menu con-foto" style="--foto:url(assets/botones/eventos.jpg)" onclick="abrirEventos()">🥳 Ver fotos de eventos sociales<span class="btn-flecha" aria-hidden="true">›</span></button>
     <button class="btn-menu con-foto" style="--foto:url(assets/botones/donde.svg)" onclick="abrirDonde()">📍 Dónde estamos y envíos<span class="btn-flecha" aria-hidden="true">›</span></button>
@@ -1621,8 +1624,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <li><span class="n">2</span><span>Subí las fotos desde el celular, acá mismo.</span></li>
         <li><span class="n">3</span><span>Mandás el pedido por WhatsApp y lo retirás en <b>Belgrano 386, Trelew</b>, o te lo enviamos.</span></li>
     </ol>
-
-    <button type="button" class="rv-promo" onclick="medir('landing_revelar', { accion: 'promo' }); abrirPromos()">🔥 ¿Son muchas fotos? Mirá la <b>promo de 30 fotos</b></button>
 
     <div class="rv-lema">NO IMPRIMIMOS. REVELAMOS.</div>
     <button type="button" class="btn-menu" onclick="elegirMedidaRevelar('medianos', '')">📸 Empezar mi pedido</button>
@@ -5536,7 +5537,10 @@ function abrirPantallaDeUrl(pantalla, params) {
         case "p-souvenirs": abrirSouvenirs(); return;
         case "p-taza":      abrirTaza(); return;
         case "p-donde":     abrirDonde(); return;
-        case "p-promos":    abrirPromos(); return;
+        /* La promo de 30 fotos se sacó el 25/10/2026: un link viejo a
+           ?ver=promos cae en la portada. La pantalla p-promos y PROMOS siguen
+           en el código por si vuelve. */
+        case "p-promos":    mostrar("p-bienvenida"); return;
         case "p-recuerdo":  abrirRecuerdoEscolar(); return;
         case "p-servicios": abrirServicios(); return;
         case "p-sociales":  abrirSociales(); return;
@@ -8126,14 +8130,6 @@ const NOVEDADES = [
       imgVertical: "assets/bajamos-fotos-vertical.webp", imgAncha: "assets/bajamos-fotos-ancha.webp",
       emoji: "📱", color: "#111", accion: "consulta",
       consulta: "Hola! Se me llenó el celu y quiero bajar las fotos a un pendrive", cta: "Escribinos ➜" },
-    /* Promo del mes: `accion` la hace tocable y `cta` es lo que dice el
-       cartelito de la esquina. El texto ya viene dentro del banner, por eso no
-       lleva titulo/texto. Tiene versión vertical para el celular parado.
-       El ?v= es para el caché: si se reemplaza la imagen con el mismo nombre,
-       subirle el número o los navegadores siguen mostrando la vieja. */
-    { img: "assets/promo-30fotos.webp?v=2", imgFallback: "assets/promo-30fotos.jpg?v=2",
-      imgVertical: "assets/promo-30fotos-vertical.webp", emoji: "🔥",
-      color: "#fdf2e0", accion: "promos", cta: "Ver la promo ➜" },
     /* Recuerdo escolar: la portada de una carpeta, tal cual se entrega. Lleva a
        la pantalla con el presupuesto y el video.
        La portada es 10:7 y el carrusel 16:9: el asset ya viene encajado entero
@@ -8484,7 +8480,17 @@ function montarCarrusel(car, items, espera) {
     });
     ir(0); reiniciar();
 }
-montarCarrusel(document.getElementById("carrusel-catalogo"), CARRUSEL_CATALOGO, 5000);
+/* false = el catálogo no aparece en la portada (ni el botón «Ver catálogo
+   completo» ni el carrusel «Mirá el catálogo»). Se ocultó el 22/10/2026;
+   para volver a mostrarlo, ponerlo en true. */
+const MOSTRAR_CATALOGO = false;
+if (MOSTRAR_CATALOGO) {
+    montarCarrusel(document.getElementById("carrusel-catalogo"), CARRUSEL_CATALOGO, 5000);
+} else {
+    document.getElementById("btn-catalogo").hidden = true;
+    document.querySelector(".portada-catalogo").hidden = true;
+    document.querySelector(".portada-cuerpo").classList.add("sin-catalogo");
+}
 
 /* Los botones de la portada aparecen a medida que se baja hasta ellos. Si
    entran varios juntos, salen de a uno con un pequeño escalonado. */
