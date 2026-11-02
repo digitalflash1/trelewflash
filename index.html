@@ -2091,12 +2091,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <p id="evv-desc" class="oculto"></p>
     <ol class="ev-pasos">
         <li>Mirá las fotos y anotá el <b>número</b> que tiene cada una debajo (por ejemplo <b>DSC_5772</b>).</li>
-        <li>Tocá <b>Pedir por WhatsApp</b> y mandanos la lista.</li>
+        <li>Escribí los números en el cuadro de abajo y tocá <b>Pedir por WhatsApp</b>.</li>
     </ol>
     <div id="evv-partes" class="cat-filtro-fila oculto"></div>
     <div class="ev-visor"><iframe id="evv-visor" title="Fotos del evento" allow="fullscreen"></iframe></div>
     <a id="evv-abrir" class="ev-abrir" target="_blank" rel="noopener">↗ Abrir las fotos en pantalla completa</a>
-    <a id="evv-wa" class="btn-agregar ev-wa" target="_blank" rel="noopener" onclick="medirPedidoEvento()">🟢 Pedir por WhatsApp</a>
+    <div class="campo">
+        <label for="evv-numeros">Números de las fotos que querés</label>
+        <textarea id="evv-numeros" rows="3" placeholder="Por ejemplo: DSC_5772, DSC_5801, DSC_5840" oninput="actualizarWaEvento()"></textarea>
+    </div>
+    <a id="evv-wa" class="btn-agregar ev-wa" target="_blank" rel="noopener" onclick="pedirFotosEvento(event)">🟢 Pedir por WhatsApp</a>
     <button type="button" class="btn-menu ev-otros" onclick="buscarOtrosEventos()">🔍 Buscar otros eventos</button>
     <div id="evv-relacionados"></div>
 </div>
@@ -7200,6 +7204,7 @@ function abrirEvento(id) {
     partes.innerHTML = e.pdfs.length < 2 ? "" : e.pdfs.map((p, i) =>
         '<button type="button" class="chip-filtro" data-i="' + i + '">' + escHtml(p.rotulo || "Parte " + (i + 1)) + '</button>').join("");
     partes.querySelectorAll("button").forEach(b => b.onclick = () => elegirParteEvento(Number(b.dataset.i)));
+    document.getElementById("evv-numeros").value = "";
     elegirParteEvento(0);
     pintarRelacionados(e);
     mostrar("p-evento-ver");
@@ -7214,14 +7219,59 @@ function elegirParteEvento(i) {
     document.getElementById("evv-visor").src = "https://drive.google.com/file/d/" + pdf.id + "/preview";
     document.getElementById("evv-abrir").href = "https://drive.google.com/file/d/" + pdf.id + "/view";
     document.querySelectorAll("#evv-partes button").forEach(b => b.classList.toggle("activo", Number(b.dataset.i) === i));
-    const rotulo = e.pdfs.length > 1 ? (pdf.rotulo || "Parte " + (i + 1)) : "";
+    actualizarWaEvento();
+}
+function rotuloParteEvento() {
+    const e = eventoAbierto;
+    return e && e.pdfs.length > 1 ? (e.pdfs[parteEvento].rotulo || "Parte " + (parteEvento + 1)) : "";
+}
+/* El mensaje de WhatsApp se rearma con cada número que el cliente escribe. */
+function actualizarWaEvento() {
+    const e = eventoAbierto;
+    if (!e) return;
+    const rotulo = rotuloParteEvento();
     const fecha = fechaCortaEvento(e.fecha);
+    const numeros = document.getElementById("evv-numeros").value.trim();
     const msg = "¡Hola Trelewflash! Quiero fotos del evento «" + e.titulo + "»" +
-        (fecha ? " (" + fecha + ")" : "") + (rotulo ? " — " + rotulo : "") + ".\n\nNúmeros de las fotos:\n";
+        (fecha ? " (" + fecha + ")" : "") + (rotulo ? " — " + rotulo : "") + ".\n\nNúmeros de las fotos:\n" + numeros;
     document.getElementById("evv-wa").href = "https://wa.me/" + TELEFONO_WA + "?text=" + encodeURIComponent(msg);
 }
 function medirPedidoEvento() {
     if (eventoAbierto) medir("pedir_fotos_evento", { evento: eventoAbierto.id, parte: parteEvento + 1 });
+}
+/* Registra en la hoja los números que el cliente anotó, además del WhatsApp.
+   Sin números no hay nada que registrar y el enlace funciona como siempre. Con
+   números hacen falta nombre y teléfono: si faltan se piden y se retoma. El
+   registro es "disparar y olvidar" a propósito: si el backend falla, el pedido
+   igual llega por WhatsApp, que es lo que el cliente espera. */
+function pedirFotosEvento(ev) {
+    medirPedidoEvento();
+    const numeros = document.getElementById("evv-numeros").value.trim();
+    if (!eventoAbierto || !numeros) return;
+    flujo = "eventos";
+    if (!datosClienteListos()) {
+        if (ev) ev.preventDefault();
+        conDatosCliente(function () {
+            registrarPedidoEvento(numeros);
+            window.open(document.getElementById("evv-wa").href, "_blank");
+        });
+        return;
+    }
+    registrarPedidoEvento(numeros);
+}
+function registrarPedidoEvento(numeros) {
+    if (!PEDIDOS_URL || !eventoAbierto) return;
+    try {
+        fetch(PEDIDOS_URL, {
+            method: "POST", mode: "no-cors", keepalive: true,
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+                accion: "pedidoEvento", version: APP_VERSION,
+                evento: { id: eventoAbierto.id, titulo: eventoAbierto.titulo, parte: rotuloParteEvento() },
+                cliente: cliente, numeros: numeros
+            })
+        }).catch(function () {});
+    } catch (e) { /* el WhatsApp sale igual */ }
 }
 
 /* «Quizás te interese ver…»: los que comparten más etiquetas y, entre esos,
