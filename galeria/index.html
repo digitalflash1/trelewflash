@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fotos del evento · Trelew Flash</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--am:#FFE81A;--ng:#111;--gr:#f3f3f1}
+*{box-sizing:border-box;margin:0}
+[hidden]{display:none!important}
+body{font-family:system-ui,sans-serif;background:var(--gr);color:var(--ng);padding-bottom:84px}
+header{background:var(--am);padding:14px 16px;position:sticky;top:0;z-index:5;box-shadow:0 2px 6px #0002}
+header h1{font-size:17px;line-height:1.2}
+header p{font-size:13px;margin-top:2px}
+.barra{display:flex;gap:8px;margin-top:10px}
+.barra input{flex:1;min-width:0;border:2px solid var(--ng);border-radius:8px;padding:8px;font-size:15px;background:#fff}
+.barra button{border:2px solid var(--ng);background:#fff;border-radius:8px;padding:8px 12px;font-weight:700;font-size:14px}
+.barra button.on{background:var(--ng);color:var(--am)}
+#grilla{display:flex;flex-wrap:wrap;gap:4px;padding:4px}
+.f{position:relative;flex-grow:1;height:150px;background:#ddd;border-radius:4px;overflow:hidden;cursor:pointer}
+.f img{width:100%;height:100%;object-fit:cover;display:block}
+.f .num{position:absolute;left:4px;top:4px;background:#000a;color:#fff;font-size:11px;padding:1px 5px;border-radius:4px}
+.f .ck{position:absolute;right:4px;top:4px;width:30px;height:30px;border-radius:50%;background:#fff9;border:2px solid #fff;display:grid;place-items:center;font-size:17px;color:transparent}
+.f.sel{outline:4px solid var(--am);outline-offset:-4px}
+.f.sel .ck{background:var(--am);border-color:var(--ng);color:var(--ng)}
+@media(min-width:1024px){.f{height:200px}}
+#pie{position:fixed;left:0;right:0;bottom:0;background:var(--ng);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;z-index:6}
+#pie span{flex:1;font-size:15px}
+#pie b{color:var(--am)}
+#pie button{background:#25D366;color:#000;border:0;border-radius:10px;padding:12px 16px;font-weight:800;font-size:15px}
+#pie button:disabled{opacity:.4}
+#visor{position:fixed;inset:0;background:#000e;z-index:10;display:none;flex-direction:column;align-items:center;justify-content:center}
+#visor.on{display:flex}
+#visor img{max-width:100%;max-height:78vh;image-rendering:auto;touch-action:pan-y}
+#visor .t{color:#fff;margin:10px;font-size:15px}
+#visor .bt{display:flex;gap:10px;margin-top:6px}
+#visor .bt button{border:0;border-radius:10px;padding:12px 18px;font-weight:800;font-size:16px;background:#fff}
+#visor .bt .el{background:var(--am)}
+#visor .nav{position:absolute;top:50%;font-size:34px;background:#0008;color:#fff;border:0;padding:12px 10px;border-radius:8px}
+#visor .nav.a{left:6px}#visor .nav.s{right:6px}
+#visor .x{position:absolute;top:10px;right:12px;font-size:30px;color:#fff;background:none;border:0}
+.ev{display:block;background:#fff;border-radius:10px;padding:14px 16px;margin:6px 4px;color:var(--ng);text-decoration:none;flex:1 1 100%;border-left:6px solid var(--am)}.ev span{display:block;font-size:13px;color:#666;margin-top:2px}
+.vacio{padding:40px 16px;text-align:center;color:#666}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="tit">…</h1>
+  <p id="sub"></p>
+  <div class="barra">
+    <input id="ir" type="search" placeholder="Buscar número (ej. 1043)" inputmode="numeric">
+    <button id="soloSel">Mis elegidas</button>
+  </div>
+</header>
+<main id="grilla"></main>
+<div id="pie"><span id="cuenta"></span><button id="enviar" disabled>Enviar por WhatsApp</button></div>
+
+<div id="visor">
+  <button class="x" id="cerrar">×</button>
+  <button class="nav a" id="ant">‹</button>
+  <img id="grande" alt="">
+  <div class="t" id="vt"></div>
+  <div class="bt"><button class="el" id="vel">☆ Elegir</button></div>
+  <button class="nav s" id="sig">›</button>
+</div>
+
+<script>
+const WHATSAPP = '5492804696961';
+let datos, fotos = [], sel = new Set(), soloSel = false, actual = 0, lista = [];
+const $ = id => document.getElementById(id);
+const evento = new URLSearchParams(location.search).get('e');
+const clave = 'tf_galeria_' + (evento || 'lista');
+const dir = 'eventos/' + evento + '/';
+try { sel = new Set(JSON.parse(localStorage.getItem(clave) || '[]')); } catch (e) {}
+const guardar = () => { try { localStorage.setItem(clave, JSON.stringify([...sel])); } catch (e) {} };
+const numero = n => n.replace(/\D/g, '').replace(/^0+/, '') || n;
+
+if (!evento) {
+  document.body.classList.add('lista');
+  fetch('eventos.json').then(r => r.json()).then(l => {
+    if (l.length === 1) { location.replace('?e=' + l[0].id); return; }
+    $('tit').textContent = 'Fotos de eventos';
+    $('sub').textContent = 'Elegí un evento';
+    document.querySelector('.barra').hidden = true; $('pie').hidden = true;
+    $('grilla').innerHTML = l.map(e => `<a class="ev" href="?e=${e.id}"><b>${e.titulo}</b><span>${e.fecha}</span></a>`).join('');
+  });
+} else fetch(dir + 'manifest.json').then(r => r.json()).then(d => {
+  datos = d; fotos = d.fotos;
+  $('tit').textContent = d.titulo;
+  $('sub').textContent = d.fecha + ' · ' + fotos.length + ' fotos · tocá las que te gusten';
+  pintar();
+});
+
+function pintar() {
+  const q = $('ir').value.trim();
+  lista = fotos.filter(f => (!soloSel || sel.has(f.n)) && (!q || numero(f.n).includes(q.replace(/^0+/, ''))));
+  const g = $('grilla');
+  if (!lista.length) { g.innerHTML = '<p class="vacio">' + (soloSel ? 'Todavía no elegiste ninguna.' : 'No hay fotos con ese número.') + '</p>'; }
+  else g.innerHTML = lista.map((f, i) =>
+    `<div class="f${sel.has(f.n) ? ' sel' : ''}" style="flex-basis:${f.w / f.h * 150}px" data-i="${i}">
+      <img loading="lazy" src="${dir}fotos/${f.n}.webp" width="${f.w}" height="${f.h}" alt="">
+      <span class="num">${numero(f.n)}</span><span class="ck" data-ck="1">✓</span></div>`).join('');
+  const n = sel.size;
+  $('cuenta').innerHTML = n ? `<b>${n}</b> foto${n > 1 ? 's' : ''} elegida${n > 1 ? 's' : ''}` : 'Elegí tus fotos';
+  $('enviar').disabled = !n;
+}
+
+function alternar(nombre) { sel.has(nombre) ? sel.delete(nombre) : sel.add(nombre); guardar(); }
+
+$('grilla').addEventListener('click', e => {
+  const f = e.target.closest('.f'); if (!f) return;
+  const i = +f.dataset.i;
+  if (e.target.dataset.ck) { alternar(lista[i].n); f.classList.toggle('sel'); refrescarCuenta(); return; }
+  abrir(i);
+});
+function refrescarCuenta() {
+  const n = sel.size;
+  $('cuenta').innerHTML = n ? `<b>${n}</b> foto${n > 1 ? 's' : ''} elegida${n > 1 ? 's' : ''}` : 'Elegí tus fotos';
+  $('enviar').disabled = !n;
+}
+
+function abrir(i) {
+  actual = (i + lista.length) % lista.length;
+  const f = lista[actual];
+  $('grande').src = dir + 'fotos/' + f.n + '.webp';
+  $('vt').textContent = 'Foto ' + numero(f.n) + ' · ' + (actual + 1) + ' de ' + lista.length;
+  $('vel').textContent = sel.has(f.n) ? '★ Elegida (sacar)' : '☆ Elegir';
+  $('visor').classList.add('on');
+}
+function cerrar() { $('visor').classList.remove('on'); pintar(); }
+$('cerrar').onclick = cerrar;
+$('ant').onclick = () => abrir(actual - 1);
+$('sig').onclick = () => abrir(actual + 1);
+$('vel').onclick = () => { alternar(lista[actual].n); abrir(actual); };
+document.addEventListener('keydown', e => {
+  if (!$('visor').classList.contains('on')) return;
+  if (e.key === 'Escape') cerrar(); if (e.key === 'ArrowLeft') abrir(actual - 1); if (e.key === 'ArrowRight') abrir(actual + 1);
+});
+let x0 = null;
+$('visor').addEventListener('touchstart', e => x0 = e.touches[0].clientX);
+$('visor').addEventListener('touchend', e => {
+  if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null;
+  if (Math.abs(dx) > 50) abrir(actual + (dx < 0 ? 1 : -1));
+});
+
+$('ir').addEventListener('input', pintar);
+$('soloSel').onclick = () => { soloSel = !soloSel; $('soloSel').classList.toggle('on', soloSel); pintar(); };
+$('enviar').onclick = () => {
+  const nums = fotos.filter(f => sel.has(f.n)).map(f => numero(f.n)).join(', ');
+  const msg = `Hola! Quiero estas fotos de "${datos.titulo}" (${datos.fecha}): ${nums}`;
+  window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank');
+};
+</script>
+</body>
+</html>
