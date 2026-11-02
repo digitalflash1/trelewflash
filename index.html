@@ -7066,6 +7066,26 @@ function portadaEventoFallo(img) {
     img.style.visibility = "hidden";
 }
 
+/* Eventos con galería propia (galeria/): se ven en la lista como cualquier otro,
+   pero la tarjeta abre la galería en vez del PDF. No salen de la hoja. */
+const EVENTOS_GALERIA = [{
+    galeria: "galeria/?e=sandra-halloween",
+    titulo: "Sandra Liberatti, Halloween",
+    lugar: "Teatro Verdi",
+    fechaTexto: "31/10/2026",
+    etiquetas: ["Danzas"],
+    portada: "galeria/eventos/sandra-halloween/fotos/FAB_3590.webp"
+}];
+function galeriasFiltradas() {
+    const palabras = normalizarTexto(filtroEventos.texto).split(/\s+/).filter(Boolean);
+    const etiqueta = normalizarTexto(filtroEventos.etiqueta);
+    return EVENTOS_GALERIA.filter(e => {
+        const buscar = normalizarTexto([e.titulo, e.lugar, e.fechaTexto].concat(e.etiquetas).join(" "));
+        return (!etiqueta || e.etiquetas.some(t => normalizarTexto(t) === etiqueta)) &&
+            palabras.every(p => buscar.indexOf(p) !== -1);
+    });
+}
+
 function eventosFiltrados() {
     if (!listaEventos) return [];
     const palabras = normalizarTexto(filtroEventos.texto).split(/\s+/).filter(Boolean);
@@ -7076,6 +7096,14 @@ function eventosFiltrados() {
 }
 
 function tarjetaEvento(e) {
+    if (e.galeria) {
+        return '<a class="ev-card" href="' + escHtml(e.galeria) + '" style="text-decoration:none;display:block">' +
+            '<img class="ev-portada" loading="lazy" alt="" src="' + escHtml(e.portada) + '">' +
+            '<span class="ev-cuerpo"><span class="ev-tit">' + escHtml(e.titulo) + '</span>' +
+            '<span class="ev-fecha" style="display:block">' + escHtml(e.fechaTexto) + ' · ' + escHtml(e.lugar) + '</span>' +
+            '<span class="ev-tags">' + e.etiquetas.map(t => '<span class="ev-tag">' + escHtml(t) + '</span>').join("") +
+            '<span class="ev-tag">Galería</span></span></span></a>';
+    }
     const id = e.pdfs[0].id;
     const alt = (e.portada ? miniaturaDrive(id) + " " : "") + miniaturaDrive2(id);
     return '<button type="button" class="ev-card" data-id="' + escHtml(e.id) + '" onclick="abrirEvento(this.dataset.id)">' +
@@ -7104,7 +7132,7 @@ function pintarEventos() {
             : '<p class="ev-vacio">⏳ Buscando eventos…</p>';
         return;
     }
-    const encontrados = eventosFiltrados();
+    const encontrados = galeriasFiltradas().concat(eventosFiltrados());
     const filtrando = filtroEventos.texto || filtroEventos.etiqueta;
     const n = encontrados.length;
     resumen.innerText = !filtrando
