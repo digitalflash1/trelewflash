@@ -1,1 +1,198 @@
-[{"id":"sandra-halloween","titulo":"Sandra Liberatti · Halloween · Teatro Verdi","fecha":"31/10/2026"}]
+[
+{
+"id": "sandra-halloween",
+"titulo": "Sandra Liberatti, Halloween - Teatro Verdi",
+"fecha": "31/10/2026",
+"orden": "2026-10-31",
+"web": ""
+},
+{
+"id": "encuentro-de-salsa-y-bachata-en-el-centro-cultural-octubre-2-2026-10",
+"titulo": "Encuentro de Salsa y Bachata - Centro Cultural",
+"fecha": "22/10/2026",
+"orden": "2026-10-22",
+"web": "encuentro-de-salsa-y-bachata-en-el-centro-cultural-octubre-2-2026-10"
+},
+{
+"id": "jura-del-colegio-publico-de-abogados-octubre-2026-2026-10",
+"titulo": "Jura del Colegio Público de Abogados - Colegio Público de Abogados de Trelew",
+"fecha": "13/10/2026",
+"orden": "2026-10-13",
+"web": "jura-del-colegio-publico-de-abogados-octubre-2026-2026-10"
+},
+{
+"id": "aniversario-del-grupo-folklorico-el-michay-en-el-teatro-el-a-2026-10",
+"titulo": "Aniversario del Grupo Folklórico El Michay - Teatro El Árbol",
+"fecha": "11/10/2026",
+"orden": "2026-10-11",
+"web": "aniversario-del-grupo-folklorico-el-michay-en-el-teatro-el-a-2026-10"
+},
+{
+"id": "360-cantantes-en-el-teatro-el-arbol-octubre-2026-2026-10",
+"titulo": "360 Cantantes - Teatro El Árbol",
+"fecha": "10/10/2026",
+"orden": "2026-10-10",
+"web": "360-cantantes-en-el-teatro-el-arbol-octubre-2026-2026-10"
+},
+{
+"id": "grupo-de-folklore-asir-en-el-centro-cultural-octubre-2026-2026-10",
+"titulo": "Grupo de Folklore Asir - Centro Cultural",
+"fecha": "10/10/2026",
+"orden": "2026-10-10",
+"web": "grupo-de-folklore-asir-en-el-centro-cultural-octubre-2026-2026-10"
+},
+{
+"id": "antuen-en-el-centro-cultural-octubre-2026-2026-10",
+"titulo": "Antuen - Centro Cultural",
+"fecha": "07/10/2026",
+"orden": "2026-10-07",
+"web": "antuen-en-el-centro-cultural-octubre-2026-2026-10"
+},
+{
+"id": "danzas-greys-de-graciela-manzano-en-el-teatro-el-arbol-octub-2026-10",
+"titulo": "Danzas Greys de Graciela Manzano - Teatro El Árbol",
+"fecha": "04/10/2026",
+"orden": "2026-10-04",
+"web": "danzas-greys-de-graciela-manzano-en-el-teatro-el-arbol-octub-2026-10"
+},
+{
+"id": "ides-educacion-fisica-en-el-teatro-verdi-octubre-2026-2026-10",
+"titulo": "IDES Educación Física - Teatro Verdi",
+"fecha": "02/10/2026",
+"orden": "2026-10-02",
+"web": "ides-educacion-fisica-en-el-teatro-verdi-octubre-2026-2026-10"
+},
+{
+"id": "encuentro-de-folklore-en-el-centro-cultural-septiembre-2026-2026-09",
+"titulo": "Encuentro de Folklore - Centro Cultural",
+"fecha": "29/09/2026",
+"orden": "2026-09-29",
+"web": "encuentro-de-folklore-en-el-centro-cultural-septiembre-2026-2026-09"
+},
+{
+"id": "kya-danzas-en-el-espacio-expresarte-del-centro-cultural-septiembre-2026",
+"titulo": "Kya Danzas, Espacio Expresarte - Centro Cultural",
+"fecha": "21/09/2026",
+"orden": "2026-09-21",
+"web": "kya-danzas-en-el-espacio-expresarte-del-centro-cultural-septiembre-2026"
+},
+{
+"id": "kamaria-en-el-teatro-el-arbol-septiembre-2026",
+"titulo": "Kamaria - Teatro El Árbol",
+"fecha": "19/09/2026",
+"orden": "2026-09-19",
+"web": "kamaria-en-el-teatro-el-arbol-septiembre-2026"
+},
+{
+"id": "grand-plie-renacer-en-el-teatro-el-arbol",
+"titulo": "Grand Plie, Renacer - Teatro El Árbol",
+"fecha": "18/09/2026",
+"orden": "2026-09-18",
+"web": "grand-plie-renacer-en-el-teatro-el-arbol"
+},
+{
+"id": "daydream-en-el-teatro-el-arbol-agosto-2026",
+"titulo": "Daydream - Teatro El Árbol",
+"fecha": "30/08/2026",
+"orden": "2026-08-30",
+"web": "daydream-en-el-teatro-el-arbol-agosto-2026"
+},
+{
+"id": "ritmos-del-alma-en-el-centro-cultural-agosto-2026",
+"titulo": "Ritmos del Alma - Centro Cultural",
+"fecha": "29/08/2026",
+"orden": "2026-08-29",
+"web": "ritmos-del-alma-en-el-centro-cultural-agosto-2026"
+},
+{
+"id": "acto-academico-egresados-escuela-7716-agosto-2026",
+"titulo": "Acto Académico, Egresados Escuela 7716 - Escuela 195",
+"fecha": "28/08/2026",
+"orden": "2026-08-28",
+"web": "acto-academico-egresados-escuela-7716-agosto-2026"
+},
+{
+"id": "dia-del-folklore-trelew",
+"titulo": "Día del Folklore - Gimnasio N°1",
+"fecha": "22/08/2026",
+"orden": "2026-08-22",
+"web": "dia-del-folklore-trelew"
+},
+{
+"id": "remembranza-por-alma-gitana-a-cargo-de-nadia-troncoso-agosto-2026",
+"titulo": "Remembranza, Alma Gitana de Nadia Troncoso",
+"fecha": "22/08/2026",
+"orden": "2026-08-22",
+"web": "remembranza-por-alma-gitana-a-cargo-de-nadia-troncoso-agosto-2026"
+},
+{
+"id": "garbo-gitano-en-espacio-expresarte-en-el-centro-cultural-agosto-2026",
+"titulo": "Garbo Gitano, Espacio Expresarte - Centro Cultural",
+"fecha": "21/08/2026",
+"orden": "2026-08-21",
+"web": "garbo-gitano-en-espacio-expresarte-en-el-centro-cultural-agosto-2026"
+},
+{
+"id": "nghenechen-en-el-teatro-espanol-agosto-2026",
+"titulo": "Nghenechen - Teatro Español",
+"fecha": "21/08/2026",
+"orden": "2026-08-21",
+"web": "nghenechen-en-el-teatro-espanol-agosto-2026"
+},
+{
+"id": "360-arte-multiespacio-en-el-teatro-espanol-agosto-2026",
+"titulo": "360 Arte Multiespacio - Teatro Español",
+"fecha": "16/08/2026",
+"orden": "2026-08-16",
+"web": "360-arte-multiespacio-en-el-teatro-espanol-agosto-2026"
+},
+{
+"id": "influence-en-el-teatro-el-arbol-agosto-2026",
+"titulo": "Influence - Teatro El Árbol",
+"fecha": "15/08/2026",
+"orden": "2026-08-15",
+"web": "influence-en-el-teatro-el-arbol-agosto-2026"
+},
+{
+"id": "espacio-expresarte-en-el-centro-cultural-agosto-2026",
+"titulo": "Stella Herrera, Espacio Expresarte - Centro Cultural",
+"fecha": "15/08/2026",
+"orden": "2026-08-15",
+"web": "espacio-expresarte-en-el-centro-cultural-agosto-2026"
+},
+{
+"id": "syldance-presentadancers-el-espectaculo-en-el-salon-san-david-agosto-2026",
+"titulo": "Syldance, Dancers El Espectáculo - Salón San David",
+"fecha": "14/08/2026",
+"orden": "2026-08-14",
+"web": "syldance-presentadancers-el-espectaculo-en-el-salon-san-david-agosto-2026"
+},
+{
+"id": "jura-colegio-publico-de-abogados-agosto-2026",
+"titulo": "Jura del Colegio Público de Abogados",
+"fecha": "11/08/2026",
+"orden": "2026-08-11",
+"web": "jura-colegio-publico-de-abogados-agosto-2026"
+},
+{
+"id": "legado-criollo-en-el-centro-cultural-agosto-2026",
+"titulo": "Legado Criollo - Centro Cultural",
+"fecha": "06/08/2026",
+"orden": "2026-08-06",
+"web": "legado-criollo-en-el-centro-cultural-agosto-2026"
+},
+{
+"id": "flashmob-en-el-gimnasio-n1-agosto-2026-flashmob-17-hs",
+"titulo": "Flashmob 17 hs - Gimnasio N°1",
+"fecha": "02/08/2026",
+"orden": "2026-08-02",
+"web": "flashmob-en-el-gimnasio-n1-agosto-2026"
+},
+{
+"id": "flashmob-en-el-gimnasio-n1-agosto-2026-flashmob-19-hs",
+"titulo": "Flashmob 19 hs - Gimnasio N°1",
+"fecha": "02/08/2026",
+"orden": "2026-08-02",
+"web": "flashmob-en-el-gimnasio-n1-agosto-2026"
+}
+]

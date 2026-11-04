@@ -70,18 +70,21 @@ const WHATSAPP = '5492804696961';
 let datos, fotos = [], sel = new Set(), soloSel = false, actual = 0, lista = [];
 const $ = id => document.getElementById(id);
 const evento = new URLSearchParams(location.search).get('e');
+const grupo = new URLSearchParams(location.search).get('grupo');  // un evento de la web con varias funciones
 const clave = 'tf_galeria_' + (evento || 'lista');
 const dir = 'eventos/' + evento + '/';
+const dirFotos = 'https://fotos.trelewflash.com.ar/eventos/' + evento + '/fotos/';
 try { sel = new Set(JSON.parse(localStorage.getItem(clave) || '[]')); } catch (e) {}
 const guardar = () => { try { localStorage.setItem(clave, JSON.stringify([...sel])); } catch (e) {} };
 const numero = n => n.replace(/\D/g, '').replace(/^0+/, '') || n;
 
 if (!evento) {
   document.body.classList.add('lista');
-  fetch('eventos.json').then(r => r.json()).then(l => {
+  fetch('eventos.json').then(r => r.json()).then(todos => {
+    const l = grupo ? todos.filter(e => e.web === grupo) : todos;
     if (l.length === 1) { location.replace('?e=' + l[0].id); return; }
     $('tit').textContent = 'Fotos de eventos';
-    $('sub').textContent = 'Elegí un evento';
+    $('sub').textContent = grupo ? 'Elegí la función' : 'Elegí un evento';
     document.querySelector('.barra').hidden = true; $('pie').hidden = true;
     $('grilla').innerHTML = l.map(e => `<a class="ev" href="?e=${e.id}"><b>${e.titulo}</b><span>${e.fecha}</span></a>`).join('');
   });
@@ -99,7 +102,7 @@ function pintar() {
   if (!lista.length) { g.innerHTML = '<p class="vacio">' + (soloSel ? 'Todavía no elegiste ninguna.' : 'No hay fotos con ese número.') + '</p>'; }
   else g.innerHTML = lista.map((f, i) =>
     `<div class="f${sel.has(f.n) ? ' sel' : ''}" style="flex-basis:${f.w / f.h * 150}px" data-i="${i}">
-      <img loading="lazy" src="${dir}fotos/${f.n}.webp" width="${f.w}" height="${f.h}" alt="">
+      <img loading="lazy" src="${dirFotos}${f.n}.webp" width="${f.w}" height="${f.h}" alt="">
       <span class="num">${numero(f.n)}</span><span class="ck" data-ck="1">✓</span></div>`).join('');
   const n = sel.size;
   $('cuenta').innerHTML = n ? `<b>${n}</b> foto${n > 1 ? 's' : ''} elegida${n > 1 ? 's' : ''}` : 'Elegí tus fotos';
@@ -123,7 +126,7 @@ function refrescarCuenta() {
 function abrir(i) {
   actual = (i + lista.length) % lista.length;
   const f = lista[actual];
-  $('grande').src = dir + 'fotos/' + f.n + '.webp';
+  $('grande').src = dirFotos + f.n + '.webp';
   $('vt').textContent = 'Foto ' + numero(f.n) + ' · ' + (actual + 1) + ' de ' + lista.length;
   $('vel').textContent = sel.has(f.n) ? '★ Elegida (sacar)' : '☆ Elegir';
   $('visor').classList.add('on');

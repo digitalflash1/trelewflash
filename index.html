@@ -1248,6 +1248,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     @keyframes nov-cta-late { 0%, 88%, 100% { transform: scale(1); } 94% { transform: scale(1.07); } }
     @media (prefers-reduced-motion: reduce) { .slide-nov .nov-cta { animation: none; } }
 </style>
+<script src="galeria/galerias.js"></script>
 </head>
 <body class="en-portada">
 
@@ -7074,8 +7075,12 @@ const EVENTOS_GALERIA = [{
     lugar: "Teatro Verdi",
     fechaTexto: "31/10/2026",
     etiquetas: ["Danzas"],
-    portada: "galeria/eventos/sandra-halloween/fotos/FAB_3590.webp"
+    portada: "https://fotos.trelewflash.com.ar/eventos/sandra-halloween/fotos/FAB_3590.webp"
 }];
+/* Los eventos de la hoja que ya tienen galería abren la galería en vez del PDF.
+   galeria/galerias.js lo arma publicar_galerias.py: { id del evento: dirección }.
+   Si no carga, siguen abriendo el PDF. */
+function galeriaDeEvento(id) { return (window.GALERIAS_EVENTOS || {})[id] || ""; }
 function galeriasFiltradas() {
     const palabras = normalizarTexto(filtroEventos.texto).split(/\s+/).filter(Boolean);
     const etiqueta = normalizarTexto(filtroEventos.etiqueta);
@@ -7111,8 +7116,9 @@ function tarjetaEvento(e) {
         ' data-alt="' + escHtml(alt) + '" onerror="portadaEventoFallo(this)">' +
         '<span class="ev-cuerpo"><span class="ev-tit">' + escHtml(e.titulo) + '</span>' +
         (e.fechaTexto ? '<span class="ev-fecha" style="display:block">' + escHtml(e.fechaTexto) + '</span>' : "") +
-        (e.etiquetas.length ? '<span class="ev-tags">' +
-            e.etiquetas.slice(0, 3).map(t => '<span class="ev-tag">' + escHtml(t) + '</span>').join("") + '</span>' : "") +
+        (e.etiquetas.length || galeriaDeEvento(e.id) ? '<span class="ev-tags">' +
+            e.etiquetas.slice(0, 3).map(t => '<span class="ev-tag">' + escHtml(t) + '</span>').join("") +
+            (galeriaDeEvento(e.id) ? '<span class="ev-tag">Galería</span>' : "") + '</span>' : "") +
         '</span></button>';
 }
 
@@ -7199,16 +7205,23 @@ function abrirEventoPendiente() {
     const id = eventoPendiente;
     eventoPendiente = "";
     if (listaEventos.some(e => e.id === id)) {
-        abrirEvento(id);
         medir("abrir_evento_compartido", { evento: id });
+        abrirEvento(id, true);
     } else {
         avisoToast("Ese evento ya no está publicado. Buscalo en la lista o consultanos.", 5);
     }
 }
 
-function abrirEvento(id) {
+function abrirEvento(id, desdeLink) {
     const e = (listaEventos || []).find(x => x.id === id);
     if (!e) return;
+    const galeria = galeriaDeEvento(id);
+    if (galeria) {
+        medir("abrir_evento_galeria", { evento: id });
+        // Desde un link compartido se reemplaza, para que «atrás» no vuelva a redirigir.
+        if (desdeLink) location.replace(galeria); else location.href = galeria;
+        return;
+    }
     const lista = document.getElementById("p-eventos");
     if (!lista.classList.contains("oculto")) scrollListaEventos = window.scrollY;
     eventoAbierto = e;
