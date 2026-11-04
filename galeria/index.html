@@ -32,7 +32,7 @@ header p{font-size:13px;margin-top:2px}
 #pie button:disabled{opacity:.4}
 #visor{position:fixed;inset:0;background:#000e;z-index:10;display:none;flex-direction:column;align-items:center;justify-content:center}
 #visor.on{display:flex}
-#visor img{max-width:100%;max-height:78vh;image-rendering:auto;touch-action:pan-y}
+#visor img{max-width:100%;max-height:62vh;image-rendering:auto;touch-action:pan-y}
 #visor .t{color:#fff;margin:10px;font-size:15px}
 #visor .bt{display:flex;gap:10px;margin-top:6px}
 #visor .bt button{border:0;border-radius:10px;padding:12px 18px;font-weight:800;font-size:16px;background:#fff}
@@ -42,19 +42,38 @@ header p{font-size:13px;margin-top:2px}
 #visor .x{position:absolute;top:10px;right:12px;font-size:30px;color:#fff;background:none;border:0}
 .ev{display:block;background:#fff;border-radius:10px;padding:14px 16px;margin:6px 4px;color:var(--ng);text-decoration:none;flex:1 1 100%;border-left:6px solid var(--am)}.ev span{display:block;font-size:13px;color:#666;margin-top:2px}
 .vacio{padding:40px 16px;text-align:center;color:#666}
+header .precio{font-weight:700;font-size:14px}
+#resumen{background:#fff;border-left:6px solid var(--am);border-radius:10px;margin:8px;padding:12px 14px;font-size:15px;line-height:1.35}
+#resumen b{font-size:18px}
+#pie small{display:block;font-size:13px;color:#ccc}
+#resumen .aviso,#vaviso{display:block;font-size:13px;margin-top:6px;color:#8a5a00}
+.f .ped{position:absolute;left:4px;bottom:4px;background:var(--am);color:var(--ng);font-size:11px;font-weight:700;padding:1px 5px;border-radius:4px}
+.fila{flex:1 1 340px;display:flex;gap:10px;background:#fff;border-radius:10px;padding:8px;align-items:flex-start}
+.fila img{width:96px;height:96px;object-fit:cover;border-radius:6px;flex:none;cursor:pointer}
+.fila .det{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:14px}
+.fila .cab{flex:1 1 100%;display:flex;justify-content:space-between;gap:8px}
+.fila label,#vop label{display:inline-flex;align-items:center;gap:5px}
+.fila input,#vop input{width:20px;height:20px}
+.fila select,#vop select{font-size:15px;padding:4px;border:1px solid #888;border-radius:6px;background:#fff;color:#111}
+.fila select:disabled{opacity:.4}
+.fila .sacar{border:0;background:none;color:#a00;font-size:13px;text-decoration:underline;padding:4px 0}
+#vop{color:#fff;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 14px;align-items:center;font-size:15px;margin:8px 12px 0;max-width:460px}
+#vaviso{flex:1 1 100%;text-align:center;color:#ffd966}
 </style>
 </head>
 <body>
 <header>
   <h1 id="tit">…</h1>
   <p id="sub"></p>
+  <p id="precio" class="precio" hidden></p>
   <div class="barra">
     <input id="ir" type="search" placeholder="Buscar número (ej. 1043)" inputmode="numeric">
     <button id="soloSel">Mis elegidas</button>
   </div>
 </header>
+<div id="resumen" hidden></div>
 <main id="grilla"></main>
-<div id="pie"><span id="cuenta"></span><button id="enviar" disabled>Enviar por WhatsApp</button></div>
+<div id="pie"><span id="cuenta"></span><button id="enviar" disabled>Pedir por WhatsApp</button></div>
 
 <div id="visor">
   <button class="x" id="cerrar">×</button>
@@ -62,19 +81,40 @@ header p{font-size:13px;margin-top:2px}
   <img id="grande" alt="">
   <div class="t" id="vt"></div>
   <div class="bt"><button class="el" id="vel">☆ Elegir</button></div>
+  <div id="vop" hidden>
+    <label><input type="checkbox" id="vimp"> Impresa</label>
+    <select id="vmed" aria-label="Medida"></select>
+    <label><input type="checkbox" id="vdig"> Digital</label>
+    <span id="vaviso" hidden></span>
+  </div>
   <button class="nav s" id="sig">›</button>
 </div>
 
 <script>
 const WHATSAPP = '5492804696961';
-let datos, fotos = [], sel = new Set(), soloSel = false, actual = 0, lista = [];
+const PRECIO_FOTO = 5000;       // cualquier medida de MEDIDAS, mismo precio
+const PRECIO_DIGITAL = 4000;
+const MEDIDAS = ['15x21', '13x18', '10x15'];
+const AVISO_GRUPALES = 'Las fotos grupales de muchas personas no se venden en digital. Si elegís alguna, te avisamos por WhatsApp.';
+const plata = n => '$' + n.toLocaleString('es-AR');
+const pedidoNuevo = () => ({ impresa: true, medida: MEDIDAS[0], digital: false });
+const describir = p => [p.impresa && p.medida, p.digital && 'Digital'].filter(Boolean).join(' + ');
+const subtotal = p => (p.impresa ? PRECIO_FOTO : 0) + (p.digital ? PRECIO_DIGITAL : 0);
+let datos, fotos = [], sel = new Map(), soloSel = false, actual = 0, lista = [];
 const $ = id => document.getElementById(id);
 const evento = new URLSearchParams(location.search).get('e');
 const grupo = new URLSearchParams(location.search).get('grupo');  // un evento de la web con varias funciones
 const clave = 'tf_galeria_' + (evento || 'lista');
 const dir = 'eventos/' + evento + '/';
 const dirFotos = 'https://fotos.trelewflash.com.ar/eventos/' + evento + '/fotos/';
-try { sel = new Set(JSON.parse(localStorage.getItem(clave) || '[]')); } catch (e) {}
+try {
+  // Las selecciones guardadas antes eran solo una lista de nombres.
+  sel = new Map(JSON.parse(localStorage.getItem(clave) || '[]').map(x => {
+    if (typeof x === 'string') return [x, pedidoNuevo()];
+    const p = x[1] || {};
+    return [x[0], { impresa: !!p.impresa, medida: MEDIDAS.includes(p.medida) ? p.medida : MEDIDAS[0], digital: !!p.digital }];
+  }));
+} catch (e) {}
 const guardar = () => { try { localStorage.setItem(clave, JSON.stringify([...sel])); } catch (e) {} };
 const numero = n => n.replace(/\D/g, '').replace(/^0+/, '') || n;
 
@@ -92,6 +132,9 @@ if (!evento) {
   datos = d; fotos = d.fotos;
   $('tit').textContent = d.titulo;
   $('sub').textContent = d.fecha + ' · ' + fotos.length + ' fotos · tocá las que te gusten';
+  $('precio').textContent = `Impresa ${MEDIDAS[0]} o más chica: ${plata(PRECIO_FOTO)} c/u · Digital: ${plata(PRECIO_DIGITAL)} (solo individuales)`;
+  $('vmed').innerHTML = MEDIDAS.map(m => `<option>${m}</option>`).join('');
+  $('precio').hidden = false;
   pintar();
 });
 
@@ -100,44 +143,100 @@ function pintar() {
   lista = fotos.filter(f => (!soloSel || sel.has(f.n)) && (!q || numero(f.n).includes(q.replace(/^0+/, ''))));
   const g = $('grilla');
   if (!lista.length) { g.innerHTML = '<p class="vacio">' + (soloSel ? 'Todavía no elegiste ninguna.' : 'No hay fotos con ese número.') + '</p>'; }
+  else if (soloSel) g.innerHTML = lista.map((f, i) => filaElegida(f, i)).join('');
   else g.innerHTML = lista.map((f, i) =>
     `<div class="f${sel.has(f.n) ? ' sel' : ''}" style="flex-basis:${f.w / f.h * 150}px" data-i="${i}">
       <img loading="lazy" src="${dirFotos}${f.n}.webp" width="${f.w}" height="${f.h}" alt="">
-      <span class="num">${numero(f.n)}</span><span class="ck" data-ck="1">✓</span></div>`).join('');
-  const n = sel.size;
-  $('cuenta').innerHTML = n ? `<b>${n}</b> foto${n > 1 ? 's' : ''} elegida${n > 1 ? 's' : ''}` : 'Elegí tus fotos';
-  $('enviar').disabled = !n;
+      <span class="num">${numero(f.n)}</span><span class="ck" data-ck="1">✓</span>
+      ${sel.has(f.n) ? `<span class="ped">${describir(sel.get(f.n))}</span>` : ''}</div>`).join('');
+  refrescarCuenta();
 }
 
-function alternar(nombre) { sel.has(nombre) ? sel.delete(nombre) : sel.add(nombre); guardar(); }
+/* En «Mis elegidas» cada foto se puede pedir impresa (con su medida), digital o las dos. */
+function filaElegida(f, i) {
+  const p = sel.get(f.n);
+  return `<div class="fila" data-i="${i}">
+    <img loading="lazy" src="${dirFotos}${f.n}.webp" alt="">
+    <div class="det">
+      <span class="cab"><b>Foto ${numero(f.n)}</b><b>${plata(subtotal(p))}</b></span>
+      <label><input type="checkbox" data-c="impresa"${p.impresa ? ' checked' : ''}> Impresa</label>
+      <select data-c="medida" aria-label="Medida"${p.impresa ? '' : ' disabled'}>${MEDIDAS.map(m =>
+        `<option${m === p.medida ? ' selected' : ''}>${m}</option>`).join('')}</select>
+      <label><input type="checkbox" data-c="digital"${p.digital ? ' checked' : ''}> Digital ${plata(PRECIO_DIGITAL)}</label>
+      <button type="button" class="sacar" data-c="sacar">Sacar</button>
+    </div></div>`;
+}
+
+function alternar(nombre) { sel.has(nombre) ? sel.delete(nombre) : sel.set(nombre, pedidoNuevo()); guardar(); }
+
+/* Sin impresa ni digital, la foto deja de estar elegida. */
+function cambiarPedido(nombre, campo, valor) {
+  const p = sel.get(nombre);
+  if (!p) return;
+  p[campo] = valor;
+  if (!p.impresa && !p.digital) sel.delete(nombre);
+  guardar();
+}
 
 $('grilla').addEventListener('click', e => {
+  const fila = e.target.closest('.fila');
+  if (fila) {
+    if (e.target.dataset.c === 'sacar') { sel.delete(lista[+fila.dataset.i].n); guardar(); pintar(); }
+    else if (e.target.tagName === 'IMG') abrir(+fila.dataset.i);
+    return;
+  }
   const f = e.target.closest('.f'); if (!f) return;
   const i = +f.dataset.i;
-  if (e.target.dataset.ck) { alternar(lista[i].n); f.classList.toggle('sel'); refrescarCuenta(); return; }
+  if (e.target.dataset.ck) { alternar(lista[i].n); pintar(); return; }
   abrir(i);
 });
+$('grilla').addEventListener('change', e => {
+  const fila = e.target.closest('.fila'); if (!fila) return;
+  const campo = e.target.dataset.c;
+  cambiarPedido(lista[+fila.dataset.i].n, campo, campo === 'medida' ? e.target.value : e.target.checked);
+  pintar();
+});
+const plural = (n, palabra) => `${n} ${palabra}${n > 1 ? 's' : ''}`;
 function refrescarCuenta() {
-  const n = sel.size;
-  $('cuenta').innerHTML = n ? `<b>${n}</b> foto${n > 1 ? 's' : ''} elegida${n > 1 ? 's' : ''}` : 'Elegí tus fotos';
-  $('enviar').disabled = !n;
+  const pedidos = [...sel.values()];
+  const imp = pedidos.filter(p => p.impresa).length, dig = pedidos.filter(p => p.digital).length;
+  const total = plata(imp * PRECIO_FOTO + dig * PRECIO_DIGITAL);
+  const hay = sel.size > 0;
+  const partes = [imp && plural(imp, 'impresa'), dig && plural(dig, 'digital').replace('digitals', 'digitales')].filter(Boolean);
+  $('cuenta').innerHTML = hay ? `<small>${partes.join(' · ')}</small>Total <b>${total}</b>` : 'Elegí tus fotos';
+  $('enviar').disabled = !hay;
+  $('resumen').hidden = !(soloSel && hay);
+  if (soloSel && hay) $('resumen').innerHTML =
+    (imp ? `${plural(imp, 'impresa')} × ${plata(PRECIO_FOTO)}<br>` : '') +
+    (dig ? `${plural(dig, 'digital').replace('digitals', 'digitales')} × ${plata(PRECIO_DIGITAL)}<br>` : '') +
+    `Total: <b>${total}</b>` + (dig ? `<span class="aviso">${AVISO_GRUPALES}</span>` : '');
 }
 
 function abrir(i) {
   actual = (i + lista.length) % lista.length;
   const f = lista[actual];
   $('grande').src = dirFotos + f.n + '.webp';
-  $('vt').textContent = 'Foto ' + numero(f.n) + ' · ' + (actual + 1) + ' de ' + lista.length;
-  $('vel').textContent = sel.has(f.n) ? '★ Elegida (sacar)' : '☆ Elegir';
+  const p = sel.get(f.n);
+  $('vt').textContent = 'Foto ' + numero(f.n) + ' · ' + (actual + 1) + ' de ' + lista.length + (p ? ' · ' + plata(subtotal(p)) : '');
+  $('vel').textContent = p ? '★ Elegida (sacar)' : '☆ Elegir';
+  $('vop').hidden = !p;
+  if (p) {
+    $('vimp').checked = p.impresa; $('vdig').checked = p.digital;
+    $('vmed').value = p.medida; $('vmed').disabled = !p.impresa;
+    $('vaviso').hidden = !p.digital; $('vaviso').textContent = AVISO_GRUPALES;
+  }
   $('visor').classList.add('on');
 }
+$('vimp').onchange = e => { cambiarPedido(lista[actual].n, 'impresa', e.target.checked); abrir(actual); };
+$('vdig').onchange = e => { cambiarPedido(lista[actual].n, 'digital', e.target.checked); abrir(actual); };
+$('vmed').onchange = e => { cambiarPedido(lista[actual].n, 'medida', e.target.value); abrir(actual); };
 function cerrar() { $('visor').classList.remove('on'); pintar(); }
 $('cerrar').onclick = cerrar;
 $('ant').onclick = () => abrir(actual - 1);
 $('sig').onclick = () => abrir(actual + 1);
 $('vel').onclick = () => { alternar(lista[actual].n); abrir(actual); };
 document.addEventListener('keydown', e => {
-  if (!$('visor').classList.contains('on')) return;
+  if (!$('visor').classList.contains('on') || e.target.tagName === 'SELECT') return;
   if (e.key === 'Escape') cerrar(); if (e.key === 'ArrowLeft') abrir(actual - 1); if (e.key === 'ArrowRight') abrir(actual + 1);
 });
 let x0 = null;
@@ -150,8 +249,13 @@ $('visor').addEventListener('touchend', e => {
 $('ir').addEventListener('input', pintar);
 $('soloSel').onclick = () => { soloSel = !soloSel; $('soloSel').classList.toggle('on', soloSel); pintar(); };
 $('enviar').onclick = () => {
-  const nums = fotos.filter(f => sel.has(f.n)).map(f => numero(f.n)).join(', ');
-  const msg = `Hola! Quiero estas fotos de "${datos.titulo}" (${datos.fecha}): ${nums}`;
+  const elegidas = fotos.filter(f => sel.has(f.n));
+  const nums = cond => elegidas.filter(f => cond(sel.get(f.n))).map(f => numero(f.n)).join(', ');
+  const lineas = MEDIDAS.map(m => [m, nums(p => p.impresa && p.medida === m)]).filter(x => x[1]).map(x => `Impresas ${x[0]}: ${x[1]}`);
+  if (nums(p => p.digital)) lineas.push(`Digital: ${nums(p => p.digital)}`);
+  const imp = elegidas.filter(f => sel.get(f.n).impresa).length, dig = elegidas.filter(f => sel.get(f.n).digital).length;
+  const msg = `Hola! Quiero estas fotos de "${datos.titulo}" (${datos.fecha}):\n${lineas.join('\n')}\n` +
+    `Total: ${plata(imp * PRECIO_FOTO + dig * PRECIO_DIGITAL)}`;
   window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank');
 };
 </script>
