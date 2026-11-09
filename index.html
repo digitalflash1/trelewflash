@@ -7077,7 +7077,8 @@ const EVENTOS_GALERIA = [{
     galeria: "galeria/?e=sandra-halloween",
     titulo: "Sandra Liberatti, Halloween",
     lugar: "Teatro Verdi",
-    fechaTexto: "31/10/2026",
+    fecha: "2026-10-31",
+    fechaTexto: "31 de octubre de 2026",
     etiquetas: ["Danzas"],
     portada: "galeria/eventos/sandra-halloween/portada-fab-3592.webp"
 }];
@@ -7143,7 +7144,9 @@ function pintarEventos() {
             : '<p class="ev-vacio">⏳ Buscando eventos…</p>';
         return;
     }
-    const encontrados = galeriasFiltradas().concat(eventosFiltrados());
+    const encontrados = galeriasFiltradas().concat(eventosFiltrados()).sort((a, b) =>
+        String(b.fecha || "").localeCompare(String(a.fecha || ""))
+    );
     const filtrando = filtroEventos.texto || filtroEventos.etiqueta;
     const n = encontrados.length;
     resumen.innerText = !filtrando
@@ -7359,7 +7362,7 @@ function sumarEventosAlCarrusel() {
     /* Las portadas subidas a assets/eventos/ pueden tener versión vertical para
        el celular con el mismo nombre terminado en "-vertical.jpg". */
     const galerias = EVENTOS_GALERIA.map(e => Object.assign({}, e, {
-        fecha: String(e.fechaTexto || "").split("/").reverse().join("-")
+        fecha: e.fecha || String(e.fechaTexto || "").split("/").reverse().join("-")
     }));
     const recientes = galerias.concat(listaEventos).sort((a, b) =>
         String(b.fecha || "").localeCompare(String(a.fecha || ""))
