@@ -7054,7 +7054,11 @@ function miniaturaDrive(id) { return "https://lh3.googleusercontent.com/d/" + id
 /* La de lh3 falla de a ratos con PDFs pesados; esta otra de Drive suele andar
    justo cuando aquella no. */
 function miniaturaDrive2(id) { return "https://drive.google.com/thumbnail?id=" + id + "&sz=w640"; }
-function portadaEvento(e) { return e.portada || (e.pdfs[0] ? miniaturaDrive(e.pdfs[0].id) : ""); }
+const PORTADAS_EVENTOS = {
+    "amulen-2026-11": "assets/eventos/amulen-centro-cultural-noviembre-2026.webp",
+    "dia-de-la-tradicion-del-sol-2026-11": "assets/eventos/dia-de-la-tradicion-del-sol-noviembre-2026.webp"
+};
+function portadaEvento(e) { return PORTADAS_EVENTOS[e.id] || e.portada || (e.pdfs[0] ? miniaturaDrive(e.pdfs[0].id) : ""); }
 /* Si la portada cargada no abre (por ejemplo una foto de WordPress que ya no
    está), se cae a las del PDF, una por una (data-alt, separadas por espacio);
    si ninguna abre, queda el fondo liso. */
@@ -7104,7 +7108,7 @@ function tarjetaEvento(e) {
     const destinoGaleria = e.galeria || galeriaDeEvento(e.id);
     if (destinoGaleria) {
         return '<a class="ev-card" href="' + escHtml(destinoGaleria) + '" style="text-decoration:none;display:block">' +
-            '<img class="ev-portada" loading="lazy" alt="" src="' + escHtml(e.portada) + '">' +
+            '<img class="ev-portada" loading="lazy" alt="" src="' + escHtml(portadaEvento(e)) + '">' +
             '<span class="ev-cuerpo"><span class="ev-tit">' + escHtml(e.titulo) + '</span>' +
             '<span class="ev-fecha" style="display:block">' + escHtml(e.fechaTexto) + ' · ' + escHtml(e.lugar) + '</span>' +
             '<span class="ev-tags">' + e.etiquetas.map(t => '<span class="ev-tag">' + escHtml(t) + '</span>').join("") +
