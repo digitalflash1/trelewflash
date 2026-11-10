@@ -91,7 +91,8 @@ header .precio{font-weight:700;font-size:14px}
 </div>
 
 <script>
-const WHATSAPP = '5492804696961';
+const PEDIDOS_URL = 'https://script.google.com/macros/s/AKfycbxxkTt_esCqor3id4ZTcbav0uB7chR7QBFqwuxLPTmg_6pe6HfcPX4f0r0QBDrI0YkL5Q/exec';
+const WHATSAPP ='5492804696961';
 const PRECIO_FOTO = 5000;       // cualquier medida de MEDIDAS, mismo precio
 const PRECIO_DIGITAL = 4000;
 const MEDIDAS = ['15x21', '13x18', '10x15'];
@@ -107,6 +108,7 @@ const grupo = new URLSearchParams(location.search).get('grupo');  // un evento d
 const clave = 'tf_galeria_' + (evento || 'lista');
 const dir = 'eventos/' + evento + '/';
 const dirFotos = 'https://fotos.trelewflash.com.ar/eventos/' + evento + '/fotos/';
+const fotoUrl = n => `${dirFotos}${n}.webp?v=1100px`;
 try {
   // Las selecciones guardadas antes eran solo una lista de nombres.
   sel = new Map(JSON.parse(localStorage.getItem(clave) || '[]').map(x => {
@@ -146,7 +148,7 @@ function pintar() {
   else if (soloSel) g.innerHTML = lista.map((f, i) => filaElegida(f, i)).join('');
   else g.innerHTML = lista.map((f, i) =>
     `<div class="f${sel.has(f.n) ? ' sel' : ''}" style="flex-basis:${f.w / f.h * 150}px" data-i="${i}">
-      <img loading="lazy" src="${dirFotos}${f.n}.webp" width="${f.w}" height="${f.h}" alt="">
+      <img loading="lazy" src="${fotoUrl(f.n)}" width="${f.w}" height="${f.h}" alt="">
       <span class="num">${numero(f.n)}</span><span class="ck" data-ck="1">✓</span>
       ${sel.has(f.n) ? `<span class="ped">${describir(sel.get(f.n))}</span>` : ''}</div>`).join('');
   refrescarCuenta();
@@ -156,7 +158,7 @@ function pintar() {
 function filaElegida(f, i) {
   const p = sel.get(f.n);
   return `<div class="fila" data-i="${i}">
-    <img loading="lazy" src="${dirFotos}${f.n}.webp" alt="">
+    <img loading="lazy" src="${fotoUrl(f.n)}" alt="">
     <div class="det">
       <span class="cab"><b>Foto ${numero(f.n)}</b><b>${plata(subtotal(p))}</b></span>
       <label><input type="checkbox" data-c="impresa"${p.impresa ? ' checked' : ''}> Impresa</label>
@@ -215,7 +217,7 @@ function refrescarCuenta() {
 function abrir(i) {
   actual = (i + lista.length) % lista.length;
   const f = lista[actual];
-  $('grande').src = dirFotos + f.n + '.webp';
+  $('grande').src = fotoUrl(f.n);
   const p = sel.get(f.n);
   $('vt').textContent = 'Foto ' + numero(f.n) + ' · ' + (actual + 1) + ' de ' + lista.length + (p ? ' · ' + plata(subtotal(p)) : '');
   $('vel').textContent = p ? '★ Elegida (sacar)' : '☆ Elegir';
@@ -249,13 +251,34 @@ $('visor').addEventListener('touchend', e => {
 $('ir').addEventListener('input', pintar);
 $('soloSel').onclick = () => { soloSel = !soloSel; $('soloSel').classList.toggle('on', soloSel); pintar(); };
 $('enviar').onclick = () => {
+  if (!fotos.some(f => sel.has(f.n))) return;
+  // Mismo dato que guarda la tienda (mismo sitio): si no hay nombre, se pide antes de abrir WhatsApp.
+  let cli = {};
+  try { cli = JSON.parse(localStorage.getItem('ftf_cliente_v1') || '{}') || {}; } catch (e) {}
+  let nombre = String(cli.nombre || '').trim();
+  if (!nombre) {
+    nombre = (prompt('¿A nombre de quién dejamos el pedido?') || '').trim();
+    if (!nombre) return;
+  }
+  const hex = Array.from(crypto.getRandomValues(new Uint8Array(4)), b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+  const hoy = new Date(), dd = n => String(n).padStart(2, '0');
+  const pedidoId = `EG-${hoy.getFullYear()}${dd(hoy.getMonth() + 1)}${dd(hoy.getDate())}-${hex}`;
   const elegidas = fotos.filter(f => sel.has(f.n));
   const nums = cond => elegidas.filter(f => cond(sel.get(f.n))).map(f => numero(f.n)).join(', ');
   const lineas = MEDIDAS.map(m => [m, nums(p => p.impresa && p.medida === m)]).filter(x => x[1]).map(x => `Impresas ${x[0]}: ${x[1]}`);
   if (nums(p => p.digital)) lineas.push(`Digital: ${nums(p => p.digital)}`);
   const imp = elegidas.filter(f => sel.get(f.n).impresa).length, dig = elegidas.filter(f => sel.get(f.n).digital).length;
   const msg = `Hola! Quiero estas fotos de "${datos.titulo}" (${datos.fecha}):\n${lineas.join('\n')}\n` +
-    `Total: ${plata(imp * PRECIO_FOTO + dig * PRECIO_DIGITAL)}`;
+    `Total: ${plata(imp * PRECIO_FOTO + dig * PRECIO_DIGITAL)}\nPedido: ${pedidoId}`;
+  // Copia de trabajo para el local; si falla, el WhatsApp sale igual.
+  try {
+    fetch(PEDIDOS_URL, { method: 'POST', mode: 'no-cors', keepalive: true,
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ accion: 'pedidoGaleria', pedidoId,
+        evento: { id: evento, titulo: datos.titulo, fecha: datos.fecha },
+        cliente: { nombre, telefono: cli.telefono || '' },
+        fotos: elegidas.map(f => { const p = sel.get(f.n); return { n: f.n, impresa: p.impresa, digital: p.digital, medida: p.medida }; }) }) }).catch(() => {});
+  } catch (e) {}
   window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank');
 };
 </script>
