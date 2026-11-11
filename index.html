@@ -106,8 +106,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta name="description" content="Revelado de fotos, souvenirs, tazas, collages e imanes en Trelew. Armá tu pedido paso a paso desde el celular y envialo por WhatsApp.">
 <meta name="theme-color" content="#FCFC14">
 
-<link rel="icon" href="assets/favicon.ico" sizes="any">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="icon" href="assets/favicon.ico?v=2" sizes="any">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=2">
 
 <!-- Vista previa al compartir el link (WhatsApp, Facebook, Instagram).
      ⚠️ og:url y og:image van con la dirección COMPLETA a propósito: los
@@ -122,7 +122,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="canonical" href="https://trelewflash.com.ar/">
 <meta property="og:title" content="Trelewflash · Armá tu pedido de fotos">
 <meta property="og:description" content="Revelado, souvenirs, tazas y regalos con tu foto. Armá el pedido desde el celular y lo terminamos por WhatsApp.">
-<meta property="og:image" content="https://trelewflash.com.ar/assets/og-image.jpg">
+<meta property="og:image" content="https://trelewflash.com.ar/assets/og-image.jpg?v=2">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Trelewflash · Revelado, souvenirs y regalos con tu foto">
@@ -235,6 +235,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .btn-menu:active { transform: scale(.99); }
     .caja-inicio { margin-top: 8px; padding: 16px 16px 4px; background: var(--gris-suave); border: 1px solid var(--gris-borde); border-radius: 14px; }
     .caja-inicio .caja-titulo { font-size: 15px; font-weight: bold; color: var(--color-principal); margin: 0 0 12px; }
+    .resena { margin: 12px 16px 0; padding: 14px 16px; background: #fffbe0; border: 2px solid #111; border-radius: 14px; }
+    .resena p { margin: 0 0 10px; font-size: 15px; line-height: 1.35; }
+    .resena .resena-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    .resena a, .resena button { border: 2px solid #111; border-radius: 10px; padding: 9px 14px; font-weight: bold;
+        font-size: 14px; text-decoration: none; color: #111; background: #FFE81A; cursor: pointer; }
+    .resena button { background: #fff; }
 
     /* ===== Portada de borde a borde =====
        La bienvenida no va en tarjeta: arriba el logo y el carrusel llenando la
@@ -1301,6 +1307,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="portada-cuerpo">
 <!-- Botones de la portada. La foto de fondo de cada uno va en --foto
      (las recortadas para esto están en assets/botones/). -->
+<div class="resena" id="resena" hidden></div>
 <div class="caja-inicio" id="caja-inicio">
     <p class="caja-titulo">¿Qué querés hacer?</p>
     <p class="caja-bajada">Armá tu pedido paso a paso y nos lo enviás por WhatsApp.</p>
@@ -3101,6 +3108,52 @@ llenarDatosTransferencia();
 // y el pedido se envía por WhatsApp, sin registrar en la hoja ni subir imágenes a Drive.
 const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxxkTt_esCqor3id4ZTcbav0uB7chR7QBFqwuxLPTmg_6pe6HfcPX4f0r0QBDrI0YkL5Q/exec";
 const APP_VERSION = "4.3";
+
+/* ── Pedido de reseñas ──
+   Cuatro días después de un pedido registrado (de la tienda o de la galería, que
+   marcan tf_resena en este navegador), la portada muestra un cartel que invita a
+   dejar una opinión. Sale como mucho 2 veces, con un día entre una y otra, y no
+   vuelve si el cliente tocó un botón de reseña. Un link vacío no muestra su botón.
+   Google: el link para compartir la ficha (abre el perfil; ahí tocan «Escribir una opinión»). */
+const RESENAS = {
+    google: "https://share.google/KK6oEHaxfNsnKpRag",
+    // Facebook se sacó el 10/11/2026 (decisión de Marcelo): la página no muestra la pestaña Opiniones.
+    facebook: ""
+};
+const RESENA_LS = "tf_resena", RESENA_DIAS = 4, RESENA_VECES = 2, DIA_MS = 864e5;
+function leerResena() {
+    try { return JSON.parse(localStorage.getItem(RESENA_LS) || "null") || {}; } catch (e) { return {}; }
+}
+function guardarResena(r) { try { localStorage.setItem(RESENA_LS, JSON.stringify(r)); } catch (e) {} }
+function marcarPedidoParaResena() {
+    const r = leerResena();
+    r.pedido = Date.now();
+    guardarResena(r);
+}
+function invitarAResena() {
+    const caja = document.getElementById("resena");
+    if (!caja) return;
+    const r = leerResena(), ahora = Date.now();
+    const botones = [["google", "⭐ Opinar en Google"], ["facebook", "👍 Opinar en Facebook"]].filter(b => RESENAS[b[0]]);
+    if (!r.pedido || r.listo || !botones.length || (r.veces || 0) >= RESENA_VECES) return;
+    if (ahora - r.pedido < RESENA_DIAS * DIA_MS || (r.ultima && ahora - r.ultima < DIA_MS)) return;
+    r.veces = (r.veces || 0) + 1; r.ultima = ahora;
+    guardarResena(r);
+    caja.innerHTML = "<p><b>¿Cómo te quedaron las fotos?</b> Si te gustó cómo te atendimos, " +
+        "dejanos tu opinión: a otros les sirve para animarse.</p><div class=\"resena-btns\">" +
+        botones.map(b => "<a href=\"" + RESENAS[b[0]] + "\" target=\"_blank\" rel=\"noopener\" data-red=\"" + b[0] + "\">" + b[1] + "</a>").join("") +
+        "<button type=\"button\" data-cerrar=\"1\">Ahora no</button></div>";
+    caja.hidden = false;
+    caja.onclick = e => {
+        const a = e.target.closest("a[data-red]");
+        if (a) {
+            const x = leerResena(); x.listo = true; guardarResena(x);
+            try { if (window.dataLayer) dataLayer.push({ event: "resena_click", red: a.dataset.red }); } catch (err) {}
+        }
+        if (a || e.target.dataset.cerrar) caja.hidden = true;
+    };
+}
+invitarAResena();
 
 /* =========================================================
    MEDICIÓN (GA4 directo + capa de datos para GTM)
@@ -7888,7 +7941,7 @@ async function enviarPedido() {
                 body: cuerpo
             });
             const data = await resp.json();
-            if (data && data.ok) { numero = data.numero; carpeta = data.carpeta; estado = "ok"; }
+            if (data && data.ok) { numero = data.numero; carpeta = data.carpeta; estado = "ok"; marcarPedidoParaResena(); }
         } catch (e) { estado = "error"; }
     }
 

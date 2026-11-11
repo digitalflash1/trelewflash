@@ -228,7 +228,7 @@ foreach ($o in $eventos) {
 <meta property="og:image:alt" content="$(Esc $o.titulo)">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#FCFC14">
-<link rel="icon" href="../../assets/favicon.ico" sizes="any">
+<link rel="icon" href="../../assets/favicon.ico?v=2" sizes="any">
 <!-- Los enlaces que se comparten desde la tienda terminan en #fotos: esas
      personas van derecho a las fotos. Google no ve el #, así que lee esta
      página entera y la puede indexar. Sin meta refresh a propósito:
@@ -323,7 +323,7 @@ $hub = @"
 <meta property="og:title" content="Fotos de eventos en Trelew">
 <meta property="og:description" content="$(Esc $descHub)">
 <meta name="theme-color" content="#FCFC14">
-<link rel="icon" href="../assets/favicon.ico" sizes="any">
+<link rel="icon" href="../assets/favicon.ico?v=2" sizes="any">
 <script type="application/ld+json">$ldHub</script>
 <style>$css
 main h2{font-size:1.1em;margin:22px 0 4px}</style>

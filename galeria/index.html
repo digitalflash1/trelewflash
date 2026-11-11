@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Fotos del evento · Trelew Flash</title>
 <meta name="robots" content="noindex">
+<link rel="icon" href="../assets/favicon.ico?v=2" sizes="any">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=2">
 <style>
 :root{--am:#FFE81A;--ng:#111;--gr:#f3f3f1}
 *{box-sizing:border-box;margin:0}
@@ -67,6 +69,8 @@ header .precio{font-weight:700;font-size:14px}
 #pago .fila{display:flex;align-items:center;gap:8px;background:var(--gr);border-radius:8px;padding:8px 10px;margin:6px 0}
 #pago .etq{font-size:12px;color:#666;width:54px}#pago .val{flex:1;font-weight:700;word-break:break-all}
 #pago .fila button{border:2px solid var(--ng);background:#fff;border-radius:8px;padding:6px 10px;font-weight:700}
+#compartir{display:block;margin:8px 8px 0;width:calc(100% - 16px);border:2px solid var(--ng);background:#fff;border-radius:10px;padding:10px;font-weight:700;font-size:15px}
+#recibidas{background:#fff8c4;border-left:6px solid var(--am);border-radius:10px;margin:8px;padding:10px 14px;font-size:14px}
 #pago .cerrar{display:block;width:100%;margin-top:10px;border:0;background:var(--ng);color:var(--am);border-radius:10px;padding:12px;font-weight:800;font-size:15px}
 </style>
 </head>
@@ -80,7 +84,9 @@ header .precio{font-weight:700;font-size:14px}
     <button id="soloSel">Mis elegidas</button>
   </div>
 </header>
+<div id="recibidas" hidden></div>
 <div id="resumen" hidden></div>
+<button id="compartir" type="button" hidden>📤 Compartir mis elegidas</button>
 <main id="grilla"></main>
 <div id="pie"><span id="cuenta"></span><button id="enviar" disabled>Pedir por WhatsApp</button></div>
 
@@ -154,15 +160,75 @@ if (!evento) {
     document.querySelector('.barra').hidden = true; $('pie').hidden = true;
     $('grilla').innerHTML = l.map(e => `<a class="ev" href="?e=${e.id}"><b>${e.titulo}</b><span>${e.fecha}</span></a>`).join('');
   });
-} else fetch(dir + 'manifest.json').then(r => r.json()).then(d => {
+} else fetch(dir + 'manifest.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => {
   datos = d; fotos = d.fotos;
+  recibirCompartidas();
   $('tit').textContent = d.titulo;
   $('sub').textContent = d.fecha + ' · ' + fotos.length + ' fotos · tocá las que te gusten';
   $('precio').textContent = `Impresa ${MEDIDAS[0]} o más chica: ${plata(PRECIO_FOTO)} c/u · Digital: ${plata(PRECIO_DIGITAL)} (solo individuales)`;
   $('vmed').innerHTML = MEDIDAS.map(m => `<option>${m}</option>`).join('');
   $('precio').hidden = false;
   pintar();
+}).catch(() => {
+  // Un ?e= que no existe (link viejo o mal copiado) no deja la página en blanco.
+  $('tit').textContent = 'No encontramos ese evento';
+  $('sub').textContent = 'Puede que el link esté incompleto o que la galería ya no esté publicada.';
+  document.querySelector('.barra').hidden = true; $('pie').hidden = true;
+  $('grilla').innerHTML = '<p class="vacio"><a href="./">Ver todos los eventos</a></p>';
 });
+
+/* «Mis elegidas» compartidas por link: ?e=<id>&sel=<código>.
+   Cada foto va como su posición en el manifiesto (base 36) más una letra:
+   a/b/c = impresa en MEDIDAS[0..2], d = solo digital, e/f/g = impresa en MEDIDAS[0..2] + digital.
+   Las fotos se separan con «.». */
+function codigoSel() {
+  return fotos.map((f, i) => [f, i]).filter(([f]) => sel.has(f.n)).map(([f, i]) => {
+    const p = sel.get(f.n), m = Math.max(0, MEDIDAS.indexOf(p.medida));
+    const letra = !p.impresa ? 'd' : 'abcefg'[m + (p.digital ? 3 : 0)];
+    return i.toString(36) + letra;
+  }).join('.');
+}
+function leerSel(codigo) {
+  const out = new Map();
+  String(codigo || '').split('.').forEach(t => {
+    const m = /^([0-9a-z]+)([a-g])$/.exec(t.trim().toLowerCase());
+    if (!m) return;
+    const f = fotos[parseInt(m[1], 36)];
+    if (!f) return;
+    const k = 'abcdefg'.indexOf(m[2]);
+    const p = k === 3 ? { impresa: false, medida: MEDIDAS[0], digital: true }
+      : { impresa: true, medida: MEDIDAS[k > 3 ? k - 4 : k] || MEDIDAS[0], digital: k > 3 };
+    out.set(f.n, p);
+  });
+  return out;
+}
+function recibirCompartidas() {
+  const codigo = new URLSearchParams(location.search).get('sel');
+  if (!codigo) return;
+  const recibidas = leerSel(codigo);
+  // Se saca el ?sel= para que recargar no vuelva a sumar las mismas.
+  history.replaceState(null, '', '?e=' + encodeURIComponent(evento));
+  if (!recibidas.size) return;
+  let nuevas = 0;
+  recibidas.forEach((p, n) => { if (!sel.has(n)) nuevas++; sel.set(n, p); });
+  guardar();
+  soloSel = true; $('soloSel').classList.add('on');
+  $('recibidas').textContent = `Te compartieron ${plural(recibidas.size, 'foto')}` +
+    (nuevas < recibidas.size ? ` (${recibidas.size - nuevas} ya las tenías elegidas)` : '') +
+    '. Podés cambiarlas, sumar otras o pedirlas así.';
+  $('recibidas').hidden = false;
+}
+$('compartir').onclick = async () => {
+  const url = location.origin + location.pathname + '?e=' + encodeURIComponent(evento) + '&sel=' + codigoSel();
+  const texto = `Mirá las fotos que elegí de "${datos.titulo}"`;
+  try { if (navigator.share) { await navigator.share({ title: datos.titulo, text: texto, url }); return; } }
+  catch (e) { if (e.name === 'AbortError') return; }
+  try {
+    await navigator.clipboard.writeText(url);
+    $('compartir').textContent = '¡Link copiado! Pegalo en WhatsApp';
+    setTimeout(() => $('compartir').textContent = '📤 Compartir mis elegidas', 2500);
+  } catch (e) { prompt('Copiá este link y mandalo:', url); }
+};
 
 function pintar() {
   const q = $('ir').value.trim();
@@ -232,6 +298,8 @@ function refrescarCuenta() {
   $('cuenta').innerHTML = hay ? `<small>${partes.join(' · ')}</small>Total <b>${total}</b>` : 'Elegí tus fotos';
   $('enviar').disabled = !hay;
   $('resumen').hidden = !(soloSel && hay);
+  $('compartir').hidden = !(soloSel && hay);
+  if (!soloSel) $('recibidas').hidden = true;
   if (soloSel && hay) $('resumen').innerHTML =
     (imp ? `${plural(imp, 'impresa')} × ${plata(PRECIO_FOTO)}<br>` : '') +
     (dig ? `${plural(dig, 'digital').replace('digitals', 'digitales')} × ${plata(PRECIO_DIGITAL)}<br>` : '') +
@@ -284,6 +352,10 @@ $('enviar').onclick = () => {
     nombre = (prompt('¿A nombre de quién dejamos el pedido?') || '').trim();
     if (!nombre) return;
   }
+  // El WhatsApp es opcional: si lo cancela, el pedido sale igual.
+  let telefono = String(cli.telefono || '').trim();
+  if (!telefono) telefono = (prompt('Tu WhatsApp (opcional, para avisarte cuando estén listas):') || '').replace(/[^\d+ ]/g, '').trim();
+  try { localStorage.setItem('ftf_cliente_v1', JSON.stringify(Object.assign({}, cli, { nombre }, telefono ? { telefono } : {}))); } catch (e) {}
   const hex = Array.from(crypto.getRandomValues(new Uint8Array(4)), b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
   const hoy = new Date(), dd = n => String(n).padStart(2, '0');
   const pedidoId = `EG-${hoy.getFullYear()}${dd(hoy.getMonth() + 1)}${dd(hoy.getDate())}-${hex}`;
@@ -300,9 +372,11 @@ $('enviar').onclick = () => {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ accion: 'pedidoGaleria', pedidoId,
         evento: { id: evento, titulo: datos.titulo, fecha: datos.fecha },
-        cliente: { nombre, telefono: cli.telefono || '' },
+        cliente: { nombre, telefono },
         fotos: elegidas.map(f => { const p = sel.get(f.n); return { n: f.n, impresa: p.impresa, digital: p.digital, medida: p.medida }; }) }) }).catch(() => {});
   } catch (e) {}
+  // A los 4 días la portada de la tienda le pide una reseña (ver RESENAS en ../index.html).
+  try { const r = JSON.parse(localStorage.getItem('tf_resena') || 'null') || {}; r.pedido = Date.now(); localStorage.setItem('tf_resena', JSON.stringify(r)); } catch (e) {}
   window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank');
   mostrarPago(pedidoId, imp * PRECIO_FOTO + dig * PRECIO_DIGITAL);
 };
