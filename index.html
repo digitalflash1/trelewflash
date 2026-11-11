@@ -102,8 +102,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- End Google Tag Manager -->
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trelew Flash</title>
-<meta name="description" content="Revelado de fotos, souvenirs, tazas, collages e imanes en Trelew. Armá tu pedido paso a paso desde el celular y envialo por WhatsApp.">
+<!-- El título es lo primero que Google lee: dice qué hacemos y dónde. -->
+<title>Trelew Flash · Revelado de fotos, tazas y souvenirs en Trelew</title>
+<meta name="description" content="Revelado de fotos en papel fotográfico, tazas, imanes, collages y fotos de eventos en Trelew (Belgrano 386). Armá tu pedido desde el celular y envialo por WhatsApp.">
 <meta name="theme-color" content="#FCFC14">
 
 <link rel="icon" href="assets/favicon.ico?v=2" sizes="any">
@@ -127,6 +128,45 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Trelewflash · Revelado, souvenirs y regalos con tu foto">
 <meta name="twitter:card" content="summary_large_image">
+
+<!-- Datos del negocio para Google (ficha local): dirección, horario, teléfono y
+     redes. ⚠️ Están repetidos a mano respecto de LOCAL / TELEFONO_WA del script
+     y los links del pie: si el local cambia de dirección, horario o teléfono,
+     tocar también acá. Se comprueba en https://search.google.com/test/rich-results -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "@id": "https://trelewflash.com.ar/#local",
+  "name": "Trelew Flash",
+  "alternateName": "Foto Flash TW",
+  "description": "Revelado de fotos en papel fotográfico, tazas, imanes, collages, cuadros y fotos de eventos sociales en Trelew.",
+  "url": "https://trelewflash.com.ar/",
+  "image": "https://trelewflash.com.ar/assets/og-image.jpg?v=2",
+  "telephone": "+54 9 280 469-6961",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Belgrano 386",
+    "addressLocality": "Trelew",
+    "addressRegion": "Chubut",
+    "postalCode": "U9100",
+    "addressCountry": "AR"
+  },
+  "geo": { "@type": "GeoCoordinates", "latitude": -43.2527, "longitude": -65.3071 },
+  "openingHoursSpecification": {
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    "opens": "08:00",
+    "closes": "20:30"
+  },
+  "areaServed": ["Trelew", "Gaiman", "Dolavon", "28 de Julio", "Chubut"],
+  "sameAs": [
+    "https://www.instagram.com/fotoflashtw/",
+    "https://www.facebook.com/people/FOTO-FLASH-TW/61571162657400/",
+    "https://share.google/KK6oEHaxfNsnKpRag"
+  ]
+}
+</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com/">
 <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
@@ -269,6 +309,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     #p-bienvenida [hidden] { display: none !important; }
     .portada-catalogo { margin-top: 22px; }
     .portada-catalogo .caja-titulo { font-size: 20px; font-weight: bold; color: var(--color-principal); margin: 0 0 12px; }
+    /* Preguntas frecuentes de la portada: una columna angosta, debajo de todo. */
+    .portada-faq { max-width: 760px; margin: 28px auto 8px; padding: 0 16px; box-sizing: border-box; }
+    .portada-faq .caja-titulo { font-size: 20px; font-weight: bold; color: var(--color-principal); margin: 0 0 12px; }
+    .faq-item { background: #fff; border: 2px solid #111; border-radius: 12px; margin: 0 0 8px; padding: 0 14px; }
+    .faq-item summary { cursor: pointer; padding: 12px 0; font-weight: bold; font-size: 15px; line-height: 1.35; list-style: none; position: relative; padding-right: 26px; }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after { content: "+"; position: absolute; right: 2px; top: 10px; font-size: 20px; font-weight: 800; color: #1a1a00; }
+    .faq-item[open] summary::after { content: "–"; }
+    .faq-item p { margin: 0 0 12px; font-size: 15px; line-height: 1.45; color: #222; text-align: left; }
+    .faq-item a { color: var(--color-principal); font-weight: bold; }
     .carrusel-catalogo { flex: none; aspect-ratio: 4 / 5; max-height: calc(100vh - 70px); max-height: calc(100svh - 70px); }
     @media (orientation: landscape) { .carrusel-catalogo { aspect-ratio: 16 / 9; max-height: 80vh; max-height: 80svh; } }
     /* ===== Compu: taller del pedido y pantallas anchas =====
@@ -1330,6 +1380,40 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
 </section>
 </div>
+
+<!-- PREGUNTAS FRECUENTES. Texto de verdad en la portada para Google: responde lo
+     que la gente busca tal cual («cuánto sale revelar una foto en trelew»). Los
+     datos de dirección y horario están repetidos acá a mano (ver LOCAL en el
+     script). El bloque FAQPage para Google se arma solo desde este HTML al
+     cargar (ver armarFaqSchema en el script): una sola fuente de verdad. -->
+<section class="portada-faq" id="portada-faq" aria-labelledby="faq-titulo">
+    <h2 class="caja-titulo" id="faq-titulo">Preguntas frecuentes</h2>
+    <details class="faq-item"><summary>¿Qué diferencia hay entre revelar e imprimir una foto?</summary>
+        <p>La impresora deja la tinta arriba del papel y con la luz se destiñe en pocos años. Al revelar,
+        el color se forma dentro del papel fotográfico: las fotos duran décadas. En Trelew Flash
+        <b>no imprimimos, revelamos</b>.</p></details>
+    <details class="faq-item"><summary>¿Cuánto sale revelar una foto?</summary>
+        <p>Depende de la medida: hay desde 5x7 hasta 30x40 cm, y también en estilo polaroid. El precio de
+        cada medida lo ves al <a href="#" onclick="irAPedido(); return false;">armar el pedido</a>, antes de
+        mandarlo, sin compromiso.</p></details>
+    <details class="faq-item"><summary>¿Cómo pido desde el celular?</summary>
+        <p>Elegís la medida y la cantidad, subís las fotos acá mismo y el pedido nos llega por WhatsApp.
+        Lo retirás en el local o te lo enviamos. No hace falta registrarse ni bajar ninguna aplicación.</p></details>
+    <details class="faq-item"><summary>¿Dónde están y qué horario tienen?</summary>
+        <p>En <b>Belgrano 386, Trelew</b>, de lunes a sábados de 8 a 20:30 h. WhatsApp 2804 69-6961.
+        <a href="#" onclick="abrirDonde(); return false;">Ver el mapa y cómo llegar</a>.</p></details>
+    <details class="faq-item"><summary>¿Hacen envíos fuera de Trelew?</summary>
+        <p>Sí: al Valle (Gaiman, Dolavon, 28 de Julio), a la Meseta y a otras localidades de Chubut.
+        El costo y los días dependen del destino; te los confirmamos por WhatsApp.
+        <a href="#" onclick="abrirDonde(); return false;">Ver a dónde enviamos</a>.</p></details>
+    <details class="faq-item"><summary>¿Qué más hacen con fotos, además de revelarlas?</summary>
+        <p>Tazas sublimadas, imanes, llaveros, pines, collages, cuadros, álbumes, stickers, el recuerdo
+        escolar y restauración de fotos viejas. Todo con tu foto y desde el celular.</p></details>
+    <details class="faq-item"><summary>¿Dónde veo las fotos de un acto, una fiesta o un evento?</summary>
+        <p>Si cubrimos el evento, las fotos están en
+        <a href="#" onclick="abrirEventos(); return false;">Fotos de eventos sociales</a>: buscás el evento,
+        elegís las tuyas y las pedís por WhatsApp, impresas o en digital.</p></details>
+</section>
 </div>
 
 <!-- DÓNDE ESTAMOS / A DÓNDE ENVIAMOS
@@ -8656,6 +8740,23 @@ if (MOSTRAR_CATALOGO) {
     document.querySelector(".portada-catalogo").hidden = true;
     document.querySelector(".portada-cuerpo").classList.add("sin-catalogo");
 }
+
+/* Las preguntas frecuentes de la portada, en el formato que lee Google (FAQPage),
+   armadas desde el HTML para no escribir cada pregunta dos veces. */
+(function armarFaqSchema() {
+    const items = Array.from(document.querySelectorAll("#portada-faq .faq-item"));
+    if (!items.length) return;
+    const s = document.createElement("script");
+    s.type = "application/ld+json";
+    s.textContent = JSON.stringify({
+        "@context": "https://schema.org", "@type": "FAQPage",
+        mainEntity: items.map(d => ({
+            "@type": "Question", name: d.querySelector("summary").textContent.trim(),
+            acceptedAnswer: { "@type": "Answer", text: d.querySelector("p").textContent.replace(/\s+/g, " ").trim() }
+        }))
+    });
+    document.head.appendChild(s);
+})();
 
 /* Los botones de la portada aparecen a medida que se baja hasta ellos. Si
    entran varios juntos, salen de a uno con un pequeño escalonado. */
