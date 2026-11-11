@@ -69,7 +69,8 @@ header .precio{font-weight:700;font-size:14px}
 #pago .fila{display:flex;align-items:center;gap:8px;background:var(--gr);border-radius:8px;padding:8px 10px;margin:6px 0}
 #pago .etq{font-size:12px;color:#666;width:54px}#pago .val{flex:1;font-weight:700;word-break:break-all}
 #pago .fila button{border:2px solid var(--ng);background:#fff;border-radius:8px;padding:6px 10px;font-weight:700}
-#compartir{display:block;margin:8px 8px 0;width:calc(100% - 16px);border:2px solid var(--ng);background:#fff;border-radius:10px;padding:10px;font-weight:700;font-size:15px}
+/* Discreto a propósito: que no se confunda con mandar el pedido. */
+#compartir{display:block;margin:10px 12px 0 auto;border:0;background:none;padding:6px 4px;font-size:13px;color:#666;text-decoration:underline;cursor:pointer}
 #recibidas{background:#fff8c4;border-left:6px solid var(--am);border-radius:10px;margin:8px;padding:10px 14px;font-size:14px}
 #pago .cerrar{display:block;width:100%;margin-top:10px;border:0;background:var(--ng);color:var(--am);border-radius:10px;padding:12px;font-weight:800;font-size:15px}
 </style>
@@ -86,8 +87,8 @@ header .precio{font-weight:700;font-size:14px}
 </header>
 <div id="recibidas" hidden></div>
 <div id="resumen" hidden></div>
-<button id="compartir" type="button" hidden>📤 Compartir mis elegidas</button>
 <main id="grilla"></main>
+<button id="compartir" type="button" hidden>Pasarle esta lista a alguien (no envía el pedido)</button>
 <div id="pie"><span id="cuenta"></span><button id="enviar" disabled>Pedir por WhatsApp</button></div>
 
 <div id="visor">
@@ -225,8 +226,8 @@ $('compartir').onclick = async () => {
   catch (e) { if (e.name === 'AbortError') return; }
   try {
     await navigator.clipboard.writeText(url);
-    $('compartir').textContent = '¡Link copiado! Pegalo en WhatsApp';
-    setTimeout(() => $('compartir').textContent = '📤 Compartir mis elegidas', 2500);
+    $('compartir').textContent = 'Link copiado: pegalo en un chat';
+    setTimeout(() => $('compartir').textContent = 'Pasarle esta lista a alguien (no envía el pedido)', 2500);
   } catch (e) { prompt('Copiá este link y mandalo:', url); }
 };
 
