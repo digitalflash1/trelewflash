@@ -726,7 +726,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     #enm-thumbs img { width: 64px; height: 64px; cursor: pointer; }
     #enm-thumbs img.elegida { outline: 3px solid var(--color-wa); outline-offset: 1px; }
 
-    .taza-tipos { display: grid; grid-template-columns: repeat(3,1fr); gap: 9px; margin-bottom: 8px; }
+    .taza-tipos { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 10px; }
+    .taza-tipos label { display: flex; align-items: center; gap: 6px; font-size: 15px; cursor: pointer; }
+    .taza-tipos input { width: 18px; height: 18px; accent-color: #1a1a00; margin: 0; }
+    .taza-tipos small { color: #64748b; }
     /* La proporción es la del molde de impresión real (3150x1470 px @381dpi =
        21x9,8 cm). Antes era height fija, asi que en el celular el cliente
        diseñaba en un rectangulo mas cuadrado que la zona que se imprime. */
@@ -737,6 +740,30 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         font-size: 11px; color: rgba(30,41,59,.5); pointer-events: none; }
     .foto-taza { position: absolute; width: 90px; cursor: grab; user-select: none; touch-action: none;
         box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+    /* Marco de la foto o el texto elegido, con sus dos manijas: la de arriba a
+       la derecha gira y la de abajo a la derecha agranda o achica. */
+    .caja-sel { position: absolute; z-index: 2147483000; pointer-events: none; box-sizing: border-box;
+        border: 1.5px dashed #1a1a00; }
+    .caja-sel .manija { position: absolute; width: 26px; height: 26px; margin: -13px; border-radius: 50%;
+        background: #FFE81A; border: 2px solid #1a1a00; color: #1a1a00; font-size: 15px; font-weight: 800; line-height: 22px;
+        text-align: center; pointer-events: auto; touch-action: none; user-select: none; box-shadow: 0 1px 4px rgba(0,0,0,.35); }
+    .caja-sel .manija.girar { top: 0; left: 100%; cursor: grab; }
+    .caja-sel .manija.girar:active { cursor: grabbing; }
+    .caja-sel .manija.tam { top: 100%; left: 100%; cursor: nwse-resize; }
+    /* Con mouse, tamaño y giro se hacen con las manijas: las barras sobran. */
+    @media (hover: hover) and (pointer: fine) { .solo-tactil { display: none !important; } }
+    /* Vista de la taza armada. touch-action: pan-y deja bajar por la página
+       con el dedo sobre la taza; girarla es arrastrar de costado. */
+    .taza3d { margin: 4px 0 12px; text-align: center; }
+    .taza3d-tit { margin: 0 0 2px; font-size: 13px; font-weight: bold; color: #475569; }
+    #taza3d-cv { display: block; width: 100%; max-width: 380px; height: 250px; margin: 0 auto; cursor: grab;
+        touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+    #taza3d-cv:active { cursor: grabbing; }
+    .taza3d-vistas { display: flex; gap: 6px; justify-content: center; margin: 2px 0 6px; }
+    .taza3d-vistas button { border: 2px solid #cbd5e1; background: #fff; border-radius: 999px; padding: 5px 12px;
+        font: inherit; font-size: 13px; font-weight: bold; color: #334155; cursor: pointer; }
+    .taza3d-nota { margin: 0; font-size: 12px; color: #64748b; }
+    @media (min-width: 1024px) { #taza3d-cv { height: 220px; } }
     .foto-taza.seleccionada, .texto-taza.seleccionada, .foto-collage.seleccionada {
         outline: 3px solid var(--color-boton); outline-offset: 1px; }
     .texto-taza { position: absolute; cursor: grab; user-select: none; touch-action: none;
@@ -1995,12 +2022,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <div id="sec-collage" class="oculto">
         <p class="instruccion">5. Diseñá tu collage (opcional):</p>
-        <div class="nota-info">🧩 Elegí una plantilla y tus fotos adjuntas se acomodan solas. Después podés arrastrarlas, girarlas o cambiarles el tamaño. Es una referencia: el armado final lo hacemos nosotros.</div>
+        <div class="nota-info">🧩 Al adjuntar tus fotos el collage se arma solo. Podés elegir otra plantilla, arrastrar cada foto para encuadrarla o cambiarlas de lugar. Es una referencia: el armado final lo hacemos nosotros.</div>
         <div id="plantillas-collage" class="plantillas"></div>
         <div id="lienzo-collage" class="lienzo-collage oculto"></div>
         <div id="tools-collage" class="herramientas oculto">
             <label class="btn-tool">🖼 Fondo<input type="file" accept="image/*" style="display:none" onchange="subirFondoCollage(event)"></label>
             <button type="button" class="btn-tool" onclick="abrirStickers('collage')">⭐ Stickers/Emojis</button>
+            <button type="button" class="btn-tool" id="btn-cambiar-col" onclick="cambiarLugarCol()">🔀 Cambiar de lugar</button>
             <button type="button" class="btn-tool" id="btn-modo-celda" onclick="toggleModoCelda()">✥ Mover fotos</button>
             <button class="btn-tool" onclick="recortarCol()">✂ Recortar</button>
             <button class="btn-tool" onclick="frenteCol()">⬆ Al frente</button>
@@ -2008,11 +2036,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <button class="btn-tool peligro" onclick="borrarCol()">🗑 Quitar del diseño</button>
         </div>
         <div id="sliders-collage" class="oculto">
-            <div class="slider-fila">
+            <div class="slider-fila solo-tactil">
                 <span style="font-size:13px;color:#475569;font-weight:bold;min-width:52px;">Tamaño</span>
                 <input type="range" id="slider-col" min="10" max="100" value="40" oninput="resizeCol(this.value)">
             </div>
-            <div class="slider-fila">
+            <div class="slider-fila solo-tactil">
                 <span style="font-size:13px;color:#475569;font-weight:bold;min-width:52px;">Rotar</span>
                 <input type="range" id="slider-rot-col" min="-180" max="180" value="0" oninput="rotCol(this.value)">
             </div>
@@ -2092,12 +2120,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-taza">0</span>)</button>
     </div>
     <h2>Armá tu taza</h2>
-    <p class="instruccion">1. Tipo de taza:</p>
-    <div id="taza-tipos" class="taza-tipos"></div>
-
     <div id="taza-disenador">
-    <p class="instruccion">2. Diseño (arrastrá las fotos para ubicarlas):</p>
+    <p class="instruccion">1. Diseño (arrastrá las fotos para ubicarlas; con ↻ las girás y con ⤡ las agrandás):</p>
     <div id="lienzo-taza" class="lienzo-taza"></div>
+    <!-- Vista de la taza armada: se dibuja sola con lo que hay en el lienzo de
+         arriba (ver «VISTA 3D DE LA TAZA» en el script). -->
+    <div class="taza3d" id="taza3d">
+        <p class="taza3d-tit">Así queda tu taza</p>
+        <canvas id="taza3d-cv" aria-label="Vista previa de la taza con tu diseño"></canvas>
+        <div class="taza3d-vistas">
+            <button type="button" onclick="girarTazaA('izq')">◀ Izquierda</button>
+            <button type="button" onclick="girarTazaA('centro')">Centro</button>
+            <button type="button" onclick="girarTazaA('der')">Derecha ▶</button>
+        </div>
+        <p class="taza3d-nota">👆 Arrastrá la taza para girarla. El centro del diseño queda del lado opuesto al asa.</p>
+    </div>
     </div>
     <div class="herramientas">
         <label class="btn-tool">📷 Agregar fotos<input type="file" accept="image/*" multiple="" style="display:none" onchange="subirFotosTaza(event)"></label>
@@ -2110,11 +2147,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button class="btn-tool" onclick="mandarAlFondo()">⬇ Al fondo</button>
         <button class="btn-tool peligro" onclick="borrarFotoSel()">🗑 Borrar</button>
     </div>
-    <div class="slider-fila">
+    <div class="slider-fila solo-tactil">
         <span style="font-size:13px;color:#475569;font-weight:bold;min-width:52px;">Tamaño</span>
         <input type="range" id="slider-taza" min="40" max="240" value="90" oninput="redimensionarSel(this.value)">
     </div>
-    <div class="slider-fila">
+    <div class="slider-fila solo-tactil">
         <span style="font-size:13px;color:#475569;font-weight:bold;min-width:52px;">Rotar</span>
         <input type="range" id="slider-rot" min="-180" max="180" value="0" oninput="rotarSel(this.value)">
         <button class="btn-tool" style="padding:4px 8px;" onclick="rotar90()">↻ 90°</button>
@@ -2126,7 +2163,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
 
     <div class="campo" style="margin-top:6px;">
-        <label>3. Texto que llevará el diseño (opcional):</label>
+        <label>2. Texto que llevará el diseño (opcional):</label>
         <textarea id="taza-texto" rows="2" placeholder="Ej: Feliz cumple mamá · 2026" oninput="actualizarTextoTaza()"></textarea>
         <div class="slider-fila" style="margin-top:6px;">
             <label class="btn-tool" style="margin:0;">🎨 Color del texto<input type="color" id="color-texto-taza" value="#1e293b" style="display:none" oninput="colorTextoTaza(this.value)"></label>
@@ -2134,6 +2171,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <span style="font-size:12px;color:#64748b;">Tocá el texto en el diseño para moverlo o cambiarle el tamaño.</span>
         </div>
     </div>
+
+    <!-- El tipo de taza va al final y chico: el diseño es el mismo para todas,
+         solo cambia el precio. Las opciones las arma abrirTaza(). -->
+    <p class="instruccion">3. ¿En qué taza lo querés?</p>
+    <div id="taza-tipos" class="taza-tipos"></div>
 
     <div class="fila-cantidad">
         <label>4. Cantidad de tazas:</label>
@@ -6569,8 +6611,42 @@ function aplicarPlantilla(n, botonEl) {
     });
 }
 
+/* Al adjuntar las fotos el collage se arma solo, con la plantilla de esa
+   cantidad: antes había que descubrir el paso 5 y elegirla a mano, y la
+   mayoría mandaba las fotos sin diseño. Si el cliente ya movió algo
+   (colTocado), no se le pisa lo que hizo. */
+let colTocado = false, colCambio = null;
+function autoPlantillaCollage() {
+    if (!grupoActual || !grupoActual.esCollage || colTocado || adjuntosSim.length < 2) return;
+    const n = Math.min(6, adjuntosSim.length);
+    if (n === plantillaCol && document.querySelectorAll("#lienzo-collage .foto-collage").length) return;
+    const botones = document.querySelectorAll("#plantillas-collage .btn-plantilla");
+    aplicarPlantilla(n, botones[n - 2] || null);
+    colTocado = false;
+}
+/* Intercambiar dos fotos de lugar: se toca el botón con una foto elegida y
+   después la otra. En el celular arrastrar una foto encima de otra no sirve,
+   porque arrastrar ya es reencuadrar. */
+function cambiarLugarCol() {
+    if (!colSel || !colSel.dataset.celda) { alert("Tocá primero una de las fotos que querés cambiar de lugar."); return; }
+    colCambio = colSel;
+    const b = document.getElementById("btn-cambiar-col");
+    if (b) { b.classList.add("activo"); b.innerText = "👉 Ahora tocá la otra foto"; }
+}
+function terminarCambioCol(otra) {
+    const a = colCambio; colCambio = null;
+    const b = document.getElementById("btn-cambiar-col");
+    if (b) { b.classList.remove("activo"); b.innerText = "🔀 Cambiar de lugar"; }
+    if (!a || !otra || a === otra || !a.isConnected || !otra.dataset.celda) return;
+    [a.src, otra.src] = [otra.src, a.src];
+    const ao = a.dataset.orig || "", oo = otra.dataset.orig || "";
+    if (oo) a.dataset.orig = oo; else delete a.dataset.orig;
+    if (ao) otra.dataset.orig = ao; else delete otra.dataset.orig;
+    [a, otra].forEach(el => { el.dataset.posx = 50; el.dataset.posy = 50; el.style.objectPosition = "50% 50%"; });
+}
+
 function reiniciarCollage() {
-    plantillaCol = 0; colSel = null;
+    plantillaCol = 0; colSel = null; colTocado = false; colCambio = null;
     const lienzo = document.getElementById("lienzo-collage");
     lienzo.innerHTML = ""; lienzo.classList.add("oculto");
     document.getElementById("tools-collage").classList.add("oculto");
@@ -6588,7 +6664,8 @@ function toggleModoCelda() { setModoCelda(!modoCeldaMover); }
 function arrastrableCol(el) {
     let sx, sy, sl, st, spx, spy, activo = false;
     el.addEventListener("pointerdown", e => {
-        seleccionarCol(el); activo = true; el.setPointerCapture(e.pointerId);
+        if (colCambio) { terminarCambioCol(el); seleccionarCol(el); colTocado = true; e.preventDefault(); return; }
+        seleccionarCol(el); activo = true; colTocado = true; el.setPointerCapture(e.pointerId);
         sx = e.clientX; sy = e.clientY;
         sl = parseFloat(el.style.left) || 0; st = parseFloat(el.style.top) || 0;
         spx = parseFloat(el.dataset.posx); if (isNaN(spx)) spx = 50;
@@ -6690,13 +6767,22 @@ const TAZA_PRINT = { w: 3150, h: 1470 };
 
 function snapshotTaza() {
     const lienzo = document.getElementById("lienzo-taza");
+    if (lienzo.classList.contains("oculto") || !lienzo.querySelector(".foto-taza, .texto-taza")) return null;
+    const cv = lienzoTazaACanvas(TAZA_PRINT.w);
+    if (!cv) return null;
+    try { return cv.toDataURL("image/jpeg", 0.85); } catch (e) { return null; }
+}
+/* El lienzo de la taza pasado a un canvas del ancho pedido: a tamaño de
+   imprenta para el pedido y chico para la vista 3D. Un solo dibujo para las
+   dos cosas, así lo que se ve girando es lo mismo que le llega al local. */
+function lienzoTazaACanvas(anchoPx) {
+    const lienzo = document.getElementById("lienzo-taza");
     const hijos = [...lienzo.querySelectorAll(".foto-taza, .texto-taza")];
-    if (lienzo.classList.contains("oculto") || !hijos.length) return null;
     const rc = lienzo.getBoundingClientRect();
     if (!rc.width || !rc.height) return null;
-    const esc = TAZA_PRINT.w / rc.width;
+    const esc = anchoPx / rc.width;
     const cv = document.createElement("canvas");
-    cv.width = TAZA_PRINT.w; cv.height = TAZA_PRINT.h;
+    cv.width = anchoPx; cv.height = Math.round(anchoPx * TAZA_PRINT.h / TAZA_PRINT.w);
     const ctx = cv.getContext("2d");
     const bg = lienzo.style.backgroundColor;
     ctx.fillStyle = (bg && bg !== "") ? bg : "#ffffff";
@@ -6725,8 +6811,182 @@ function snapshotTaza() {
         }
         ctx.restore();
     });
-    try { return cv.toDataURL("image/jpeg", 0.85); } catch (e) { return null; }
+    return cv;
 }
+
+/* =========================================================
+   VISTA 3D DE LA TAZA
+   Una taza que gira con el diseño puesto, dibujada en un canvas común (sin
+   librerías ni WebGL, para que ande igual en un celular viejo): el diseño se
+   pega en franjas verticales sobre un cilindro. Se redibuja sola cuando
+   cambia algo en #lienzo-taza (un MutationObserver), así que las herramientas
+   del diseñador no tienen que avisarle nada.
+   TAZA_3D.arco es cuánto de la vuelta ocupa la zona de impresión: 21 cm de
+   molde sobre los ~25,8 cm de contorno de una taza de 330 ml. Si cambia el
+   molde (TAZA_PRINT), revisar ese número.
+   ========================================================= */
+const TAZA_3D = { arco: 293 * Math.PI / 180, margenV: 0.045, anchoTex: 1024 };
+const taza3d = { rot: 0, destino: null, tex: null, vacia: true, arrastrando: false, pausaHasta: 0, corriendo: false, pendiente: 0 };
+
+function texturaTaza3d() {
+    const lienzo = document.getElementById("lienzo-taza");
+    taza3d.vacia = !lienzo.querySelector(".foto-taza, .texto-taza") && !taza.tieneFondo;
+    let cv = taza3d.vacia ? null : lienzoTazaACanvas(TAZA_3D.anchoTex);
+    if (!cv) {
+        /* Sin diseño todavía: se marca la zona que se imprime, para que se
+           entienda qué parte de la taza va a ocupar. */
+        cv = document.createElement("canvas");
+        cv.width = TAZA_3D.anchoTex; cv.height = Math.round(cv.width * TAZA_PRINT.h / TAZA_PRINT.w);
+        const c = cv.getContext("2d");
+        c.fillStyle = "#fffbe0"; c.fillRect(0, 0, cv.width, cv.height);
+        c.strokeStyle = "#d6c400"; c.lineWidth = 6; c.setLineDash([22, 16]);
+        c.strokeRect(12, 12, cv.width - 24, cv.height - 24);
+        c.fillStyle = "#8a7f00"; c.font = "bold 64px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle";
+        [1 / 6, 1 / 2, 5 / 6].forEach(u => c.fillText("Tu diseño", cv.width * u, cv.height / 2));
+    }
+    taza3d.tex = cv;
+}
+/* Muchos cambios seguidos (arrastrar una foto) rehacen la textura como mucho
+   una vez cada 90 ms. */
+function refrescarTaza3d() {
+    if (taza3d.pendiente) return;
+    taza3d.pendiente = setTimeout(() => { taza3d.pendiente = 0; texturaTaza3d(); arrancarTaza3d(); }, 90);
+}
+function girarTazaA(lado) {
+    const paso = TAZA_3D.arco / 3;
+    taza3d.destino = lado === "izq" ? paso : lado === "der" ? -paso : 0;
+    taza3d.pausaHasta = Date.now() + 6000;
+    arrancarTaza3d();
+}
+function arrancarTaza3d() {
+    if (taza3d.corriendo) return;
+    taza3d.corriendo = true;
+    requestAnimationFrame(cuadroTaza3d);
+}
+function cuadroTaza3d() {
+    const cv = document.getElementById("taza3d-cv");
+    /* Con la pantalla de la taza oculta no se gasta batería: el bucle se corta
+       y lo vuelve a arrancar abrirTaza() o un cambio en el lienzo. */
+    if (!cv || !cv.offsetParent) { taza3d.corriendo = false; return; }
+    const quieto = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let sigue = false;
+    if (taza3d.destino !== null) {
+        let d = taza3d.destino - taza3d.rot;
+        d = Math.atan2(Math.sin(d), Math.cos(d));          // por el camino corto
+        if (Math.abs(d) < 0.01) { taza3d.rot = taza3d.destino; taza3d.destino = null; }
+        else { taza3d.rot += d * 0.18; }
+        sigue = true;
+    } else if (!taza3d.arrastrando && !quieto && Date.now() > taza3d.pausaHasta) {
+        taza3d.rot += 0.008; sigue = true;
+    } else if (!quieto && !taza3d.arrastrando) sigue = true;   // esperando para volver a girar
+    dibujarTaza3d(cv);
+    if (sigue || taza3d.arrastrando) requestAnimationFrame(cuadroTaza3d);
+    else taza3d.corriendo = false;
+}
+function dibujarTaza3d(cv) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
+    if (!W || !H) return;
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    if (!taza3d.tex) texturaTaza3d();
+    const ctx = cv.getContext("2d"), tex = taza3d.tex;
+    ctx.clearRect(0, 0, W, H);
+
+    /* Medidas de la taza en pantalla: cilindro visto un poco desde arriba. */
+    const alto = H * 0.70, R = Math.min(alto * 0.43, W * 0.30), ry = R * 0.20;
+    const cx = W / 2, yTop = (H - alto) / 2 - ry * 0.2, yBot = yTop + alto;
+    const borde = c => ry * c;                    // cuánto baja el borde en la columna (c = cos del ángulo)
+    const asaAng = Math.PI + taza3d.rot;          // el asa, opuesta al centro del diseño
+    const asaS = Math.sin(asaAng), asaC = Math.cos(asaAng);
+
+    // Sombra en la mesa
+    const som = ctx.createRadialGradient(cx, yBot + ry * 0.9, R * 0.2, cx, yBot + ry * 0.9, R * 1.5);
+    som.addColorStop(0, "rgba(0,0,0,.28)"); som.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.save(); ctx.translate(0, (yBot + ry * 0.9) * 0.72); ctx.scale(1, 0.28);
+    ctx.fillStyle = som; ctx.fillRect(cx - R * 1.6, yBot + ry * 0.9 - R * 1.6, R * 3.2, R * 3.2); ctx.restore();
+
+    const asa = () => {
+        /* Un arco en «D» que sale del costado: sus puntos giran con la taza,
+           así de frente se ve como una barra y de costado como un asa. */
+        const sale = R * 0.62, medio = alto * 0.5, altoAsa = alto * 0.50, pts = [];
+        for (let i = 0; i <= 24; i++) {
+            const t = i / 24 * Math.PI;           // 0 arriba, π abajo
+            const fuera = Math.sin(t) * sale, y = -Math.cos(t) * altoAsa / 2;
+            pts.push([cx + (R * 0.97 + fuera) * asaS, yTop + medio + y + ry * asaC * (1 + fuera / R)]);
+        }
+        const trazo = (ancho, color) => {
+            ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+            ctx.lineWidth = ancho; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = color; ctx.stroke();
+        };
+        const g = R * 0.17;
+        trazo(g + 2 * dpr, "#b9bec6"); trazo(g, asaC < 0 ? "#e9ebee" : "#fbfbfc"); trazo(g * 0.35, "#ffffff");
+    };
+    if (asaC < 0) asa();                           // asa atrás: la tapa el cuerpo
+
+    // Cuerpo: silueta
+    const silueta = () => {
+        ctx.beginPath();
+        ctx.moveTo(cx - R, yTop);
+        ctx.lineTo(cx - R, yBot);
+        ctx.ellipse(cx, yBot, R, ry, 0, Math.PI, 0, true);
+        ctx.lineTo(cx + R, yTop);
+        ctx.ellipse(cx, yTop, R, ry, 0, 0, Math.PI, true);
+        ctx.closePath();
+    };
+    silueta(); ctx.fillStyle = "#fdfdfd"; ctx.fill();
+
+    // Diseño: una franja por columna de pantalla
+    ctx.save(); silueta(); ctx.clip();
+    const mV = alto * TAZA_3D.margenV, hDis = alto - 2 * mV, paso = Math.max(1, Math.round(dpr));
+    for (let sx = -Math.floor(R) + 1; sx < R - 1; sx += paso) {
+        const s = sx / R, c = Math.sqrt(1 - s * s);
+        let fi = Math.asin(s) - taza3d.rot;
+        fi = Math.atan2(Math.sin(fi), Math.cos(fi));
+        const u = fi / TAZA_3D.arco + 0.5;
+        if (u < 0 || u > 1) continue;
+        const anchoSrc = Math.max(1, tex.width * (paso / (R * Math.max(c, 0.08))) / TAZA_3D.arco);
+        const srcX = Math.min(tex.width - anchoSrc, Math.max(0, u * tex.width - anchoSrc / 2));
+        ctx.drawImage(tex, srcX, 0, anchoSrc, tex.height, cx + sx, yTop + mV + borde(c), paso + 0.6, hDis);
+    }
+    // Volumen: sombra hacia los costados y un brillo
+    const luz = ctx.createLinearGradient(cx - R, 0, cx + R, 0);
+    luz.addColorStop(0, "rgba(0,0,0,.34)"); luz.addColorStop(0.16, "rgba(0,0,0,.08)");
+    luz.addColorStop(0.30, "rgba(255,255,255,.22)"); luz.addColorStop(0.42, "rgba(255,255,255,0)");
+    luz.addColorStop(0.80, "rgba(0,0,0,.08)"); luz.addColorStop(1, "rgba(0,0,0,.38)");
+    ctx.fillStyle = luz; ctx.fillRect(cx - R, yTop - ry, 2 * R, alto + 3 * ry);
+    ctx.restore();
+
+    // Boca: borde y el interior
+    ctx.beginPath(); ctx.ellipse(cx, yTop, R, ry, 0, 0, 2 * Math.PI); ctx.fillStyle = "#f4f5f7"; ctx.fill();
+    const dentro = ctx.createLinearGradient(cx - R, 0, cx + R, 0);
+    dentro.addColorStop(0, "#c9ccd2"); dentro.addColorStop(0.5, "#eceef1"); dentro.addColorStop(1, "#b8bcc3");
+    ctx.beginPath(); ctx.ellipse(cx, yTop + ry * 0.06, R * 0.93, ry * 0.86, 0, 0, 2 * Math.PI); ctx.fillStyle = dentro; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx, yTop, R, ry, 0, 0, 2 * Math.PI);
+    ctx.lineWidth = Math.max(1, dpr); ctx.strokeStyle = "rgba(100,110,125,.45)"; ctx.stroke();
+
+    if (asaC >= 0) asa();                          // asa adelante: va encima
+}
+(function iniciarTaza3d() {
+    const cv = document.getElementById("taza3d-cv"), lienzo = document.getElementById("lienzo-taza");
+    if (!cv || !lienzo) return;
+    new MutationObserver(refrescarTaza3d).observe(lienzo, { childList: true, subtree: true, attributes: true, characterData: true });
+    lienzo.addEventListener("load", refrescarTaza3d, true);   // las fotos terminan de cargar después
+    /* Al volver a la pantalla de la taza (desde el carrito, por ejemplo). */
+    new MutationObserver(refrescarTaza3d).observe(document.getElementById("p-taza"), { attributes: true, attributeFilter: ["class"] });
+    let x0 = 0, rot0 = 0;
+    cv.addEventListener("pointerdown", e => {
+        taza3d.arrastrando = true; taza3d.destino = null; x0 = e.clientX; rot0 = taza3d.rot;
+        try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+        arrancarTaza3d();
+    });
+    cv.addEventListener("pointermove", e => {
+        if (!taza3d.arrastrando) return;
+        taza3d.rot = rot0 + (e.clientX - x0) / (cv.clientWidth * 0.26);
+    });
+    const soltar = () => { if (taza3d.arrastrando) { taza3d.arrastrando = false; taza3d.pausaHasta = Date.now() + 6000; } };
+    cv.addEventListener("pointerup", soltar); cv.addEventListener("pointercancel", soltar);
+    window.addEventListener("resize", arrancarTaza3d);
+})();
 
 /* =========================================================
    4) SOUVENIRS
@@ -6836,11 +7096,12 @@ function abrirTaza() {
     const cont = document.getElementById("taza-tipos");
     cont.innerHTML = "";
     TIPOS_TAZA.forEach((t) => {
-        const btn = document.createElement("button");
-        btn.className = "btn-medida" + (t.nombre === taza.tipo.nombre ? " activo" : "");
-        btn.innerHTML = t.nombre + "<br><small>" + formatear(t.precio) + "</small>";
-        btn.onclick = (e) => elegirTipoTaza(t, e.currentTarget);
-        cont.appendChild(btn);
+        const lab = document.createElement("label"), r = document.createElement("input");
+        r.type = "radio"; r.name = "taza-tipo"; r.checked = t.nombre === taza.tipo.nombre;
+        r.onchange = () => elegirTipoTaza(t);
+        const txt = document.createElement("span");
+        txt.innerHTML = escHtml(t.nombre) + " <small>" + formatear(t.precio) + "</small>";
+        lab.append(r, txt); cont.appendChild(lab);
     });
     const lienzo = document.getElementById("lienzo-taza");
     lienzo.innerHTML = ""; lienzo.style.backgroundImage = ""; lienzo.style.background = "#fff";
@@ -6855,10 +7116,8 @@ function abrirTaza() {
     recalcularTaza();
     mostrar("p-taza");
 }
-function elegirTipoTaza(t, botonEl) {
+function elegirTipoTaza(t) {
     taza.tipo = t;
-    document.querySelectorAll("#taza-tipos .btn-medida").forEach(b => b.classList.remove("activo"));
-    botonEl.classList.add("activo");
     recalcularTaza();
 }
 /* Las fotos que entran al lienzo de la taza se reescalan igual que las del
@@ -6885,6 +7144,22 @@ async function subirFotosTaza(ev) {
             const img = document.createElement("img");
             img.src = f.url; img.className = "foto-taza";
             img.style.left = (12 + k * 18) + "px"; img.style.top = (12 + k * 18) + "px"; img.style.zIndex = ++zTop;
+            /* Entra ya a un tamaño que se ve bien en la taza (casi todo el alto
+               de la zona) y repartida a lo ancho: antes caían todas chiquitas
+               en la esquina y había que agrandarlas una por una. */
+            const puesto = lienzo.querySelectorAll(".foto-taza:not(.es-fondo)").length;
+            img.onload = () => {
+                img.onload = null;
+                const rc = lienzo.getBoundingClientRect();
+                if (!rc.width || !img.naturalWidth) return;
+                let h = rc.height * 0.82, w = h * img.naturalWidth / img.naturalHeight;
+                if (w > rc.width * 0.31) { w = rc.width * 0.31; h = w * img.naturalHeight / img.naturalWidth; }
+                const centro = rc.width * [1 / 6, 5 / 6, 1 / 2][puesto % 3];   // un lado, el otro, el medio
+                img.style.width = Math.round(w) + "px";
+                img.style.left = Math.round(limitar(centro - w / 2, 0, rc.width - w)) + "px";
+                img.style.top = Math.round((rc.height - h) / 2) + "px";
+                if (fotoTazaSel === img) seleccionarFotoTaza(img);
+            };
             hacerArrastrable(img); lienzo.appendChild(img); seleccionarFotoTaza(img);
         }
     } finally {
@@ -6963,6 +7238,92 @@ function seleccionarFotoTaza(el) {
     document.getElementById("slider-rot").value = parseFloat(el.dataset.rot) || 0;
     document.getElementById("slider-borde").value = parseInt(el.dataset.bw) || 0;
 }
+/* MARCO CON MANIJAS (como en un programa de diseño)
+   Un marco sobre la foto o el texto elegido con dos manijas: ↻ gira y ⤡ cambia
+   el tamaño, las dos alrededor del centro. Sigue solo al elemento con un
+   MutationObserver sobre el lienzo: mover, borrar o elegir otro no le avisan.
+   Cuando no hay nada elegido el marco se saca, porque ajustarAltoVista() solo
+   acomoda el lienzo si está vacío. */
+/* El mismo marco sirve para la taza y para el collage: cada uno dice cuál es su
+   lienzo, cuál es el elemento elegido y qué barra del celular hay que mantener
+   al día. En el collage el alto está fijado en píxeles, así que se escala junto
+   con el ancho (conAlto). */
+const CAJA_TAZA = { lienzo: "lienzo-taza", id: "caja-sel-taza", sel: () => fotoTazaSel, sliderRot: "slider-rot",
+    trasTam: el => { document.getElementById("slider-taza").value = el.classList.contains("texto-taza")
+        ? parseFloat(el.style.fontSize) : el.offsetWidth; } };
+const CAJA_COL = { lienzo: "lienzo-collage", id: "caja-sel-col", sel: () => colSel, sliderRot: "slider-rot-col", conAlto: true,
+    trasTam: el => { document.getElementById("slider-col").value =
+        Math.round(el.offsetWidth / document.getElementById("lienzo-collage").clientWidth * 100); } };
+function cajaSel(cfg) {
+    const lienzo = document.getElementById(cfg.lienzo), el = cfg.sel();
+    let c = document.getElementById(cfg.id);
+    if (!el || !el.isConnected) { if (c) c.remove(); return; }
+    if (!c) {
+        c = document.createElement("div"); c.id = cfg.id; c.className = "caja-sel";
+        [["girar", "↻", "Girar"], ["tam", "⤡", "Agrandar o achicar"]].forEach(([tipo, ic, titulo]) => {
+            const m = document.createElement("span");
+            m.className = "manija " + tipo; m.textContent = ic; m.title = titulo;
+            manijaCaja(m, tipo, cfg); c.appendChild(m);
+        });
+    }
+    if (c.parentNode !== lienzo) lienzo.appendChild(c);
+    const css = { left: el.style.left || "0px", top: el.style.top || "0px",
+        width: el.offsetWidth + "px", height: el.offsetHeight + "px",
+        transform: "rotate(" + (parseFloat(el.dataset.rot) || 0) + "deg)" };
+    Object.keys(css).forEach(k => { if (c.style[k] !== css[k]) c.style[k] = css[k]; });
+}
+function manijaCaja(m, tipo, cfg) {
+    let activo = false, cx, cy, d0, a0, w0, h0, fs0, rot0, ox, oy;
+    const lienzo = () => document.getElementById(cfg.lienzo);
+    m.addEventListener("pointerdown", e => {
+        const el = cfg.sel(); if (!el) return;
+        const rc = lienzo().getBoundingClientRect();
+        ox = rc.left + lienzo().clientLeft; oy = rc.top + lienzo().clientTop;
+        cx = ox + (parseFloat(el.style.left) || 0) + el.offsetWidth / 2;
+        cy = oy + (parseFloat(el.style.top) || 0) + el.offsetHeight / 2;
+        d0 = Math.hypot(e.clientX - cx, e.clientY - cy) || 1;
+        a0 = Math.atan2(e.clientY - cy, e.clientX - cx);
+        w0 = el.offsetWidth; h0 = el.offsetHeight; fs0 = parseFloat(el.style.fontSize) || 24; rot0 = parseFloat(el.dataset.rot) || 0;
+        activo = true; try { m.setPointerCapture(e.pointerId); } catch (err) {}
+        e.preventDefault(); e.stopPropagation();
+    });
+    m.addEventListener("pointermove", e => {
+        const el = cfg.sel(); if (!activo || !el) return;
+        if (tipo === "girar") {
+            let g = rot0 + (Math.atan2(e.clientY - cy, e.clientX - cx) - a0) * 180 / Math.PI;
+            g = ((g + 180) % 360 + 360) % 360 - 180;
+            /* Cerca de derecho, de costado o cabeza abajo, se endereza sola. */
+            [-180, -90, 0, 90, 180].forEach(r => { if (Math.abs(g - r) < 4) g = r; });
+            el.dataset.rot = Math.round(g); aplicarRot(el);
+            document.getElementById(cfg.sliderRot).value = el.dataset.rot;
+        } else {
+            const k = Math.hypot(e.clientX - cx, e.clientY - cy) / d0;
+            if (el.classList.contains("texto-taza")) el.style.fontSize = limitar(fs0 * k, 10, 220) + "px";
+            else {
+                const w = limitar(w0 * k, 30, lienzo().clientWidth * 2.5);
+                el.style.width = w + "px";
+                if (cfg.conAlto) el.style.height = (h0 * w / w0) + "px";
+            }
+            el.style.left = (cx - ox - el.offsetWidth / 2) + "px";
+            el.style.top = (cy - oy - el.offsetHeight / 2) + "px";
+            cfg.trasTam(el);
+        }
+    });
+    const soltar = () => { activo = false; };
+    m.addEventListener("pointerup", soltar); m.addEventListener("pointercancel", soltar);
+}
+(function seguirCajasSel() {
+    [CAJA_TAZA, CAJA_COL].forEach(cfg => {
+        const lienzo = document.getElementById(cfg.lienzo);
+        if (!lienzo) return;
+        new MutationObserver(recs => {
+            const c = document.getElementById(cfg.id);
+            if (c && recs.every(r => r.target === c || c.contains(r.target))) return;   // sus propios cambios
+            cajaSel(cfg);
+        }).observe(lienzo, { childList: true, subtree: true, attributes: true, characterData: true });
+        lienzo.addEventListener("load", () => cajaSel(cfg), true);
+    });
+})();
 function redimensionarSel(val) {
     if (!fotoTazaSel) return;
     if (fotoTazaSel.classList.contains("texto-taza")) fotoTazaSel.style.fontSize = val + "px";
@@ -7731,7 +8092,7 @@ function adjuntosPendientes() {
     return false;
 }
 
-function adjuntarSim(ev)  { leerAdjuntos(ev, adjuntosSim, "thumbs-sim", "sim", recalcularSim); }
+function adjuntarSim(ev)  { leerAdjuntos(ev, adjuntosSim, "thumbs-sim", "sim", () => { recalcularSim(); autoPlantillaCollage(); }); }
 function adjuntarSouv(ev) { leerAdjuntos(ev, adjuntosSouv, "thumbs-souv", "souv", null); }
 /* La promo lleva su propio tope: son 30 copias, más que el máximo por producto
    del resto de la tienda (ver agregarPromoAlCarrito). */
