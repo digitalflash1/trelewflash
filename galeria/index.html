@@ -110,7 +110,7 @@ header .precio{font-weight:700;font-size:14px}
   <p>Te abrimos WhatsApp para que nos lo mandes. Si querés, ya podés pagar por transferencia:</p>
   <div class="tot" id="pagoTotal"></div>
   <div id="pagoFilas"></div>
-  <p>Después mandanos el comprobante por WhatsApp, con el número de pedido <b id="pagoId"></b>.</p>
+  <p>Después mandanos el comprobante por WhatsApp, a nombre de <b id="pagoId"></b>.</p>
   <button class="cerrar" id="pagoCerrar">Listo</button>
 </div></div>
 <script>
@@ -348,8 +348,10 @@ $('enviar').onclick = () => {
   let cli = {};
   try { cli = JSON.parse(localStorage.getItem('ftf_cliente_v1') || '{}') || {}; } catch (e) {}
   let nombre = String(cli.nombre || '').trim();
-  if (!nombre) {
-    nombre = (prompt('¿A nombre de quién dejamos el pedido?') || '').trim();
+  // El pedido se identifica por el nombre completo (en el WhatsApp y en la carpeta del local):
+  // si la tienda guardó solo el nombre, se pide también el apellido.
+  if (!/\S\s+\S/.test(nombre)) {
+    nombre = (prompt('Tu nombre y apellido, para dejar el pedido a tu nombre:', nombre) || '').replace(/\s+/g, ' ').trim();
     if (!nombre) return;
   }
   // El WhatsApp es opcional: si lo cancela, el pedido sale igual.
@@ -365,7 +367,7 @@ $('enviar').onclick = () => {
   if (nums(p => p.digital)) lineas.push(`Digital: ${nums(p => p.digital)}`);
   const imp = elegidas.filter(f => sel.get(f.n).impresa).length, dig = elegidas.filter(f => sel.get(f.n).digital).length;
   const msg = `Hola! Quiero estas fotos de "${datos.titulo}" (${datos.fecha}):\n${lineas.join('\n')}\n` +
-    `Total: ${plata(imp * PRECIO_FOTO + dig * PRECIO_DIGITAL)}\nPedido: ${pedidoId}`;
+    `Total: ${plata(imp * PRECIO_FOTO + dig * PRECIO_DIGITAL)}\nA nombre de: ${nombre}`;
   // Copia de trabajo para el local; si falla, el WhatsApp sale igual.
   try {
     fetch(PEDIDOS_URL, { method: 'POST', mode: 'no-cors', keepalive: true,
@@ -378,11 +380,11 @@ $('enviar').onclick = () => {
   // A los 4 días la portada de la tienda le pide una reseña (ver RESENAS en ../index.html).
   try { const r = JSON.parse(localStorage.getItem('tf_resena') || 'null') || {}; r.pedido = Date.now(); localStorage.setItem('tf_resena', JSON.stringify(r)); } catch (e) {}
   window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank');
-  mostrarPago(pedidoId, imp * PRECIO_FOTO + dig * PRECIO_DIGITAL);
+  mostrarPago(nombre, imp * PRECIO_FOTO + dig * PRECIO_DIGITAL);
 };
-function mostrarPago(pedidoId, total) {
+function mostrarPago(aNombre, total) {
   $('pagoTotal').textContent = 'Total: ' + plata(total);
-  $('pagoId').textContent = pedidoId;
+  $('pagoId').textContent = aNombre;
   const cont = $('pagoFilas');
   cont.innerHTML = '';
   DATOS_TRANSFERENCIA.forEach(d => {
