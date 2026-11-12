@@ -359,10 +359,18 @@ $('enviar').onclick = () => {
   let telefono = String(cli.telefono || '').trim();
   if (!telefono) telefono = (prompt('Tu WhatsApp (opcional, para avisarte cuando estén listas):') || '').replace(/[^\d+ ]/g, '').trim();
   try { localStorage.setItem('ftf_cliente_v1', JSON.stringify(Object.assign({}, cli, { nombre }, telefono ? { telefono } : {}))); } catch (e) {}
-  const hex = Array.from(crypto.getRandomValues(new Uint8Array(4)), b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-  const hoy = new Date(), dd = n => String(n).padStart(2, '0');
-  const pedidoId = `EG-${hoy.getFullYear()}${dd(hoy.getMonth() + 1)}${dd(hoy.getDate())}-${hex}`;
   const elegidas = fotos.filter(f => sel.has(f.n));
+  // Mismo pedido (mismo cliente y mismas fotos) = mismo número: si toca el botón más de una vez,
+  // el backend lo reconoce como repetido y no crea otro pedido (antes salían 3 o 4 iguales).
+  const firma = nombre + '|' + elegidas.map(f => { const p = sel.get(f.n); return [f.n, +p.impresa, +p.digital, p.medida].join(':'); }).join(',');
+  let pedidoId = '';
+  try { const u = JSON.parse(sessionStorage.getItem('tf_ultimo_pedido') || 'null'); if (u && u.firma === firma && u.evento === evento) pedidoId = u.id; } catch (e) {}
+  if (!pedidoId) {
+    const hex = Array.from(crypto.getRandomValues(new Uint8Array(4)), b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    const hoy = new Date(), dd = n => String(n).padStart(2, '0');
+    pedidoId = `EG-${hoy.getFullYear()}${dd(hoy.getMonth() + 1)}${dd(hoy.getDate())}-${hex}`;
+    try { sessionStorage.setItem('tf_ultimo_pedido', JSON.stringify({ firma, evento, id: pedidoId })); } catch (e) {}
+  }
   const nums = cond => elegidas.filter(f => cond(sel.get(f.n))).map(f => numero(f.n)).join(', ');
   const lineas = MEDIDAS.map(m => [m, nums(p => p.impresa && p.medida === m)]).filter(x => x[1]).map(x => `Impresas ${x[0]}: ${x[1]}`);
   if (nums(p => p.digital)) lineas.push(`Digital: ${nums(p => p.digital)}`);
