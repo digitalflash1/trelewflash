@@ -108,11 +108,12 @@ header .precio{font-weight:700;font-size:14px}
 
 <div id="pago"><div class="caja">
   <h2>¡Pedido armado!</h2>
-  <p>Te abrimos WhatsApp para que nos lo mandes. Si querés, ya podés pagar por transferencia:</p>
+  <p>Si querés, ya podés pagar por transferencia (copiá el alias y hacé la transferencia desde tu app del banco):</p>
   <div class="tot" id="pagoTotal"></div>
   <div id="pagoFilas"></div>
-  <p>Después mandanos el comprobante por WhatsApp, a nombre de <b id="pagoId"></b>.</p>
-  <button class="cerrar" id="pagoCerrar">Listo</button>
+  <p>Cuando termines, tocá el botón verde para mandarnos el pedido por WhatsApp, a nombre de <b id="pagoId"></b>. Si ya pagaste, adjuntá el comprobante.</p>
+  <a class="cerrar" id="pagoWa" href="#" target="_blank" rel="noopener" style="text-align:center;text-decoration:none;background:#25d366;color:#fff">Mandar el pedido por WhatsApp</a>
+  <button class="cerrar" id="pagoCerrar" style="background:#fff;color:#444;border:2px solid #ccc">Cerrar</button>
 </div></div>
 <script>
 
@@ -388,7 +389,9 @@ $('enviar').onclick = () => {
   } catch (e) {}
   // A los 4 días la portada de la tienda le pide una reseña (ver RESENAS en ../index.html).
   try { const r = JSON.parse(localStorage.getItem('tf_resena') || 'null') || {}; r.pedido = Date.now(); localStorage.setItem('tf_resena', JSON.stringify(r)); } catch (e) {}
-  window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank');
+  // WhatsApp NO se abre solo: si se abriera acá taparía el cartel y no daría tiempo de copiar el alias.
+  // Se abre desde el botón del cartel (enlace común, que ningún bloqueador de ventanas frena).
+  $('pagoWa').href = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(msg);
   mostrarPago(nombre, imp * PRECIO_FOTO + dig * PRECIO_DIGITAL);
 };
 function mostrarPago(aNombre, total) {
