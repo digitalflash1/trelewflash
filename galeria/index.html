@@ -5,6 +5,32 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Fotos del evento · Trelew Flash</title>
 <meta name="robots" content="noindex">
+<!-- Medición (GA4 G-7ZGZ6GP56R, el mismo de la tienda). Mismo consentimiento que la tienda: las
+     cookies de estadística arrancan en "denied" y se activan si el cliente aceptó en la tienda
+     (tf_cookies, mismo sitio = mismo localStorage). Mismo interruptor «?nomedir=1» (tf_no_medir).
+     Acá NO van GTM, Clarity ni el píxel de Meta, a propósito: es una página de fotos de chicos y
+     Clarity grabaría la pantalla. No se manda ningún dato personal (ni nombre, ni teléfono). -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){ dataLayer.push(arguments); }
+gtag('consent', 'default', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+  analytics_storage: 'denied', functionality_storage: 'granted', security_storage: 'granted', wait_for_update: 500 });
+try {
+  if (localStorage.getItem('tf_cookies') === 'ok')
+    gtag('consent', 'update', { ad_storage: 'granted', ad_user_data: 'granted', ad_personalization: 'granted', analytics_storage: 'granted' });
+  var _nm = new URLSearchParams(location.search).get('nomedir');
+  if (_nm === '1') localStorage.setItem('tf_no_medir', '1');
+  if (_nm === '0') localStorage.removeItem('tf_no_medir');
+  if (localStorage.getItem('tf_no_medir') === '1') window['ga-disable-G-7ZGZ6GP56R'] = true;
+} catch (e) { /* navegación privada */ }
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7ZGZ6GP56R"></script>
+<script>
+gtag('js', new Date());
+gtag('config', 'G-7ZGZ6GP56R', { page_location: location.href });
+/* La medición nunca debe romper la galería. */
+function medir(evento, datos) { try { gtag('event', evento, datos || {}); } catch (e) {} }
+</script>
 <link rel="icon" href="../assets/favicon.ico?v=2" sizes="any">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=2">
 <style>
@@ -153,6 +179,7 @@ const guardar = () => { try { localStorage.setItem(clave, JSON.stringify([...sel
 const numero = n => n.replace(/\D/g, '').replace(/^0+/, '') || n;
 
 if (!evento) {
+  medir('ver_lista_galerias', { grupo: grupo || '' });
   document.body.classList.add('lista');
   fetch('eventos.json').then(r => r.json()).then(todos => {
     const l = grupo ? todos.filter(e => e.web === grupo) : todos;
@@ -164,6 +191,7 @@ if (!evento) {
   });
 } else fetch(dir + 'manifest.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => {
   datos = d; fotos = d.fotos;
+  medir('ver_galeria', { evento_id: evento, evento_titulo: d.titulo, cantidad_fotos: fotos.length });
   recibirCompartidas();
   $('tit').textContent = d.titulo;
   $('sub').textContent = d.fecha + ' · ' + fotos.length + ' fotos · tocá las que te gusten';
@@ -261,7 +289,11 @@ function filaElegida(f, i) {
     </div></div>`;
 }
 
-function alternar(nombre) { sel.has(nombre) ? sel.delete(nombre) : sel.set(nombre, pedidoNuevo()); guardar(); }
+function alternar(nombre) {
+  if (sel.has(nombre)) sel.delete(nombre);
+  else { sel.set(nombre, pedidoNuevo()); medir('elegir_foto', { evento_id: evento, fotos_elegidas: sel.size }); }
+  guardar();
+}
 
 /* Sin impresa ni digital, la foto deja de estar elegida. */
 function cambiarPedido(nombre, campo, valor) {
@@ -364,9 +396,10 @@ $('enviar').onclick = () => {
   // Mismo pedido (mismo cliente y mismas fotos) = mismo número: si toca el botón más de una vez,
   // el backend lo reconoce como repetido y no crea otro pedido (antes salían 3 o 4 iguales).
   const firma = nombre + '|' + elegidas.map(f => { const p = sel.get(f.n); return [f.n, +p.impresa, +p.digital, p.medida].join(':'); }).join(',');
-  let pedidoId = '';
+  let pedidoId = '', esNuevo = false;
   try { const u = JSON.parse(sessionStorage.getItem('tf_ultimo_pedido') || 'null'); if (u && u.firma === firma && u.evento === evento) pedidoId = u.id; } catch (e) {}
   if (!pedidoId) {
+    esNuevo = true;
     const hex = Array.from(crypto.getRandomValues(new Uint8Array(4)), b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
     const hoy = new Date(), dd = n => String(n).padStart(2, '0');
     pedidoId = `EG-${hoy.getFullYear()}${dd(hoy.getMonth() + 1)}${dd(hoy.getDate())}-${hex}`;
@@ -389,6 +422,9 @@ $('enviar').onclick = () => {
   } catch (e) {}
   // A los 4 días la portada de la tienda le pide una reseña (ver RESENAS en ../index.html).
   try { const r = JSON.parse(localStorage.getItem('tf_resena') || 'null') || {}; r.pedido = Date.now(); localStorage.setItem('tf_resena', JSON.stringify(r)); } catch (e) {}
+  // Solo si es un pedido nuevo: tocar el botón de nuevo con lo mismo no se cuenta otra vez.
+  if (esNuevo) medir('pedir_fotos', { evento_id: evento, evento_titulo: datos.titulo, transaction_id: pedidoId,
+    fotos: elegidas.length, impresas: imp, digitales: dig, value: imp * PRECIO_FOTO + dig * PRECIO_DIGITAL, currency: 'ARS' });
   // WhatsApp NO se abre solo: si se abriera acá taparía el cartel y no daría tiempo de copiar el alias.
   // Se abre desde el botón del cartel (enlace común, que ningún bloqueador de ventanas frena).
   $('pagoWa').href = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(msg);
@@ -415,6 +451,7 @@ function mostrarPago(aNombre, total) {
   });
   $('pago').classList.add('ver');
 }
+$('pagoWa').addEventListener('click', () => medir('clic_whatsapp', { evento_id: evento, origen: 'galeria' }));
 $('pagoCerrar').onclick = () => $('pago').classList.remove('ver');
 </script>
 </body>
