@@ -885,6 +885,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .cat-card .cat-sub { font-size: 12.5px; color: #7a7a52; margin: 3px 0 0; flex: 1; }
     .cat-card .cat-precio { font-size: 16px; font-weight: bold; color: #1a1a00; margin-top: 9px; }
     .cat-card .cat-precio small { font-size: 11px; font-weight: normal; color: #7a7a52; }
+    .cat-card .cat-consultar { font-size: 14px; color: var(--color-wa-hover); }
+    /* Catálogo sin precio: la ficha solo muestra fotos, variantes y el botón de consulta. */
+    .ficha-consultar { display: none; width: 100%; margin-top: 16px; }
+    #p-ficha.sin-precio .ficha-consultar { display: block; }
+    #p-ficha.sin-precio #ficha-paso-foto, #p-ficha.sin-precio #ficha-opc-foto,
+    #p-ficha.sin-precio #ficha-nota-sinfoto, #p-ficha.sin-precio #ficha-bloque-foto,
+    #p-ficha.sin-precio .fila-cantidad, #p-ficha.sin-precio #ficha-nota-precio,
+    #p-ficha.sin-precio .caja-precio { display: none !important; }
     .cat-card .cat-pedir { margin-top: 10px; background: var(--color-wa); color: #fff; border: none; border-radius: 10px;
         padding: 9px; font-size: 14px; font-weight: bold; cursor: pointer; }
     .cat-card .cat-pedir:hover { background: var(--color-wa-hover); }
@@ -1815,7 +1823,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-catalogo">0</span>)</button>
     </div>
     <h2>Cuadros y portarretratos</h2>
-    <p>Tu foto en la pared: cuadros listos para colgar, y más productos para regalar. Tocá <b>Pedir</b> y armá tu pedido.</p>
+    <p>Tu foto en la pared: cuadros listos para colgar, y más productos para regalar. Tocá uno para verlo de cerca.</p>
 
     <div class="cat-seccion">
         <h3>🖼️ Cuadros</h3>
@@ -1843,7 +1851,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button class="chip-carrito" onclick="mostrar(&#39;p-carrito&#39;)">🛒 Carrito (<span id="badge-albumes">0</span>)</button>
     </div>
     <h2>Álbumes de fotos</h2>
-    <p>Para tener tus fotos impresas todas juntas y a mano. Tocá uno para ver los tamaños y pedirlo.</p>
+    <p>Para tener tus fotos impresas todas juntas y a mano. Tocá uno para ver los tamaños.</p>
     <div id="alb-grid" class="cat-grid"></div>
 </div>
 
@@ -1867,7 +1875,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <div class="cat-seccion" id="stk-seccion">
         <h3>✨ Todos los stickers</h3>
-        <p>Tocá cualquiera para agrandarlo y pedirlo.</p>
+        <p>Tocá cualquiera para agrandarlo.</p>
     </div>
     <div id="stk-mosaico" class="stk-mosaico"></div>
     <p class="stk-ayuda" id="stk-pie-ayuda"></p>
@@ -1900,8 +1908,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
          "atributos" que tenga cargados el producto en la hoja. -->
     <div id="ficha-ejes"></div>
 
+    <!-- Con CATALOGO_SIN_PRECIO la ficha queda en «mirar y consultar»: este botón
+         reemplaza foto, cantidad, precio y carrito (los oculta .sin-precio). -->
+    <button type="button" class="btn-agregar ficha-consultar" onclick="consultarStockFicha()">💬 Consultar stock por WhatsApp</button>
+
     <p class="instruccion" id="ficha-paso-foto">2. ¿Querés ponerle una foto ahora?</p>
-    <div class="grid-botones">
+    <div class="grid-botones" id="ficha-opc-foto">
         <button type="button" id="btn-ficha-sinfoto" class="btn-medida activo" onclick="setFichaConFoto(false)">🖼 Solo el cuadro</button>
         <button type="button" id="btn-ficha-confoto" class="btn-medida" onclick="setFichaConFoto(true)">📷 Sí, adjuntar mi foto</button>
     </div>
@@ -4814,6 +4826,22 @@ function aplicarIntencionCatalogo(ic) {
 /* =========================================================
    CATÁLOGO tipo market (previsualizaciones + precios del catálogo)
    ========================================================= */
+/* true = cuadros, álbumes y stickers se muestran sin precio ni carrito: en vez
+   de «Agregar» dicen «Consultar stock» y abren WhatsApp con el producto elegido
+   (decisión del 16/11/2026). En false vuelve todo como antes. */
+const CATALOGO_SIN_PRECIO = true;
+function consultarStock(producto) {
+    medir("consultar_stock", { producto: producto });
+    const msg = "Hola! Quería consultar si tienen stock de: " + producto;
+    window.open("https://wa.me/" + TELEFONO_WA + "?text=" + encodeURIComponent(msg), "_blank", "noopener");
+}
+function consultarStockFicha() {
+    if (!fichaFamilia) return;
+    const titulo = tituloCuadro(fichaFamilia.producto, fichaSel ? fichaSel.nombre : "");
+    consultarStock(titulo + (fichaFamilia.material ? " (" + fichaFamilia.material + ")" : "") +
+        "\n" + urlDeFicha(fichaFamilia, medidaDeFicha()));
+}
+const ETIQUETA_CONSULTAR = '<span class="cat-consultar">💬 Consultar stock</span>';
 function minPrecio(items) {
     const ps = (items || []).map(i => i.precio).filter(p => p != null && p > 0);
     return ps.length ? Math.min(...ps) : null;
@@ -4981,6 +5009,7 @@ function tarjetaCuadro(fam, medidaFiltrada) {
     if (!precios.length) precio = "A cotizar";
     else if (Math.min(...precios) !== Math.max(...precios)) precio = "<small>desde </small>" + formatear(Math.min(...precios));
     else precio = formatear(precios[0]);
+    if (CATALOGO_SIN_PRECIO) precio = ETIQUETA_CONSULTAR;
     const abrir = "pedirDeCatalogo('ficha','" + fam.id + "'" +
         (medidaFiltrada ? ",'" + medidaFiltrada + "'" : "") + ")";
     return '<div class="cat-card">' +
@@ -4989,11 +5018,11 @@ function tarjetaCuadro(fam, medidaFiltrada) {
             '<div class="cat-titulo">' + fam.producto + '</div>' +
             '<div class="cat-sub">' + sub + '</div>' +
             '<div class="cat-precio">' + precio + '</div>' +
-            '<button class="cat-pedir" onclick="' + abrir + '">Ver / pedir →</button>' +
+            '<button class="cat-pedir" onclick="' + abrir + '">' + (CATALOGO_SIN_PRECIO ? "Ver más →" : "Ver / pedir →") + '</button>' +
         '</div></div>';
 }
 function tarjetaMini(emoji, titulo, precioMin, intento, arg) {
-    const precio = precioMin != null ? '<div class="cat-precio"><small>desde </small>' + formatear(precioMin) + '</div>' : '';
+    const precio = (precioMin != null && !CATALOGO_SIN_PRECIO) ? '<div class="cat-precio"><small>desde </small>' + formatear(precioMin) + '</div>' : '';
     const onclick = arg ? "pedirDeCatalogo('" + intento + "','" + arg + "')" : "pedirDeCatalogo('" + intento + "')";
     return '<div class="cat-card mini">' +
         '<div class="cat-preview">' + emoji + '</div>' +
@@ -5259,12 +5288,13 @@ function tarjetaAlbum(fam) {
     if (!precios.length) precio = "A cotizar";
     else if (Math.min(...precios) !== Math.max(...precios)) precio = "<small>desde </small>" + formatear(Math.min(...precios));
     else precio = formatear(precios[0]);
+    if (CATALOGO_SIN_PRECIO) precio = ETIQUETA_CONSULTAR;
     return '<div class="cat-card">' + preview +
         '<div class="cat-cuerpo">' +
             '<div class="cat-titulo">' + escHtml(fam.producto) + '</div>' +
             '<div class="cat-sub">' + escHtml(sub) + '</div>' +
             '<div class="cat-precio">' + precio + '</div>' +
-            '<button class="cat-pedir" onclick="abrirFichaDeAlbum(\'' + fam.id + '\')">Ver / pedir →</button>' +
+            '<button class="cat-pedir" onclick="abrirFichaDeAlbum(\'' + fam.id + '\')">' + (CATALOGO_SIN_PRECIO ? "Ver más →" : "Ver / pedir →") + '</button>' +
         '</div></div>';
 }
 function abrirFichaDeAlbum(id) { flujo = "pedido"; origenFicha = "p-albumes"; abrirFicha(id); }
@@ -5295,6 +5325,7 @@ function abrirAlbumes() { renderAlbumes(); mostrar("p-albumes"); }
 let stkIdx = 0;
 function stickerPorSku(sku) { return STICKERS_DTF.find(x => x.sku === sku) || null; }
 function precioSticker(st) {
+    if (CATALOGO_SIN_PRECIO) return "<small>Consultar stock</small>";
     const p = precioDe(st);
     return p != null ? formatear(p) + notaACotizar(st) : "<small>A cotizar</small>";
 }
@@ -5367,7 +5398,10 @@ function aplicarSticker() {
     const add = document.getElementById("stk-add");
     if (nom) nom.innerText = st.nombre;
     if (pre) pre.innerHTML = precioSticker(st);
-    if (add) add.onclick = () => agregarStickerAlCarrito(st.sku);
+    if (add && CATALOGO_SIN_PRECIO) {
+        add.innerText = "💬 Consultar";
+        add.onclick = () => consultarStock("sticker DTF " + st.nombre);
+    } else if (add) add.onclick = () => agregarStickerAlCarrito(st.sku);
     precargarStickers(stkIdx);
 }
 function irSticker(i) {
@@ -5465,7 +5499,11 @@ function agrandarSticker(b) {
                       '<span class="g-precio">' + precioSticker(st) + "</span></span>" +
                       '<button type="button" class="g-add">➕ Pedir</button>';
     globo.querySelector(".g-nom").innerText = st.nombre;
-    globo.querySelector(".g-add").onclick = ev => { ev.stopPropagation(); agregarStickerAlCarrito(st.sku); };
+    const gAdd = globo.querySelector(".g-add");
+    if (CATALOGO_SIN_PRECIO) {
+        gAdd.innerText = "💬 Consultar";
+        gAdd.onclick = ev => { ev.stopPropagation(); consultarStock("sticker DTF " + st.nombre); };
+    } else gAdd.onclick = ev => { ev.stopPropagation(); agregarStickerAlCarrito(st.sku); };
     globo.onclick = ev => ev.stopPropagation();
     b.appendChild(globo);
     /* Los de los bordes crecen hacia adentro: si crecieran desde el centro, el
@@ -5925,8 +5963,10 @@ function pintarCabeceraFicha() {
     document.getElementById("ficha-tags").innerHTML =
         tags.map(t => '<span class="ficha-tag">' + t + "</span>").join("");
     const precioSel = precioDe(fichaSel);
-    document.getElementById("ficha-precio-top").innerHTML =
-        (precioSel != null)
+    document.getElementById("p-ficha").classList.toggle("sin-precio", CATALOGO_SIN_PRECIO);
+    document.getElementById("ficha-precio-top").innerHTML = CATALOGO_SIN_PRECIO
+        ? '<small>Consultá stock y precio por WhatsApp</small>'
+        : (precioSel != null)
             ? formatear(precioSel) + notaACotizar(fichaSel)
             : '<small>Precio a confirmar por WhatsApp</small>';
 }
@@ -9092,8 +9132,9 @@ function montarCarrusel(car, items, espera) {
 }
 /* false = el catálogo no aparece en la portada (ni el botón «Ver catálogo
    completo» ni el carrusel «Mirá el catálogo»). Se ocultó el 22/10/2026;
-   para volver a mostrarlo, ponerlo en true. */
-const MOSTRAR_CATALOGO = false;
+   para volver a mostrarlo, ponerlo en true. Volvió el 16/11/2026, sin precios
+   (ver CATALOGO_SIN_PRECIO). */
+const MOSTRAR_CATALOGO = true;
 if (MOSTRAR_CATALOGO) {
     montarCarrusel(document.getElementById("carrusel-catalogo"), CARRUSEL_CATALOGO, 5000);
 } else {
