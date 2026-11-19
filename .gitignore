@@ -30,3 +30,6 @@ apps-script/
 
 # Archivos de la versión vieja que la tienda ya no usa.
 assets/_sin-uso/
+
+# Pruebas locales de la galería del Recuerdo Escolar (fotos de chicos: nunca al repo).
+recuerdo/_prueba/
