@@ -17,9 +17,13 @@
 :root{--am:#FFE81A;--ng:#111;--gr:#f3f3f1}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:var(--gr);color:var(--ng);padding-bottom:96px;-webkit-text-size-adjust:100%}
-header{background:var(--am);padding:14px 16px;position:sticky;top:0;z-index:5;box-shadow:0 2px 6px #0002}
+header{background:var(--am);padding:10px 12px;position:sticky;top:0;z-index:5;box-shadow:0 2px 6px #0002;display:flex;align-items:center;gap:10px}
+header .logo{flex:none;display:block;width:46px;height:46px;border:2px solid var(--ng);border-radius:10px;overflow:hidden}
+header .logo img{width:100%;height:100%;display:block}
+header .tit{flex:1;min-width:0}
 header h1{font-size:18px;line-height:1.2}
-header p{font-size:14px;margin-top:2px;font-weight:600}
+header p{font-size:14px;margin-top:2px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+header .tienda{flex:none;background:var(--ng);color:var(--am);text-decoration:none;font-weight:800;font-size:12px;border-radius:16px;padding:7px 10px}
 .caja{background:#fff;border-left:6px solid var(--am);border-radius:10px;margin:10px;padding:14px 16px;font-size:15px;line-height:1.4}
 .caja h2{font-size:17px;margin-bottom:6px}
 .caja ol{margin:6px 0 0 20px}.caja li{margin:3px 0}
@@ -76,8 +80,13 @@ button{font:inherit;cursor:pointer}
 </head>
 <body>
 <header>
-  <h1>📸 Recuerdo Escolar</h1>
-  <p id="jardin">Trelew Flash</p>
+  <!-- Logo y «Ver la tienda»: de paso, que los papás entren a la portada. -->
+  <a class="logo" href="../" title="Trelew Flash · ir a la tienda"><img src="../assets/apple-touch-icon.png?v=2" alt="Trelew Flash" width="46" height="46"></a>
+  <div class="tit">
+    <h1>📸 Recuerdo Escolar</h1>
+    <p id="jardin">Trelew Flash</p>
+  </div>
+  <a class="tienda" href="../">Ver la tienda ›</a>
 </header>
 
 <section id="entrar" class="caja oculto">
@@ -190,6 +199,8 @@ async function entrar(codigo, silencioso) {
   try {
     if (!sobre) {
       const r = await fetch("datos/" + J + ".json", { cache: "no-cache" });
+      // Galería desactivada (--desactivar borra su datos/<id>.json): el link lleva a la portada de la tienda.
+      if (r.status === 404) { location.replace("../"); return new Promise(() => {}); }
       if (!r.ok) throw new Error("no está");
       sobre = await r.json();
     }
@@ -382,7 +393,7 @@ $("fcodigo").onsubmit = ev => { ev.preventDefault(); const c = $("codigo").value
 
 /* El link que el local manda por WhatsApp trae el código después del # (no viaja al servidor): abre solo.
    Si falta o no anda, queda el formulario para escribirlo. */
-if (!VALIDO) $("sinlink").classList.remove("oculto");
+if (!VALIDO) location.replace("../");   // sin galería en el link: a la portada
 else {
   let codigo = new URLSearchParams(location.hash.slice(1)).get("c");
   if (!codigo) try { codigo = sessionStorage.getItem("tf_rec_cod_" + J); } catch (e) {}
