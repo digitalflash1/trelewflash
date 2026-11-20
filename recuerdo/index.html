@@ -28,9 +28,16 @@ header p{font-size:14px;margin-top:2px;font-weight:600}
 button{font:inherit;cursor:pointer}
 .btn{border:2px solid var(--ng);background:var(--ng);color:var(--am);border-radius:8px;padding:10px 14px;font-weight:800;font-size:15px}
 #error{color:#a00;font-size:14px;margin-top:8px;min-height:1em}
-#salas{display:flex;gap:6px;overflow-x:auto;padding:4px 10px 8px;scrollbar-width:none}
-#salas button{flex:none;border:2px solid var(--ng);background:#fff;border-radius:20px;padding:7px 14px;font-weight:700;font-size:14px}
-#salas button.on{background:var(--ng);color:var(--am)}
+#salas{display:flex;align-items:center;gap:10px;margin:0 10px 8px;padding:10px 12px;background:var(--ng);color:#fff;border-radius:10px}
+#salas span{flex:1;min-width:0;font-weight:800;font-size:15px}
+#salas small{display:block;font-weight:400;color:var(--am);font-size:12px}
+#salas button{flex:none;border:0;background:var(--am);color:var(--ng);border-radius:8px;padding:8px 10px;font-weight:800;font-size:13px}
+#cursos h3{font-size:14px;margin:12px 0 6px;color:#555;text-transform:uppercase;letter-spacing:.04em}
+#cursos h3:first-of-type{margin-top:4px}
+#cursos button{display:flex;width:100%;align-items:center;gap:8px;text-align:left;border:2px solid var(--ng);background:#fff;border-radius:10px;padding:11px 12px;margin-top:6px;font-weight:800;font-size:16px}
+#cursos button span{flex:1}
+#cursos button small{font-weight:400;color:#666;font-size:13px}
+#cursos button b{background:var(--am);border-radius:10px;padding:1px 8px;font-size:13px}
 #grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;padding:0 6px}
 @media (max-width:420px){#grilla{grid-template-columns:repeat(2,1fr)}}
 .f{position:relative;background:#ddd;border-radius:6px;overflow:hidden;aspect-ratio:3/4;border:0;padding:0;display:block;width:100%}
@@ -92,13 +99,17 @@ button{font:inherit;cursor:pointer}
   <section class="caja">
     <h2>¿Cómo se usa?</h2>
     <ol>
-      <li>Buscá a tu hijo o hija entre las fotos de la sala.</li>
+      <li id="paso1">Buscá a tu hijo o hija entre las fotos de la sala.</li>
       <li>Tocá la foto y escribí el <b>nombre de pila</b> tal como querés que salga en el recuerdo (con tildes y mayúsculas).</li>
       <li>Tocá <b>Enviar nombres</b>. Si después cambiás algo, volvé a tocarlo.</li>
     </ol>
   </section>
   <section id="mios" class="caja oculto"></section>
-  <nav id="salas" aria-label="Salas"></nav>
+  <section id="cursos" class="caja oculto" aria-label="Cursos"></section>
+  <nav id="salas" class="oculto" aria-label="Curso elegido">
+    <span id="salanom"></span>
+    <button type="button" id="bcursos">Cambiar curso</button>
+  </nav>
   <div id="grilla"></div>
 </main>
 
@@ -194,26 +205,55 @@ async function entrar(codigo, silencioso) {
   } finally { $("bentrar").disabled = false; $("bentrar").textContent = "Entrar"; }
 }
 
-function urlFoto(s, f) { return datos.base + encodeURIComponent(s.dir) + "/" + encodeURIComponent(f.n) + ".webp"; }
-const clave = (s, f) => s.dir + "|" + f.n;
+/* Galería de un jardín entero (--unir del script): cada sala trae su propia base de R2 (un turno = un lote),
+   su «grupo» (el turno) y una clave «k» única, porque «sala-amarilla» puede estar en los dos turnos. */
+function urlFoto(s, f) { return (s.base || datos.base) + encodeURIComponent(s.dir) + "/" + encodeURIComponent(f.n) + ".webp"; }
+const clave = (s, f) => (s.k || s.dir) + "|" + f.n;
+const nombreSala = s => (s.grupo ? s.grupo + " · " : "") + s.nombre;
+const VARIAS = () => datos.salas.length > 1;
 
 function mostrarGaleria() {
   $("entrar").classList.add("oculto");
   $("galeria").classList.remove("oculto");
   $("jardin").textContent = datos.jardin;
   document.title = "Recuerdo Escolar · " + datos.jardin;
-  const nav = $("salas");
-  nav.replaceChildren();
-  if (datos.salas.length > 1) datos.salas.forEach((s, i) =>
-    nav.append(el("button", { textContent: s.nombre, onclick: () => elegirSala(i) })));
-  elegirSala(0);
+  if (VARIAS()) {
+    $("paso1").textContent = "Elegí el curso de tu hijo o hija y buscalo entre las fotos. Si tenés más de un hijo, cambiá de curso y repetí.";
+    let previo = null; try { previo = sessionStorage.getItem("tf_rec_sala_" + J); } catch (e) {}
+    const i = datos.salas.findIndex(s => (s.k || s.dir) === previo);
+    if (i >= 0) elegirSala(i); else verCursos();
+  } else elegirSala(0);
   pintarMios();
+}
+
+/* Lista de cursos agrupada por turno; el número amarillo = nombres ya cargados en ese curso. */
+function verCursos() {
+  salaActual = -1;
+  $("grilla").replaceChildren();
+  $("salas").classList.add("oculto");
+  const caja = $("cursos"), cargados = {};
+  Object.keys(elegidos).forEach(k => { const ub = ubicar(k); if (ub) cargados[ub[0]] = (cargados[ub[0]] || 0) + 1; });
+  const hijos = [el("h2", { textContent: "Elegí el curso" })];
+  let grupo;
+  datos.salas.forEach((s, i) => {
+    if (s.grupo && s.grupo !== grupo) hijos.push(el("h3", { textContent: grupo = s.grupo }));
+    hijos.push(el("button", { type: "button", onclick: () => { elegirSala(i); scrollTo(0, $("salas").offsetTop - 80); } },
+      el("span", { textContent: s.nombre }), el("small", { textContent: s.fotos.length + " fotos" }),
+      cargados[i] ? el("b", { textContent: "✔ " + cargados[i] }) : ""));
+  });
+  caja.replaceChildren(...hijos);
+  caja.classList.remove("oculto");
 }
 
 function elegirSala(i) {
   salaActual = i;
-  [...$("salas").children].forEach((b, j) => b.classList.toggle("on", j === i));
   const s = datos.salas[i];
+  if (VARIAS()) {
+    try { sessionStorage.setItem("tf_rec_sala_" + J, s.k || s.dir); } catch (e) {}
+    $("cursos").classList.add("oculto");
+    $("salas").classList.remove("oculto");
+    $("salanom").replaceChildren(s.grupo ? el("small", { textContent: s.grupo }) : "", s.nombre);
+  }
   $("grilla").replaceChildren(...s.fotos.map((f, j) => {
     const b = el("button", { className: "f", onclick: () => abrir(i, j) },
       el("img", { src: urlFoto(s, f), loading: "lazy", alt: "Foto " + f.n }),
@@ -248,7 +288,7 @@ function pintarMios() {
     const [i, j] = ub, s = datos.salas[i], f = s.fotos[j];
     return el("div", { className: "fila" },
       el("img", { src: urlFoto(s, f), alt: "" }),
-      el("div", {}, el("b", { textContent: e.nombre }), s.nombre + " · foto " + f.n + (e.apellido ? " · " + e.apellido : "")),
+      el("div", {}, el("b", { textContent: e.nombre }), nombreSala(s) + " · foto " + f.n + (e.apellido ? " · " + e.apellido : "")),
       el("button", { type: "button", textContent: "Cambiar", onclick: () => abrir(i, j) }));
   }));
 }
@@ -267,7 +307,7 @@ function abrir(i, j) {
   const s = datos.salas[i], f = s.fotos[j], e = elegidos[clave(s, f)];
   $("vimg").src = urlFoto(s, f);
   $("vimg").alt = "Foto " + f.n;
-  $("vtit").textContent = (datos.salas.length > 1 ? s.nombre + " · " : "") + "Foto " + f.n + " (" + (j + 1) + " de " + s.fotos.length + ")";
+  $("vtit").textContent = (VARIAS() ? nombreSala(s) + " · " : "") + "Foto " + f.n + " (" + (j + 1) + " de " + s.fotos.length + ")";
   $("vnombre").value = e ? e.nombre : "";
   $("vapellido").value = e ? e.apellido : "";
   $("vborrar").classList.toggle("oculto", !e);
@@ -304,6 +344,7 @@ $("vborrar").onclick = () => {
   guardar(); grillaRefrescar(k); pintarMios(); cerrar();
 };
 $("vnombre").oninput = previa;
+$("bcursos").onclick = () => { verCursos(); scrollTo(0, $("cursos").offsetTop - 80); };
 $("vcerrar").onclick = cerrar;
 $("vant").onclick = () => mover(-1);
 $("vsig").onclick = () => mover(1);
@@ -319,7 +360,7 @@ $("benviar").onclick = async () => {
   const nombres = Object.keys(elegidos).map(k => {
     const ub = ubicar(k); if (!ub) return null;
     const s = datos.salas[ub[0]], e = elegidos[k];
-    return { sala: s.nombre, foto: s.fotos[ub[1]].n, nombre: e.nombre, apellido: e.apellido };
+    return { sala: nombreSala(s), foto: s.fotos[ub[1]].n, nombre: e.nombre, apellido: e.apellido };
   }).filter(Boolean);
   const b = $("benviar");
   b.disabled = true; b.textContent = "Enviando…";
