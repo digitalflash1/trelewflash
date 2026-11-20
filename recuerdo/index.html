@@ -7,13 +7,14 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <!-- Galería INTERNA del Recuerdo Escolar: los papás buscan a su hijo/a, escriben el nombre de pila
-     como va en el diseño y lo mandan por WhatsApp al local. Son fotos de chicos: sin medición,
+     como va en el diseño y lo mandan a la hoja (pestaña RecuerdoEscolar, accion nombresRecuerdo del
+     apps-script-pedidos-v2.gs del taller). Son fotos de chicos: sin medición,
      sin píxel, sin Clarity. La lista de fotos está cifrada con el código del jardín
      (datos/<id>.json, la arma privado/recuerdo-escolar/publicar_identificacion.py del taller). -->
 <link rel="icon" href="../assets/favicon.ico?v=2" sizes="any">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=2">
 <style>
-:root{--am:#FFE81A;--ng:#111;--gr:#f3f3f1;--wa:#25D366}
+:root{--am:#FFE81A;--ng:#111;--gr:#f3f3f1}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:var(--gr);color:var(--ng);padding-bottom:96px;-webkit-text-size-adjust:100%}
 header{background:var(--am);padding:14px 16px;position:sticky;top:0;z-index:5;box-shadow:0 2px 6px #0002}
@@ -45,7 +46,8 @@ button{font:inherit;cursor:pointer}
 #mios .fila button{border:0;background:none;color:#555;text-decoration:underline;font-size:13px;padding:4px}
 #pie{position:fixed;left:0;right:0;bottom:0;background:var(--ng);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;z-index:6}
 #pie span{flex:1;font-size:15px}#pie b{color:var(--am)}
-#pie button{background:var(--wa);color:#000;border:0;border-radius:10px;padding:12px 16px;font-weight:800;font-size:15px}
+#pie button{background:var(--am);color:#000;border:0;border-radius:10px;padding:12px 16px;font-weight:800;font-size:15px}
+#pie button:disabled{background:#444;color:#ccc;cursor:default}
 #visor{position:fixed;inset:0;background:#000e;z-index:10;display:flex;flex-direction:column;align-items:center;overflow:auto;padding:46px 0 16px}
 #visor .x{position:fixed;top:6px;right:10px;font-size:32px;color:#fff;background:none;border:0;padding:4px 10px;z-index:2}
 #visor .marco{position:relative;width:100%;display:flex;justify-content:center}
@@ -92,7 +94,7 @@ button{font:inherit;cursor:pointer}
     <ol>
       <li>Buscá a tu hijo o hija entre las fotos de la sala.</li>
       <li>Tocá la foto y escribí el <b>nombre de pila</b> tal como querés que salga en el recuerdo (con tildes y mayúsculas).</li>
-      <li>Tocá <b>Enviar por WhatsApp</b> y mandanos el mensaje.</li>
+      <li>Tocá <b>Enviar nombres</b>. Si después cambiás algo, volvé a tocarlo.</li>
     </ol>
   </section>
   <section id="mios" class="caja oculto"></section>
@@ -102,7 +104,7 @@ button{font:inherit;cursor:pointer}
 
 <footer id="pie" class="oculto">
   <span id="cuenta"></span>
-  <button id="benviar">Enviar por WhatsApp</button>
+  <button id="benviar">Enviar nombres</button>
 </footer>
 
 <div id="visor" class="oculto" role="dialog" aria-modal="true" aria-label="Foto">
@@ -128,12 +130,23 @@ button{font:inherit;cursor:pointer}
 
 <script>
 "use strict";
-const TELEFONO_WA = "5492804696961";
+const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxxkTt_esCqor3id4ZTcbav0uB7chR7QBFqwuxLPTmg_6pe6HfcPX4f0r0QBDrI0YkL5Q/exec";
 const $ = id => document.getElementById(id);
 const J = (new URLSearchParams(location.search).get("j") || "").toLowerCase();
 const VALIDO = /^[a-z0-9-]{4,40}$/.test(J);
 let datos = null, salaActual = 0, actual = null;
 let elegidos = leer("tf_rec_" + J) || {};   // "sala|foto" → {nombre, apellido}
+let enviado = leer("tf_rec_env_" + J);        // lo último que llegó a la hoja (JSON de elegidos)
+/* Id al azar de este celular: con él la hoja pisa los nombres que este papá cambia o quita. */
+const CELULAR = (() => {
+  let c = null; try { c = localStorage.getItem("tf_rec_cel"); } catch (e) {}
+  if (!/^[a-f0-9]{16}$/.test(c || "")) {
+    c = [...crypto.getRandomValues(new Uint8Array(8))].map(b => b.toString(16).padStart(2, "0")).join("");
+    try { localStorage.setItem("tf_rec_cel", c); } catch (e) {}
+  }
+  return c;
+})();
+const sinEnviar = () => JSON.stringify(elegidos) !== (enviado == null ? "{}" : enviado);
 
 function leer(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
 function guardar() { try { localStorage.setItem("tf_rec_" + J, JSON.stringify(elegidos)); } catch (e) {} }
@@ -220,11 +233,15 @@ function marcarFoto(b) {
 
 function pintarMios() {
   const ks = Object.keys(elegidos);
-  const caja = $("mios");
-  $("pie").classList.toggle("oculto", !ks.length);
+  const caja = $("mios"), falta = sinEnviar();
+  // Si quitó todo después de enviar, el pie queda para avisarle a la hoja.
+  $("pie").classList.toggle("oculto", !ks.length && !falta);
+  $("benviar").disabled = !falta;
+  $("benviar").textContent = falta ? "Enviar nombres" : "✔ Enviados";
+  $("cuenta").replaceChildren(el("b", { textContent: ks.length }), ks.length === 1 ? " nombre" : " nombres",
+    falta ? " · sin enviar" : " · ¡recibidos, gracias!");
   caja.classList.toggle("oculto", !ks.length);
   if (!ks.length) return;
-  $("cuenta").replaceChildren(el("b", { textContent: ks.length }), ks.length === 1 ? " nombre cargado" : " nombres cargados");
   caja.replaceChildren(el("h2", { textContent: "Tus nombres" }), ...ks.map(k => {
     const ub = ubicar(k), e = elegidos[k];
     if (!ub) return "";
@@ -297,19 +314,32 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowRight") mover(1);
 });
 
-$("benviar").onclick = () => {
-  const lineas = Object.keys(elegidos).map(k => {
+$("benviar").onclick = async () => {
+  const foto = JSON.stringify(elegidos);
+  const nombres = Object.keys(elegidos).map(k => {
     const ub = ubicar(k); if (!ub) return null;
-    const s = datos.salas[ub[0]], f = s.fotos[ub[1]], e = elegidos[k];
-    return "• " + (datos.salas.length > 1 ? s.nombre + ", foto " : "Foto ") + f.n + ": *" + e.nombre + "*" + (e.apellido ? " (" + e.apellido + ")" : "");
+    const s = datos.salas[ub[0]], e = elegidos[k];
+    return { sala: s.nombre, foto: s.fotos[ub[1]].n, nombre: e.nombre, apellido: e.apellido };
   }).filter(Boolean);
-  const texto = "Hola! Te paso el nombre para el Recuerdo Escolar 📸\n" + datos.jardin + "\n\n" + lineas.join("\n");
-  window.open("https://wa.me/" + TELEFONO_WA + "?text=" + encodeURIComponent(texto), "_blank", "noopener");
+  const b = $("benviar");
+  b.disabled = true; b.textContent = "Enviando…";
+  let error = "";
+  try {
+    // text/plain: así no hay preflight de CORS, que Apps Script no contesta.
+    const r = await fetch(PEDIDOS_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ accion: "nombresRecuerdo", galeria: J, celular: CELULAR, jardin: datos.jardin, nombres }) });
+    const d = await r.json();
+    if (!d.ok) error = d.error || "No se pudo enviar.";
+  } catch (e) { error = "No se pudo enviar. Revisá la conexión y probá de nuevo."; }
+  if (error) { alert(error); pintarMios(); return; }
+  enviado = foto;
+  try { localStorage.setItem("tf_rec_env_" + J, foto); } catch (e) {}
+  pintarMios();
 };
 
 $("fcodigo").onsubmit = ev => { ev.preventDefault(); const c = $("codigo").value; if (normalizar(c)) entrar(c); };
 
-/* El link que se manda por WhatsApp trae el código después del # (no viaja al servidor): abre solo.
+/* El link que el local manda por WhatsApp trae el código después del # (no viaja al servidor): abre solo.
    Si falta o no anda, queda el formulario para escribirlo. */
 if (!VALIDO) $("sinlink").classList.remove("oculto");
 else {
