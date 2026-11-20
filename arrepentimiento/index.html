@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Botón de arrepentimiento · Trelew Flash</title>
+<meta name="description" content="Cancelá una compra hecha en Trelew Flash dentro de los 10 días: completá el formulario y recibí tu código de trámite.">
+<link rel="canonical" href="https://trelewflash.com.ar/arrepentimiento/">
+<link rel="icon" href="../assets/favicon.ico?v=2" sizes="any">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=2">
+<!-- Botón de arrepentimiento (Res. 424/2020 de la Secretaría de Comercio Interior; art. 34 Ley 24.240 y
+     arts. 1110-1116 del Código Civil y Comercial). Sin registrarse: el formulario va al Apps Script de pedidos
+     (accion 'arrepentimiento', pestaña Arrepentimientos) y el cliente ve el código de trámite en el momento.
+     Lo enlazan la franja de arriba y el pie de ../index.html. -->
+<style>
+:root{--am:#FCFC14;--ng:#1a1a00;--fondo:#fff9c4;--borde:#fff59d;--texto:#4a4a00}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);font-family:system-ui,-apple-system,sans-serif;color:var(--ng);padding:16px;display:flex;justify-content:center}
+main{width:100%;max-width:560px}
+.volver{display:inline-block;color:var(--texto);font-size:14px;margin-bottom:10px}
+.caja{background:#fff;border:2px solid var(--borde);border-radius:14px;padding:18px 16px;margin-bottom:14px}
+h1{font-size:22px;margin:0 0 8px}
+h2{font-size:17px;margin:0 0 8px}
+p,li{font-size:15px;line-height:1.45}
+ul{padding-left:20px;margin:6px 0}
+label{display:block;font-weight:700;font-size:14px;margin-top:12px}
+label small{font-weight:400;color:#666}
+input,textarea{width:100%;border:2px solid #d8d27a;border-radius:10px;padding:10px;font:inherit;font-size:16px;margin-top:4px;background:#fff}
+input:focus,textarea:focus{outline:3px solid var(--am);border-color:var(--ng)}
+textarea{min-height:96px;resize:vertical}
+button{margin-top:16px;width:100%;border:0;border-radius:12px;background:var(--am);color:var(--ng);font:inherit;font-weight:800;font-size:17px;padding:14px;cursor:pointer;box-shadow:0 2px 0 #c9c900}
+button:disabled{opacity:.6;cursor:default}
+#error{color:#a00;font-size:14px;margin:10px 0 0;min-height:1em}
+.codigo{font-family:ui-monospace,Consolas,monospace;font-size:24px;font-weight:800;background:var(--fondo);border:2px dashed var(--ng);border-radius:10px;padding:10px;text-align:center;margin:10px 0;user-select:all}
+.chico{font-size:13px;color:#555}
+.oculto{display:none}
+</style>
+</head>
+<body>
+<main>
+  <a class="volver" href="../">← Volver a la tienda</a>
+
+  <section class="caja">
+    <h1>↩️ Botón de arrepentimiento</h1>
+    <p>Si compraste en Trelew Flash por la web o a distancia, podés <b>cancelar la compra dentro de los 10 días
+      corridos</b> desde que la hiciste o desde que recibiste el producto (lo último que pase), sin dar motivos y
+      sin costo. No hace falta registrarse.</p>
+    <ul>
+      <li>Completá el formulario y te damos un <b>código de trámite</b> en el momento.</li>
+      <li>Te contactamos para coordinar la devolución del producto y del dinero.</li>
+    </ul>
+    <p class="chico">Ley 24.240 de Defensa del Consumidor (art. 34) y Resolución 424/2020. En productos hechos a
+      pedido con tus fotos o tu diseño puede no corresponder (art. 1116 del Código Civil y Comercial): igual
+      registramos tu solicitud y te respondemos.</p>
+  </section>
+
+  <section class="caja" id="formulario">
+    <h2>Tus datos</h2>
+    <form id="f" novalidate>
+      <label for="nombre">Nombre y apellido</label>
+      <input id="nombre" autocomplete="name" maxlength="120" required>
+      <label for="contacto">WhatsApp o email <small>(para responderte)</small></label>
+      <input id="contacto" autocomplete="tel" maxlength="120" required>
+      <label for="pedido">Número de pedido <small>(opcional, ej. A-0123)</small></label>
+      <input id="pedido" maxlength="60" autocapitalize="characters">
+      <label for="fechaCompra">Fecha de la compra <small>(aproximada está bien)</small></label>
+      <input id="fechaCompra" type="date">
+      <label for="detalle">¿Qué compra querés cancelar?</label>
+      <textarea id="detalle" maxlength="1000" required placeholder="Ej.: 20 fotos 10x15 retiradas el lunes"></textarea>
+      <button id="enviar">Cancelar mi compra</button>
+      <p id="error" role="alert"></p>
+    </form>
+  </section>
+
+  <section class="caja oculto" id="listo" aria-live="polite">
+    <h2>✔ Recibimos tu solicitud</h2>
+    <p>Este es tu código de trámite. Guardalo (sacale una captura):</p>
+    <div class="codigo" id="codigo"></div>
+    <p id="cuando" class="chico"></p>
+    <p>Te vamos a contactar a <b id="a"></b> para coordinar la devolución.</p>
+  </section>
+</main>
+
+<script>
+"use strict";
+const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxxkTt_esCqor3id4ZTcbav0uB7chR7QBFqwuxLPTmg_6pe6HfcPX4f0r0QBDrI0YkL5Q/exec";
+const $ = id => document.getElementById(id);
+$("fechaCompra").max = new Date().toISOString().slice(0, 10);
+
+$("f").onsubmit = async ev => {
+  ev.preventDefault();
+  const v = id => $(id).value.trim();
+  const faltan = ["nombre", "contacto", "detalle"].filter(id => !v(id));
+  if (faltan.length) { $("error").textContent = "Completá tu nombre, cómo contactarte y qué compra querés cancelar."; $(faltan[0]).focus(); return; }
+  $("error").textContent = "";
+  $("enviar").disabled = true; $("enviar").textContent = "Enviando…";
+  try {
+    // text/plain: así no hay preflight de CORS, que Apps Script no contesta.
+    const r = await fetch(PEDIDOS_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ accion: "arrepentimiento", nombre: v("nombre"), contacto: v("contacto"),
+        pedido: v("pedido"), fechaCompra: v("fechaCompra"), detalle: v("detalle") }) });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || "No se pudo enviar.");
+    $("codigo").textContent = d.codigo;
+    $("cuando").textContent = "Registrado el " + d.fecha + ".";
+    $("a").textContent = v("contacto");
+    $("formulario").classList.add("oculto");
+    $("listo").classList.remove("oculto");
+    scrollTo(0, 0);
+  } catch (e) {
+    $("error").textContent = (e instanceof TypeError ? "No se pudo enviar. Revisá la conexión y probá de nuevo." : e.message) +
+      " Si sigue fallando, escribinos por WhatsApp al 280 469-6961.";
+    $("enviar").disabled = false; $("enviar").textContent = "Cancelar mi compra";
+  }
+};
+</script>
+</body>
+</html>
