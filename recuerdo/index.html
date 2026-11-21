@@ -201,7 +201,9 @@ button{font:inherit;cursor:pointer}
   <div class="tot" id="pagoTotal"></div>
   <p>Podés pagarlo por transferencia (copiá el alias y transferí desde la app de tu banco):</p>
   <div id="pagoFilas"></div>
-  <p>Después tocá el botón verde para mandarnos el pedido por WhatsApp. Si ya pagaste, adjuntá el comprobante.</p>
+  <p>Si ya transferiste, tocá <b>Ya pagué</b> y adjuntá el comprobante en WhatsApp. Si no, mandanos el pedido y pagalo después.</p>
+  <!-- «Ya pagué»: mismo pedido + aviso de que transfirió, para que adjunte el comprobante. -->
+  <a class="bt wa" id="pagoYa" href="#" target="_blank" rel="noopener">✅ Ya pagué · mandar el comprobante</a>
   <a class="bt wa" id="pagoWa" href="#" target="_blank" rel="noopener">Mandar el pedido por WhatsApp</a>
   <button type="button" class="bt" id="pagoCerrar">Cerrar</button>
 </div></div>
@@ -512,6 +514,8 @@ function pedirPorWhatsApp() {
   const texto = "Hola! Quiero pedir el Recuerdo Escolar del " + datos.jardin + ":\n" + lineas.join("\n") +
     "\nTotal: " + pesos(nombres.length * datos.precio) + " (" + nombres.length + " × " + pesos(datos.precio) + ")";
   $("pagoWa").href = "https://wa.me/" + TELEFONO_WA + "?text=" + encodeURIComponent(texto);
+  $("pagoYa").href = "https://wa.me/" + TELEFONO_WA + "?text=" +
+    encodeURIComponent(texto + "\n\nYa hice la transferencia, te adjunto el comprobante.");
   $("pagoTotal").replaceChildren("Costo: " + pesos(nombres.length * datos.precio),
     nombres.length > 1 ? el("small", { textContent: nombres.length + " recuerdos de " + pesos(datos.precio) }) : "");
   $("pagoFilas").replaceChildren(...DATOS_TRANSFERENCIA.map(d => {
@@ -531,6 +535,7 @@ function pedirPorWhatsApp() {
   medirRec("recuerdo_pedir", { cantidad: nombres.length, value: nombres.length * datos.precio, currency: "ARS" });
 }
 $("pagoWa").addEventListener("click", () => medirRec("clic_whatsapp", { cantidad: listaNombres().length }));
+$("pagoYa").addEventListener("click", () => medirRec("clic_whatsapp", { cantidad: listaNombres().length, ya_pago: true }));
 $("pagoCerrar").onclick = () => $("pago").classList.add("oculto");
 
 $("benviar").onclick = async () => {
