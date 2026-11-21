@@ -58,6 +58,16 @@ button{font:inherit;cursor:pointer}
 #pie{position:fixed;left:0;right:0;bottom:0;background:var(--ng);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;z-index:6}
 #pie span{flex:1;font-size:15px}#pie b{color:var(--am)}
 #pie button{background:var(--am);color:#000;border:0;border-radius:10px;padding:12px 16px;font-weight:800;font-size:15px}
+#pie button.wa{background:#25D366}
+#pago{position:fixed;inset:0;background:#000a;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px}
+#pago .cpago{background:#fff;border-radius:14px;max-width:420px;width:100%;padding:18px;border-top:8px solid var(--am);max-height:92vh;overflow:auto}
+#pago h2{font-size:19px;margin-bottom:6px}#pago p{font-size:14px;line-height:1.35;margin:6px 0}
+#pago .tot{font-size:22px;font-weight:800;margin:8px 0}#pago .tot small{display:block;font-size:13px;font-weight:400;color:#666}
+#pago .fila{display:flex;align-items:center;gap:8px;background:#f1f1f1;border-radius:8px;padding:8px 10px;margin:6px 0}
+#pago .etq{font-size:12px;color:#666;width:54px}#pago .val{flex:1;font-weight:700;word-break:break-all}
+#pago .fila button{border:2px solid var(--ng);background:#fff;border-radius:8px;padding:6px 10px;font-weight:700}
+#pago .bt{display:block;width:100%;margin-top:10px;border:2px solid #ccc;background:#fff;color:#444;border-radius:10px;padding:12px;font-weight:800;font-size:15px;text-align:center;text-decoration:none}
+#pago .bt.wa{background:#25D366;border-color:#25D366;color:#fff}
 #pie button:disabled{background:#444;color:#ccc;cursor:default}
 #visor{position:fixed;inset:0;background:#000e;z-index:10;display:flex;flex-direction:column;align-items:center;overflow:auto;padding:46px 0 16px}
 #visor .x{position:fixed;top:6px;right:10px;font-size:32px;color:#fff;background:none;border:0;padding:4px 10px;z-index:2}
@@ -110,7 +120,7 @@ button{font:inherit;cursor:pointer}
     <ol>
       <li id="paso1">Buscá a tu hijo o hija entre las fotos de la sala.</li>
       <li>Tocá la foto y escribí el <b>nombre de pila</b> tal como querés que salga en el recuerdo (con tildes y mayúsculas).</li>
-      <li>Tocá <b>Enviar nombres</b>. Si después cambiás algo, volvé a tocarlo.</li>
+      <li id="paso3">Tocá <b>Enviar nombres</b>. Si después cambiás algo, volvé a tocarlo.</li>
     </ol>
   </section>
   <section id="mios" class="caja oculto"></section>
@@ -126,6 +136,18 @@ button{font:inherit;cursor:pointer}
   <span id="cuenta"></span>
   <button id="benviar">Enviar nombres</button>
 </footer>
+
+<!-- Jardines con cobro propio: al tocar «Pedir por WhatsApp», costo y datos de la transferencia para copiar.
+     WhatsApp se abre recién con el botón verde, como en la galería: si no, tapa el cartel antes de copiar. -->
+<div id="pago" class="oculto" role="dialog" aria-modal="true" aria-label="Pedido"><div class="cpago">
+  <h2>Recuerdo Escolar</h2>
+  <div class="tot" id="pagoTotal"></div>
+  <p>Podés pagarlo por transferencia (copiá el alias y transferí desde la app de tu banco):</p>
+  <div id="pagoFilas"></div>
+  <p>Después tocá el botón verde para mandarnos el pedido por WhatsApp. Si ya pagaste, adjuntá el comprobante.</p>
+  <a class="bt wa" id="pagoWa" href="#" target="_blank" rel="noopener">Mandar el pedido por WhatsApp</a>
+  <button type="button" class="bt" id="pagoCerrar">Cerrar</button>
+</div></div>
 
 <div id="visor" class="oculto" role="dialog" aria-modal="true" aria-label="Foto">
   <button class="x" id="vcerrar" aria-label="Cerrar">✕</button>
@@ -150,6 +172,13 @@ button{font:inherit;cursor:pointer}
 
 <script>
 "use strict";
+const TELEFONO_WA = "5492804696961";   // el mismo de la tienda
+// Mismos datos que DATOS_TRANSFERENCIA de ../index.html y ../galeria/index.html: si cambian, tocar los tres.
+const DATOS_TRANSFERENCIA = [
+  { etiqueta: "Alias", valor: "trelewflash" },
+  { etiqueta: "Titular", valor: "Roberto Fabricio Gacitua", sinCopiar: true },
+  { etiqueta: "CBU", valor: "3840200500000040430508" }
+];
 const PEDIDOS_URL = "https://script.google.com/macros/s/AKfycbxxkTt_esCqor3id4ZTcbav0uB7chR7QBFqwuxLPTmg_6pe6HfcPX4f0r0QBDrI0YkL5Q/exec";
 const $ = id => document.getElementById(id);
 const J = (new URLSearchParams(location.search).get("j") || "").toLowerCase();
@@ -222,6 +251,10 @@ function urlFoto(s, f) { return (s.base || datos.base) + encodeURIComponent(s.di
 const clave = (s, f) => (s.k || s.dir) + "|" + f.n;
 const nombreSala = s => (s.grupo ? s.grupo + " · " : "") + s.nombre;
 const VARIAS = () => datos.salas.length > 1;
+/* Jardín donde cada papá encarga y paga su recuerdo con nosotros (no lo cobra la escuela): datos.precio
+   (lo pone --precio del script). Muestra el precio y el botón del pie pide por WhatsApp. */
+const COBRA = () => datos.precio > 0;
+const pesos = n => "$" + Math.round(n).toLocaleString("es-AR");
 
 function mostrarGaleria() {
   $("entrar").classList.add("oculto");
@@ -234,6 +267,10 @@ function mostrarGaleria() {
     const i = datos.salas.findIndex(s => (s.k || s.dir) === previo);
     if (i >= 0) elegirSala(i); else verCursos();
   } else elegirSala(0);
+  if (COBRA()) {
+    $("paso3").replaceChildren("Tocá ", el("b", { textContent: "Pedir por WhatsApp" }), ".");
+    $("benviar").classList.add("wa");
+  }
   pintarMios();
 }
 
@@ -287,10 +324,16 @@ function pintarMios() {
   const caja = $("mios"), falta = sinEnviar();
   // Si quitó todo después de enviar, el pie queda para avisarle a la hoja.
   $("pie").classList.toggle("oculto", !ks.length && !falta);
-  $("benviar").disabled = !falta;
-  $("benviar").textContent = falta ? "Enviar nombres" : "✔ Enviados";
-  $("cuenta").replaceChildren(el("b", { textContent: ks.length }), ks.length === 1 ? " nombre" : " nombres",
-    falta ? " · sin enviar" : " · ¡recibidos, gracias!");
+  if (COBRA()) {   // se puede volver a pedir siempre: el WhatsApp es el pedido
+    $("benviar").disabled = !ks.length;
+    $("benviar").textContent = "Pedir por WhatsApp";
+    $("cuenta").replaceChildren(el("b", { textContent: ks.length }), ks.length === 1 ? " recuerdo" : " recuerdos");
+  } else {
+    $("benviar").disabled = !falta;
+    $("benviar").textContent = falta ? "Enviar nombres" : "✔ Enviados";
+    $("cuenta").replaceChildren(el("b", { textContent: ks.length }), ks.length === 1 ? " nombre" : " nombres",
+      falta ? " · sin enviar" : " · ¡recibidos, gracias!");
+  }
   caja.classList.toggle("oculto", !ks.length);
   if (!ks.length) return;
   caja.replaceChildren(el("h2", { textContent: "Tus nombres" }), ...ks.map(k => {
@@ -366,13 +409,52 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowRight") mover(1);
 });
 
-$("benviar").onclick = async () => {
-  const foto = JSON.stringify(elegidos);
-  const nombres = Object.keys(elegidos).map(k => {
+function listaNombres() {
+  return Object.keys(elegidos).map(k => {
     const ub = ubicar(k); if (!ub) return null;
     const s = datos.salas[ub[0]], e = elegidos[k];
     return { sala: nombreSala(s), foto: s.fotos[ub[1]].n, nombre: e.nombre, apellido: e.apellido };
   }).filter(Boolean);
+}
+
+/* Con cobro: los nombres van igual a la hoja (sin esperar la respuesta, con keepalive para que no se corte al
+   salir a WhatsApp) y se abre WhatsApp con el pedido ya escrito. */
+function pedirPorWhatsApp() {
+  const foto = JSON.stringify(elegidos), nombres = listaNombres();
+  if (!nombres.length) return;
+  try {
+    fetch(PEDIDOS_URL, { method: "POST", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ accion: "nombresRecuerdo", galeria: J, celular: CELULAR, jardin: datos.jardin, nombres }) })
+      .then(r => r.json()).then(d => { if (d.ok) { enviado = foto; try { localStorage.setItem("tf_rec_env_" + J, foto); } catch (e) {} } })
+      .catch(() => {});
+  } catch (e) {}
+  const lineas = nombres.map(n => "• " + n.nombre + (n.apellido ? " " + n.apellido : "") + " (" + n.sala + ", foto " + n.foto + ")");
+  const texto = "Hola! Quiero pedir el Recuerdo Escolar del " + datos.jardin + ":\n" + lineas.join("\n") +
+    "\nTotal: " + pesos(nombres.length * datos.precio) + " (" + nombres.length + " × " + pesos(datos.precio) + ")";
+  $("pagoWa").href = "https://wa.me/" + TELEFONO_WA + "?text=" + encodeURIComponent(texto);
+  $("pagoTotal").replaceChildren("Costo: " + pesos(nombres.length * datos.precio),
+    nombres.length > 1 ? el("small", { textContent: nombres.length + " recuerdos de " + pesos(datos.precio) }) : "");
+  $("pagoFilas").replaceChildren(...DATOS_TRANSFERENCIA.map(d => {
+    const fila = el("div", { className: "fila" }, el("span", { className: "etq", textContent: d.etiqueta }),
+      el("span", { className: "val", textContent: d.valor }));
+    if (!d.sinCopiar) {
+      const b = el("button", { type: "button", textContent: "Copiar" });
+      b.onclick = async () => {
+        try { await navigator.clipboard.writeText(d.valor); b.textContent = "¡Copiado!"; setTimeout(() => b.textContent = "Copiar", 1500); }
+        catch (e) { window.prompt("Copiá el " + d.etiqueta + ":", d.valor); }
+      };
+      fila.append(b);
+    }
+    return fila;
+  }));
+  $("pago").classList.remove("oculto");
+}
+$("pagoCerrar").onclick = () => $("pago").classList.add("oculto");
+
+$("benviar").onclick = async () => {
+  if (COBRA()) return pedirPorWhatsApp();
+  const foto = JSON.stringify(elegidos);
+  const nombres = listaNombres();
   const b = $("benviar");
   b.disabled = true; b.textContent = "Enviando…";
   let error = "";
