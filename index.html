@@ -5773,7 +5773,13 @@ function abrirPantallaDeUrl(pantalla, params) {
         case "p-servicios": abrirServicios(); return;
         case "p-sociales":  abrirSociales(); return;
         case "p-revelar":   abrirRevelar(); return;
-        case "p-eventos":   abrirEventos(String((params && params.get("evento")) || "")); return;
+        case "p-eventos": {
+            /* «&buscar=jardin»: llega con la búsqueda hecha (el cartel del Recuerdo Escolar muestra todos los jardines). */
+            const buscar = String((params && params.get("buscar")) || "").trim().slice(0, 60);
+            if (buscar) { filtroEventos.texto = buscar; eventosVisibles = EVENTOS_POR_PAGINA; }
+            abrirEventos(String((params && params.get("evento")) || ""));
+            return;
+        }
         case "p-simulador": {
             /* Sin grupo válido no hay nada que simular: se queda un paso atrás,
                en la pantalla donde se elige el tamaño. */

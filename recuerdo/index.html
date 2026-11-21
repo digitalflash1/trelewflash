@@ -8,9 +8,34 @@
 <meta name="referrer" content="no-referrer">
 <!-- Galería INTERNA del Recuerdo Escolar: los papás buscan a su hijo/a, escriben el nombre de pila
      como va en el diseño y lo mandan a la hoja (pestaña RecuerdoEscolar, accion nombresRecuerdo del
-     apps-script-pedidos-v2.gs del taller). Son fotos de chicos: sin medición,
-     sin píxel, sin Clarity. La lista de fotos está cifrada con el código del jardín
+     apps-script-pedidos-v2.gs del taller). Son fotos de chicos: sin GTM, sin píxel, sin Clarity.
+     La lista de fotos está cifrada con el código del jardín
      (datos/<id>.json, la arma privado/recuerdo-escolar/publicar_identificacion.py del taller). -->
+<!-- Medición: solo GA4 (G-7ZGZ6GP56R, el de la tienda), igual que la galería de eventos: mismo
+     consentimiento (tf_cookies) y mismo «?nomedir=1». Ni nombres ni teléfonos. page_location va SIN el
+     «#c=…»: ese es el código de la sala y no tiene que quedar guardado en Google. «Ver la tienda» lleva
+     utm_source=recuerdo-escolar para ver en Analytics cuántos papás pasan a la tienda y qué compran. -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){ dataLayer.push(arguments); }
+gtag('consent', 'default', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+  analytics_storage: 'denied', functionality_storage: 'granted', security_storage: 'granted', wait_for_update: 500 });
+try {
+  if (localStorage.getItem('tf_cookies') === 'ok')
+    gtag('consent', 'update', { analytics_storage: 'granted' });
+  var _nm = new URLSearchParams(location.search).get('nomedir');
+  if (_nm === '1') localStorage.setItem('tf_no_medir', '1');
+  if (_nm === '0') localStorage.removeItem('tf_no_medir');
+  if (localStorage.getItem('tf_no_medir') === '1') window['ga-disable-G-7ZGZ6GP56R'] = true;
+} catch (e) { /* navegación privada */ }
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7ZGZ6GP56R"></script>
+<script>
+gtag('js', new Date());
+gtag('config', 'G-7ZGZ6GP56R', { page_location: location.origin + location.pathname + location.search });
+/* La medición nunca debe romper la página. */
+function medir(evento, datos) { try { gtag('event', evento, datos || {}); } catch (e) {} }
+</script>
 <link rel="icon" href="../assets/favicon.ico?v=2" sizes="any">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=2">
 <style>
@@ -85,6 +110,16 @@ button{font:inherit;cursor:pointer}
 #visor .bts{display:flex;gap:8px;margin-top:12px}
 #visor .bts .btn{flex:1;background:var(--am);color:var(--ng)}
 #visor .bts .borrar{background:#fff;color:#a00;border-color:#a00;flex:none}
+/* Cartel «fotos de los actos»: lleva a la tienda con todos los eventos de jardines (?ver=eventos&buscar=jardin). */
+.promo{display:block;margin:16px 10px 10px;border-radius:14px;overflow:hidden;background:var(--ng);color:#fff;text-decoration:none;box-shadow:0 4px 14px #0003}
+/* actos-jardines.webp: collage de 3 portadas de actos (9 de Julio 429, 25 de Mayo 429, 9 de Julio 412), con marca. */
+.promo .fotos{display:block;width:100%;height:auto;aspect-ratio:1206/400;object-fit:cover;background:#333}
+.promo .txt{padding:12px 14px 14px;border-top:5px solid var(--am)}
+.promo small{display:inline-block;background:var(--am);color:var(--ng);font-weight:800;font-size:11px;letter-spacing:.06em;border-radius:6px;padding:2px 7px}
+.promo b{display:block;font-size:19px;line-height:1.2;margin:7px 0 4px}
+.promo span{display:block;font-size:14px;line-height:1.35;color:#ddd}
+.promo .bt{display:inline-block;margin-top:10px;background:var(--am);color:var(--ng);font-weight:800;font-size:15px;border-radius:10px;padding:10px 16px}
+@media (min-width:700px){.promo{display:flex;max-width:760px;margin:20px auto 10px}.promo .fotos{flex:1.3;width:0;aspect-ratio:auto;min-height:190px}.promo .txt{flex:1;border-top:0;border-left:5px solid var(--am)}}
 .oculto{display:none!important}
 </style>
 </head>
@@ -130,6 +165,17 @@ button{font:inherit;cursor:pointer}
     <button type="button" id="bcursos">Cambiar curso</button>
   </nav>
   <div id="grilla"></div>
+  <!-- Publicidad propia: las fotos de los actos de TODOS los jardines en la tienda. El href lo completa
+       linkTienda() con las utm_…; las portadas son las de eventos ya publicados en la tienda. -->
+  <a class="promo" id="promoActos" href="../?ver=eventos&amp;buscar=jardin">
+    <img class="fotos" src="../assets/recuerdo/actos-jardines.webp" alt="" loading="lazy" width="1206" height="400">
+    <div class="txt">
+      <small>FOTOS DE LOS ACTOS</small>
+      <b>¿Ya viste las fotos de los actos del jardín?</b>
+      <span>25 de Mayo, 9 de Julio, Día de la Tradición y fin de año, de todos los jardines. Buscá a tu hijo o hija y pedí las que quieras.</span>
+      <span class="bt">Ver fotos de actos ›</span>
+    </div>
+  </a>
 </main>
 
 <footer id="pie" class="oculto">
@@ -229,7 +275,7 @@ async function entrar(codigo, silencioso) {
     if (!sobre) {
       const r = await fetch("datos/" + J + ".json", { cache: "no-cache" });
       // Galería desactivada (--desactivar borra su datos/<id>.json): el link lleva a la portada de la tienda.
-      if (r.status === 404) { location.replace("../"); return new Promise(() => {}); }
+      if (r.status === 404) { location.replace("../?utm_source=recuerdo-escolar&utm_medium=link-interno&utm_campaign=galeria-cerrada"); return new Promise(() => {}); }
       if (!r.ok) throw new Error("no está");
       sobre = await r.json();
     }
@@ -256,11 +302,33 @@ const VARIAS = () => datos.salas.length > 1;
 const COBRA = () => datos.precio > 0;
 const pesos = n => "$" + Math.round(n).toLocaleString("es-AR");
 
+/* Medición (ver el <head>). evento_id = el jardín: es la dimensión «Evento de galeria» de GA4. */
+const slug = t => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+function medirRec(evento, extra) {
+  medir(evento, Object.assign({ origen: "recuerdo", galeria_id: J, evento_id: datos ? datos.jardin : J }, extra || {}));
+}
+/* «Ver la tienda» con utm_…: la tienda las conserva (PARAMS_CAMPANIA) y en Adquisición de tráfico se ve
+   cuántas visitas vienen del Recuerdo y si compran. Sin «#c=…», obvio. */
+function linkTienda() {
+  const utm = "utm_source=recuerdo-escolar&utm_medium=link-interno&utm_campaign=" + encodeURIComponent(slug(datos.jardin) || J);
+  const a = document.querySelector("a.tienda"), p = $("promoActos");
+  if (a) {
+    a.href = "../?" + utm + "&utm_content=boton-tienda";
+    a.onclick = () => medirRec("ir_a_tienda");
+  }
+  if (p) {   // utm_content distingue el cartel del botón de arriba
+    p.href = "../?ver=eventos&buscar=jardin&" + utm + "&utm_content=cartel-actos";
+    p.onclick = () => medirRec("ir_a_actos");
+  }
+}
+
 function mostrarGaleria() {
   $("entrar").classList.add("oculto");
   $("galeria").classList.remove("oculto");
   $("jardin").textContent = datos.jardin;
   document.title = "Recuerdo Escolar · " + datos.jardin;
+  medirRec("ver_recuerdo", { cobra: COBRA() ? "si" : "no" });
+  linkTienda();
   if (VARIAS()) {
     $("paso1").textContent = "Elegí el curso de tu hijo o hija y buscalo entre las fotos. Si tenés más de un hijo, cambiá de curso y repetí.";
     let previo = null; try { previo = sessionStorage.getItem("tf_rec_sala_" + J); } catch (e) {}
@@ -389,6 +457,7 @@ $("vform").onsubmit = ev => {
   const nombre = limpio($("vnombre").value);
   if (!nombre) { $("vnombre").focus(); return; }
   const s = datos.salas[actual[0]], k = clave(s, s.fotos[actual[1]]);
+  if (!elegidos[k]) medirRec("recuerdo_foto_elegida", { sala: nombreSala(s) });
   elegidos[k] = { nombre, apellido: limpio($("vapellido").value) };
   guardar(); grillaRefrescar(k); pintarMios(); cerrar();
 };
@@ -448,7 +517,9 @@ function pedirPorWhatsApp() {
     return fila;
   }));
   $("pago").classList.remove("oculto");
+  medirRec("recuerdo_pedir", { cantidad: nombres.length, value: nombres.length * datos.precio, currency: "ARS" });
 }
+$("pagoWa").addEventListener("click", () => medirRec("clic_whatsapp", { cantidad: listaNombres().length }));
 $("pagoCerrar").onclick = () => $("pago").classList.add("oculto");
 
 $("benviar").onclick = async () => {
@@ -468,6 +539,7 @@ $("benviar").onclick = async () => {
   if (error) { alert(error); pintarMios(); return; }
   enviado = foto;
   try { localStorage.setItem("tf_rec_env_" + J, foto); } catch (e) {}
+  medirRec("recuerdo_enviar_nombres", { cantidad: nombres.length });
   pintarMios();
 };
 
