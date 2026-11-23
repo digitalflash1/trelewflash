@@ -124,6 +124,11 @@ button{font:inherit;cursor:pointer}
 .interno{display:flex;align-items:flex-start;gap:10px;margin:10px;padding:10px 12px;background:#eaf6ec;border:1px solid #9fd3a8;border-radius:10px;color:#1d4d27;font-size:14px;line-height:1.35}
 .interno .ic{flex:none;font-size:20px;line-height:1}
 .interno b{display:block;font-size:15px;margin-bottom:1px}
+/* Modo seños (datos.senos): primero el turno, después la sala; cada nombre se registra al guardar. */
+#cursos .volver{display:inline-block;width:auto;border:0;background:none;padding:2px 0;margin:0 0 4px;font-weight:700;font-size:14px;text-decoration:underline;color:#555}
+#cursos button.turno{font-size:18px;padding:16px 14px;background:var(--am)}
+#exito{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:30;max-width:calc(100% - 24px);background:#1d7a34;color:#fff;font-weight:800;font-size:16px;padding:13px 18px;border-radius:12px;box-shadow:0 6px 18px #0005;text-align:center}
+#exito.mal{background:#a00}
 .oculto{display:none!important}
 </style>
 </head>
@@ -142,7 +147,7 @@ button{font:inherit;cursor:pointer}
      sitemap, sin link desde la tienda y la lista de fotos va cifrada con el código del jardín. -->
 <aside class="interno" role="note">
   <span class="ic" aria-hidden="true">🔒</span>
-  <div><b>Estás en una galería interna del jardín</b>Solo pueden entrar las familias que tienen el link. No es pública, no aparece en Google ni en la tienda.</div>
+  <div><b>Estás en una galería interna del jardín</b><span id="internoTxt">Solo pueden entrar las familias que tienen el link.</span> No es pública, no aparece en Google ni en la tienda.</div>
 </aside>
 
 <section id="entrar" class="caja oculto">
@@ -165,7 +170,7 @@ button{font:inherit;cursor:pointer}
     <h2>¿Cómo se usa?</h2>
     <ol>
       <li id="paso1">Buscá a tu hijo o hija entre las fotos de la sala.</li>
-      <li>Tocá la foto y escribí el <b>nombre de pila</b> tal como querés que salga en el recuerdo (con tildes y mayúsculas).</li>
+      <li id="paso2">Tocá la foto y escribí el <b>nombre de pila</b> tal como querés que salga en el recuerdo (con tildes y mayúsculas).</li>
       <li id="paso3">Tocá <b>Enviar nombres</b>. Si después cambiás algo, volvé a tocarlo.</li>
     </ol>
   </section>
@@ -188,6 +193,8 @@ button{font:inherit;cursor:pointer}
     </div>
   </a>
 </main>
+
+<div id="exito" class="oculto" role="status" aria-live="polite"></div>
 
 <footer id="pie" class="oculto">
   <span id="cuenta"></span>
@@ -217,9 +224,9 @@ button{font:inherit;cursor:pointer}
   </div>
   <p class="t" id="vtit"></p>
   <form id="vform" autocomplete="off">
-    <label for="vnombre">Nombre de pila <small>(como va en el recuerdo)</small></label>
+    <label for="vnombre" id="vnombreEtq">Nombre de pila <small>(como va en el recuerdo)</small></label>
     <input id="vnombre" autocapitalize="words" maxlength="40" placeholder="ej. Martina Belén">
-    <label for="vapellido">Apellido <small>(opcional, para ubicarlo nosotros)</small></label>
+    <label for="vapellido" id="vapellidoEtq">Apellido <small>(opcional, para ubicarlo nosotros)</small></label>
     <input id="vapellido" autocapitalize="words" maxlength="40">
     <p class="previa">Así va a salir:<b id="vprevia"></b></p>
     <div class="bts">
@@ -313,6 +320,11 @@ const VARIAS = () => datos.salas.length > 1;
 /* Jardín donde cada papá encarga y paga su recuerdo con nosotros (no lo cobra la escuela): datos.precio
    (lo pone --precio del script). Muestra el precio y el botón del pie pide por WhatsApp. */
 const COBRA = () => datos.precio > 0;
+/* Jardín donde los nombres los carga la seño (--unir --senos): la escuela arregla con los papás y no nos
+   rinde. Pregunta turno y sala, cada nombre se registra al guardarlo y no hay ningún botón de WhatsApp. */
+const SENOS = () => !!datos.senos && !COBRA();
+const GRUPOS = () => [...new Set(datos.salas.map(s => s.grupo).filter(Boolean))];
+let turnoElegido = null;
 const pesos = n => "$" + Math.round(n).toLocaleString("es-AR");
 
 /* Medición (ver el <head>). evento_id = el jardín: es la dimensión «Evento de galeria» de GA4. */
@@ -340,10 +352,21 @@ function mostrarGaleria() {
   $("galeria").classList.remove("oculto");
   $("jardin").textContent = datos.jardin;
   document.title = "Recuerdo Escolar · " + datos.jardin;
-  medirRec("ver_recuerdo", { cobra: COBRA() ? "si" : "no" });
+  medirRec("ver_recuerdo", { cobra: COBRA() ? "si" : "no", senos: SENOS() ? "si" : "no" });
   linkTienda();
+  if (SENOS()) {
+    $("internoTxt").textContent = "Solo pueden entrar las seños que tienen el link.";
+    $("paso2").replaceChildren("Tocá la foto de cada nene o nena y escribí su ", el("b", { textContent: "nombre de pila" }),
+      " tal como va en el recuerdo (con tildes y mayúsculas).");
+    $("paso3").replaceChildren("Tocá ", el("b", { textContent: "Guardar nombre" }),
+      ": queda registrado al instante. Si te equivocaste, tocá la foto de nuevo y corregilo.");
+    $("vnombreEtq").replaceChildren("Nombre del nene o nena ", el("small", { textContent: "(como va en el recuerdo)" }));
+    $("vapellidoEtq").replaceChildren("Apellido ", el("small", { textContent: "(opcional)" }));
+    $("bcursos").textContent = "Cambiar sala";
+  }
   if (VARIAS()) {
-    $("paso1").textContent = "Elegí el curso de tu hijo o hija y buscalo entre las fotos. Si tenés más de un hijo, cambiá de curso y repetí.";
+    if (SENOS()) $("paso1").textContent = GRUPOS().length > 1 ? "Elegí el turno y después la sala." : "Elegí la sala.";
+    else $("paso1").textContent = "Elegí el curso de tu hijo o hija y buscalo entre las fotos. Si tenés más de un hijo, cambiá de curso y repetí.";
     let previo = null; try { previo = sessionStorage.getItem("tf_rec_sala_" + J); } catch (e) {}
     const i = datos.salas.findIndex(s => (s.k || s.dir) === previo);
     if (i >= 0) elegirSala(i); else verCursos();
@@ -362,10 +385,23 @@ function verCursos() {
   $("salas").classList.add("oculto");
   const caja = $("cursos"), cargados = {};
   Object.keys(elegidos).forEach(k => { const ub = ubicar(k); if (ub) cargados[ub[0]] = (cargados[ub[0]] || 0) + 1; });
-  const hijos = [el("h2", { textContent: "Elegí el curso" })];
+  if (SENOS() && GRUPOS().length > 1 && !turnoElegido) {   // paso 1: el turno
+    caja.replaceChildren(el("h2", { textContent: "¿Qué turno?" }), ...GRUPOS().map(g => {
+      const n = datos.salas.filter(s => s.grupo === g).length;
+      return el("button", { type: "button", className: "turno", onclick: () => { turnoElegido = g; verCursos(); } },
+        el("span", { textContent: g }), el("small", { textContent: n + (n === 1 ? " sala" : " salas") }));
+    }));
+    caja.classList.remove("oculto");
+    return;
+  }
+  const hijos = SENOS() && turnoElegido
+    ? [el("button", { type: "button", className: "volver", textContent: "‹ Cambiar turno",
+        onclick: () => { turnoElegido = null; verCursos(); } }), el("h2", { textContent: turnoElegido + ": elegí la sala" })]
+    : [el("h2", { textContent: SENOS() ? "Elegí la sala" : "Elegí el curso" })];
   let grupo;
   datos.salas.forEach((s, i) => {
-    if (s.grupo && s.grupo !== grupo) hijos.push(el("h3", { textContent: grupo = s.grupo }));
+    if (SENOS() && turnoElegido && s.grupo !== turnoElegido) return;
+    if (s.grupo && s.grupo !== grupo && !(SENOS() && turnoElegido)) hijos.push(el("h3", { textContent: grupo = s.grupo }));
     hijos.push(el("button", { type: "button", onclick: () => { elegirSala(i); scrollTo(0, $("salas").offsetTop - 80); } },
       el("span", { textContent: s.nombre }), el("small", { textContent: s.fotos.length + " fotos" }),
       cargados[i] ? el("b", { textContent: "✔ " + cargados[i] }) : ""));
@@ -377,6 +413,7 @@ function verCursos() {
 function elegirSala(i) {
   salaActual = i;
   const s = datos.salas[i];
+  turnoElegido = s.grupo || null;
   if (VARIAS()) {
     try { sessionStorage.setItem("tf_rec_sala_" + J, s.k || s.dir); } catch (e) {}
     $("cursos").classList.add("oculto");
@@ -405,6 +442,14 @@ function pintarMios() {
   const caja = $("mios"), falta = sinEnviar();
   // Si quitó todo después de enviar, el pie queda para avisarle a la hoja.
   $("pie").classList.toggle("oculto", !ks.length && !falta);
+  if (SENOS()) {   // cada nombre se registra solo: el pie aparece únicamente si algo no llegó
+    $("pie").classList.toggle("oculto", !falta);
+    $("benviar").disabled = enviando;
+    $("benviar").textContent = enviando ? "Registrando…" : "Reintentar";
+    $("cuenta").replaceChildren("⚠️ Hay nombres sin registrar");
+    caja.classList.add("oculto");   // la seño los ve en cada foto y en la lista de salas
+    return;
+  }
   if (COBRA()) {   // se puede volver a pedir siempre: el WhatsApp es el pedido
     $("benviar").disabled = !ks.length;
     $("benviar").textContent = "Pedir por WhatsApp";
@@ -446,7 +491,7 @@ function abrir(i, j) {
   $("vnombre").value = e ? e.nombre : "";
   $("vapellido").value = e ? e.apellido : "";
   $("vborrar").classList.toggle("oculto", !e);
-  $("vguardar").textContent = e ? "✔ Guardar cambios" : "✔ Es mi hijo/a";
+  $("vguardar").textContent = e ? "✔ Guardar cambios" : SENOS() ? "✔ Guardar nombre" : "✔ Es mi hijo/a";
   previa();
   $("visor").classList.remove("oculto");
   document.body.style.overflow = "hidden";
@@ -473,12 +518,46 @@ $("vform").onsubmit = ev => {
   if (!elegidos[k]) medirRec("recuerdo_foto_elegida", { sala: nombreSala(s) });
   elegidos[k] = { nombre, apellido: limpio($("vapellido").value) };
   guardar(); grillaRefrescar(k); pintarMios(); cerrar();
+  if (SENOS()) registrar("✔ " + nombre + " se registró con éxito");
 };
 $("vborrar").onclick = () => {
   const s = datos.salas[actual[0]], k = clave(s, s.fotos[actual[1]]);
+  const quitado = elegidos[k] && elegidos[k].nombre;
   delete elegidos[k];
   guardar(); grillaRefrescar(k); pintarMios(); cerrar();
+  if (SENOS()) registrar("Se quitó el nombre " + (quitado || ""));
 };
+
+/* Modo seños: manda la lista entera de este celular (la hoja pisa sus filas) apenas se guarda o se quita un
+   nombre. De a un envío por vez: si se guardan dos seguidos, el segundo sale después con la lista completa. */
+let enviando = false, otraVez = null;
+function avisar(texto, mal) {
+  const a = $("exito");
+  a.textContent = texto; a.classList.toggle("mal", !!mal); a.classList.remove("oculto");
+  clearTimeout(avisar.t); avisar.t = setTimeout(() => a.classList.add("oculto"), mal ? 5000 : 2600);
+}
+async function registrar(mensaje) {
+  if (enviando) { otraVez = mensaje; return; }
+  enviando = true; pintarMios();
+  const foto = JSON.stringify(elegidos), nombres = listaNombres();
+  let error = "";
+  try {
+    const r = await fetch(PEDIDOS_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ accion: "nombresRecuerdo", galeria: J, celular: CELULAR, jardin: datos.jardin, nombres }) });
+    const d = await r.json();
+    if (!d.ok) error = d.error || "No se pudo registrar.";
+  } catch (e) { error = "No se pudo registrar. Revisá la conexión y tocá Reintentar."; }
+  enviando = false;
+  if (!error) {
+    enviado = foto;
+    try { localStorage.setItem("tf_rec_env_" + J, foto); } catch (e) {}
+    medirRec("recuerdo_enviar_nombres", { cantidad: nombres.length });
+  }
+  if (otraVez !== null && !error) { const m = otraVez; otraVez = null; pintarMios(); return registrar(m); }
+  otraVez = null;
+  pintarMios();
+  avisar(error || mensaje, !!error);
+}
 $("vnombre").oninput = previa;
 $("bcursos").onclick = () => { verCursos(); scrollTo(0, $("cursos").offsetTop - 80); };
 $("vcerrar").onclick = cerrar;
@@ -506,7 +585,7 @@ function pedirPorWhatsApp() {
   if (!nombres.length) return;
   try {
     fetch(PEDIDOS_URL, { method: "POST", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ accion: "nombresRecuerdo", galeria: J, celular: CELULAR, jardin: datos.jardin, nombres }) })
+      body: JSON.stringify({ accion: "nombresRecuerdo", galeria: J, celular: CELULAR, jardin: datos.jardin, nombres, pedido: true }) })
       .then(r => r.json()).then(d => { if (d.ok) { enviado = foto; try { localStorage.setItem("tf_rec_env_" + J, foto); } catch (e) {} } })
       .catch(() => {});
   } catch (e) {}
@@ -540,6 +619,7 @@ $("pagoCerrar").onclick = () => $("pago").classList.add("oculto");
 
 $("benviar").onclick = async () => {
   if (COBRA()) return pedirPorWhatsApp();
+  if (SENOS()) return registrar("✔ Nombres registrados con éxito");
   const foto = JSON.stringify(elegidos);
   const nombres = listaNombres();
   const b = $("benviar");
