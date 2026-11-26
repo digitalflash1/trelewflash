@@ -72,6 +72,8 @@ $telWa = "5492804696961"
 $urlsSitemap = New-Object System.Collections.Generic.List[string]
 $urlsSitemap.Add("  <url><loc>$(Esc $sitio)</loc><lastmod>$hoy</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>")
 $urlsSitemap.Add("  <url><loc>$(Esc ($sitio + "e/"))</loc><lastmod>$hoy</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>")
+# Páginas sueltas de servicios (escritas a mano, no salen de la hoja).
+$urlsSitemap.Add("  <url><loc>$(Esc ($sitio + "bajar-fotos-del-celular/"))</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>")
 
 # JSON para <script type="application/ld+json">. pwsh 7 no escapa «<», así
 # que se corta a mano cualquier «</» que pudiera cerrar el script antes.

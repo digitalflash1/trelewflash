@@ -1454,6 +1454,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <details class="faq-item"><summary>¿Qué más hacen con fotos, además de revelarlas?</summary>
         <p>Tazas sublimadas, imanes, llaveros, pines, collages, cuadros, álbumes, stickers, el recuerdo
         escolar y restauración de fotos viejas. Todo con tu foto y desde el celular.</p></details>
+    <details class="faq-item"><summary>¿Me pueden bajar las fotos del celular a un pendrive?</summary>
+        <p>Sí: traés el celu al local, pasamos todas tus fotos a un pendrive, te revelamos las que elijas y, si
+        querés, te liberamos espacio. <a href="bajar-fotos-del-celular/">Ver cómo es</a>.</p></details>
     <details class="faq-item"><summary>¿Dónde veo las fotos de un acto, una fiesta o un evento?</summary>
         <p>Si cubrimos el evento, las fotos están en
         <a href="#" onclick="abrirEventos(); return false;">Fotos de eventos sociales</a>: buscás el evento,
@@ -8789,12 +8792,13 @@ const NOVEDADES = [
       imgVertical: "assets/revela-celular-vertical.webp", emoji: "📸",
       color: "#fcfc14", accion: "revelar", cta: "Ver medidas y precios ➜" },
     /* Bajamos las fotos del celu a un pendrive (servicio en el local, no está
-       en el catálogo): abre WhatsApp con el mismo mensaje del anuncio de Meta.
+       en el catálogo): lleva a su página, bajar-fotos-del-celular/, que es la
+       que indexa Google y tiene el WhatsApp con el mismo mensaje del anuncio.
        Fuente editable en trelewflash-taller/carteles/banner-bajamos-fotos/. */
     { img: "assets/bajamos-fotos.webp", imgFallback: "assets/bajamos-fotos.jpg",
       imgVertical: "assets/bajamos-fotos-vertical.webp", imgAncha: "assets/bajamos-fotos-ancha.webp",
-      emoji: "📱", color: "#111", accion: "consulta",
-      consulta: "Hola! Se me llenó el celu y quiero bajar las fotos a un pendrive", cta: "Escribinos ➜" },
+      emoji: "📱", color: "#111", accion: "pagina", pagina: "bajar-fotos-del-celular/",
+      cta: "Ver cómo es ➜" },
     /* Recuerdo escolar: la portada de una carpeta, tal cual se entrega. Lleva a
        la pantalla con el presupuesto y el video.
        La portada es 10:7 y el carrusel 16:9: el asset ya viene encajado entero
@@ -9072,6 +9076,9 @@ function abrirNovedad(n) {
     if (n.accion === "revelar") { flujo = "pedido"; abrirRevelar(); }
     if (n.accion === "evento") { abrirEventos(); abrirEvento(n.evento); }
     if (n.accion === "galeria" && n.galeria) window.location.href = n.galeria;
+    /* Página suelta del sitio (no una pantalla de la tienda): la dirección lleva
+       las etiquetas de campaña con las que llegó el cliente. */
+    if (n.accion === "pagina" && n.pagina) window.location.href = conCampania(new URL(n.pagina, urlBase()).toString());
     /* Los del carrusel del catálogo. Si el souvenir todavía no cargó (o se
        ocultó desde el admin) se cae a la lista de souvenirs. */
     if (n.accion === "souvenir") {
@@ -9327,6 +9334,7 @@ if (MOSTRAR_CATALOGO) {
     <!-- Enlace común (no un botón con onclick) para que Google llegue a la
          lista de eventos y desde ahí a la página de cada uno. -->
     <div><a href="e/">📸 Fotos de eventos en Trelew</a></div>
+    <div><a href="bajar-fotos-del-celular/">📱 Bajar las fotos del celular a un pendrive</a></div>
     Diseñado por <a class="cred-mr" href="https://marceloriffo81.github.io/?utm_source=trelewflash&amp;utm_medium=referral&amp;utm_campaign=credito-pie"
         target="_blank" rel="noopener" title="Marcelo Riffo · webs y sistemas">MR</a>
     <!-- Acceso administrativo deshabilitado (el panel de precios no se publica acá).
