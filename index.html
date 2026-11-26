@@ -686,6 +686,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(37,211,102,.3); }
     .btn-agregar:hover { background: var(--color-wa-hover); }
     .btn-agregar:disabled { background: #cbd5e1; color:#fff; box-shadow: none; cursor: not-allowed; }
+    .aviso-registrando { margin: 10px 0 0; padding: 10px 12px; background: #fff7ed; border: 1px solid #fdba74;
+        border-radius: 10px; font-size: 13.5px; color: #7c2d12; line-height: 1.45; text-align: left; }
 
     .btn-tool { background: #fff; border: 2px solid #cbd5e1; padding: 9px 12px; font-size: 13px; font-weight: bold;
         border-radius: 8px; cursor: pointer; display:inline-block; }
@@ -2295,6 +2297,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div id="lista-carrito"></div>
     <div class="total-carrito">Total: <span id="total-carrito">$ 0</span></div>
     <button id="btn-wa-final" class="btn-agregar" onclick="enviarPedido()">🟢 Enviar pedido por WhatsApp</button>
+    <p id="aviso-registrando" class="aviso-registrando oculto">📶 Estamos subiendo tu pedido y tus fotos.
+        <b>No cierres ni salgas de esta pantalla</b> hasta que aparezca el número de pedido.</p>
 </div>
 
 <!-- MODAL DE RECORTE -->
@@ -2356,6 +2360,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div id="transf-filas"></div>
             <p class="transf-pie">Transferí el total del pedido y mandanos el comprobante por WhatsApp.</p>
         </div>
+        <button id="pedido-reintentar" class="btn-tool oculto" style="margin-top:14px;" onclick="reintentarPedido()">🔄 Volver a intentar registrarlo</button>
         <a id="pedido-wa-btn" href="#" target="_blank" class="btn-agregar oculto" style="display:inline-block;text-decoration:none;margin-top:14px;">🟢 Abrir WhatsApp para enviar</a>
         <div style="margin-top:10px;"><button class="btn-tool" onclick="document.getElementById(&#39;modal-pedido&#39;).classList.add(&#39;oculto&#39;)">Cerrar</button></div>
     </div>
@@ -8422,31 +8427,53 @@ async function enviarPedido() {
         }))
     };
 
+    /* Mismo carrito = mismo envio_id, también si el cliente vuelve a tocar el
+       botón después de un error: el .gs devuelve el número que ya dio en vez de
+       registrar el pedido dos veces (puede que el primer intento sí haya llegado
+       y solo se perdió la respuesta). */
+    const firma = firmaCarrito();
+    if (!envioPendiente || envioPendiente.firma !== firma) {
+        envioPendiente = { firma: firma, id: nuevoIdEnvio() };
+    }
+    payload.envio_id = envioPendiente.id;
+
     /* Estado del registro: "sin-backend" (la hoja no está configurada), "ok" o
        "error". Antes los tres casos se mostraban igual, así que una caída del
        backend era invisible: el cliente creía que su pedido estaba guardado. */
-    let numero = null, carpeta = null, estado = "sin-backend", sinImagenes = false;
+    let numero = null, carpeta = null, estado = "sin-backend", sinImagenes = false, intentos = 0;
+    const aviso = document.getElementById("aviso-registrando");
     if (PEDIDOS_URL) {
         estado = "error";
-        try {
-            let cuerpo = JSON.stringify(payload);
-            /* Tope de seguridad: si el pedido es enorme igual se registra, pero sin
-               imágenes. Perder los adjuntos (que el cliente manda por WhatsApp) es
-               mucho mejor que perder el pedido entero. */
-            if (cuerpo.length > MAX_POST_MB * 1024 * 1024) {
-                payload.items.forEach(it => { it.imagenes = []; });
-                payload.imagenes_omitidas = true;
-                sinImagenes = true;
-                cuerpo = JSON.stringify(payload);
+        aviso.classList.remove("oculto");
+        let cuerpo = JSON.stringify(payload);
+        /* Tope de seguridad: si el pedido es enorme igual se registra, pero sin
+           imágenes. Perder los adjuntos (que el cliente manda por WhatsApp) es
+           mucho mejor que perder el pedido entero. */
+        if (cuerpo.length > MAX_POST_MB * 1024 * 1024) {
+            payload.items.forEach(it => { it.imagenes = []; });
+            payload.imagenes_omitidas = true;
+            sinImagenes = true;
+            cuerpo = JSON.stringify(payload);
+        }
+        /* Reintentos (26/11/2026): una clienta tocó «Enviar», salió de Safari
+           mientras subían las fotos y el iPhone cortó el envío; el pedido no llegó
+           a Apps Script. Ahora, si el envío se corta, se espera a que la página
+           vuelva a estar a la vista y se prueba otra vez. Solo se reintenta un
+           error de conexión: si el .gs contesta que el pedido no es válido,
+           repetirlo daría lo mismo. */
+        for (intentos = 1; intentos <= INTENTOS_PEDIDO; intentos++) {
+            if (intentos > 1) {
+                btn.textContent = "⏳ Reintentando (" + intentos + " de " + INTENTOS_PEDIDO + ")…";
+                await esperarPaginaVisible();
+                await new Promise(r => setTimeout(r, ESPERA_REINTENTO_MS[intentos - 2] || 6000));
             }
-            const resp = await fetch(PEDIDOS_URL, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: cuerpo
-            });
-            const data = await resp.json();
-            if (data && data.ok) { numero = data.numero; carpeta = data.carpeta; estado = "ok"; marcarPedidoParaResena(); }
-        } catch (e) { estado = "error"; }
+            try {
+                const data = await postPedido(cuerpo);
+                if (data && data.ok) { numero = data.numero; carpeta = data.carpeta; estado = "ok"; marcarPedidoParaResena(); }
+                break;
+            } catch (e) { estado = "error"; }
+        }
+        aviso.classList.add("oculto");
     }
 
     btn.disabled = false; btn.textContent = txtOrig;
@@ -8461,6 +8488,7 @@ async function enviarPedido() {
         cantidad_items: carrito.length,
         fotos: carrito.reduce((s, it) => s + ((it.fotos || []).length), 0),
         estado: estado,
+        intentos: intentos,
         imagenes_omitidas: sinImagenes,
         currency: "ARS"
     };
@@ -8490,6 +8518,51 @@ async function enviarPedido() {
     medir("purchase", medicionPedido);
 
     mostrarResultadoPedido(numero, carpeta, wa, estado, sinImagenes);
+}
+
+/* --- Envío del pedido con reintentos --- */
+const INTENTOS_PEDIDO = 4;
+const ESPERA_REINTENTO_MS = [2000, 5000, 10000];
+/* Generoso a propósito: 17 MB de fotos con datos móviles lentos tardan minutos, y
+   cortar un envío que iba bien obliga a subir todo de nuevo. */
+const TIEMPO_MAX_ENVIO_MS = 300000;
+let envioPendiente = null;            // { firma, id } del carrito que se está mandando
+function nuevoIdEnvio() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12);
+}
+/* Lo que identifica al pedido: cliente, total y cada ítem con sus fotos. Si el
+   cliente cambia algo, es otro pedido y lleva otro envio_id. */
+function firmaCarrito() {
+    return JSON.stringify([cliente && cliente.nombre, cliente && cliente.telefono, totalCarrito(),
+        carrito.map(it => [it.sku || it.tipo, it.variante || "", it.cant || 1, it.subtotal,
+            (it.fotos || []).map(f => (f.name || "") + ":" + String(f.url || "").length)])]);
+}
+function esperarPaginaVisible() {
+    if (!document.hidden) return Promise.resolve();
+    return new Promise(function (r) {
+        function listo() { if (!document.hidden) { document.removeEventListener("visibilitychange", listo); r(); } }
+        document.addEventListener("visibilitychange", listo);
+    });
+}
+/* Lanza error si no hubo respuesta válida (corte, tiempo agotado, página de
+   error de Google en vez de JSON): eso es lo que se reintenta. */
+async function postPedido(cuerpo) {
+    const ctrl = window.AbortController ? new AbortController() : null;
+    const reloj = ctrl ? setTimeout(() => ctrl.abort(), TIEMPO_MAX_ENVIO_MS) : null;
+    try {
+        const resp = await fetch(PEDIDOS_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: cuerpo,
+            signal: ctrl ? ctrl.signal : undefined
+        });
+        return await resp.json();
+    } finally { if (reloj) clearTimeout(reloj); }
+}
+function reintentarPedido() {
+    document.getElementById("modal-pedido").classList.add("oculto");
+    enviarPedido();
 }
 
 /* subieronImagenes: true solo si el backend recibió las fotos (pedido registrado
@@ -8546,11 +8619,13 @@ function mostrarResultadoPedido(numero, carpeta, wa, estado, sinImagenes) {
         tit.innerHTML = "📲 Enviá tu pedido por WhatsApp";
         det.innerHTML = "Tocá el botón para abrir WhatsApp con tu pedido cargado. Acordate de adjuntar tus fotos en el chat." +
                         avisoModal("⚠️ No pudimos guardar tu pedido en nuestro sistema (puede ser la conexión). " +
-                                   "No te preocupes: <b>el detalle completo viaja en el mensaje de WhatsApp</b> y lo cargamos nosotros.");
+                                   "Podés <b>volver a intentarlo</b> con el botón de abajo o mandarlo igual: " +
+                                   "<b>el detalle completo viaja en el mensaje de WhatsApp</b> y lo cargamos nosotros.");
     } else {
         tit.innerHTML = "📲 Enviá tu pedido";
         det.innerHTML = "Tocá el botón para abrir WhatsApp con tu pedido cargado. Acordate de adjuntar tus fotos en el chat.";
     }
+    document.getElementById("pedido-reintentar").classList.toggle("oculto", estado !== "error");
     waBtn.href = wa; waBtn.classList.remove("oculto");
     /* Conversión final: que el pedido se registre no significa que el cliente
        haya escrito. Esto mide el clic real que abre WhatsApp. */
