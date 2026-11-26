@@ -696,12 +696,23 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .btn-tool.activo { border-color: var(--color-wa); background: #e8f9ef; color: #128C7E; }
 
     .thumbs { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    /* Las del revelado llevan botón en las cuatro esquinas: más aire entre fotos. */
+    #thumbs-sim { gap: 18px 16px; padding: 6px 0 0 6px; }
     .thumb { position:relative; }
     .thumb img { width:46px; height:46px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1; }
     .thumb button { position:absolute; top:-6px; right:-6px; width:18px; height:18px; border-radius:50%;
         border:none; background:#dc2626; color:#fff; font-size:11px; line-height:1; cursor:pointer; }
     .thumb .btn-texto-foto { top:auto; bottom:-6px; background:#f8fafc; color:#334155; border:1px solid #cbd5e1; font-size:10px; padding:0; }
     .thumb .btn-crop-foto { top:auto; bottom:-6px; right:auto; left:-6px; background:#f8fafc; color:#334155; border:1px solid #cbd5e1; font-size:10px; padding:0; }
+    /* Retoque de UNA foto: esquina de arriba a la izquierda; prendido, dorado. */
+    .thumb .btn-retoque-foto { right:auto; left:-6px; background:#f8fafc; color:#334155; border:1px solid #cbd5e1; font-size:10px; padding:0; filter:grayscale(1); }
+    .thumb .btn-retoque-foto.activo { background:#facc15; border-color:#ca8a04; filter:none; }
+    .thumb.con-retoque img { border: 2px solid #eab308; }
+    .nota-otra-medida { margin: 12px 0 0; padding: 12px 14px; background: #f0fdf4; border: 1px solid #86efac;
+        border-radius: 10px; font-size: 14px; color: #14532d; line-height: 1.45; }
+    .nota-otra-medida .botones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .nota-otra-medida .btn-tool { margin: 0; }
+    .btn-otra-medida { display: block; width: 100%; margin: 4px 0 12px; }
 
     .modal-flotante { position: fixed; inset: 0; background: rgba(15,23,42,.75); z-index: 1000;
         display: flex; align-items: center; justify-content: center; padding: 14px; }
@@ -823,6 +834,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         font-weight: bold; box-shadow: 0 6px 18px rgba(0,0,0,.35); z-index: 1100; opacity: 0;
         transition: all .25s ease; white-space: nowrap; display: flex; align-items: center; gap: 10px; }
     #toast-carrito.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+    /* Avisos largos (el de «otra medida»): en dos líneas y sin salirse del celular. */
+    #toast-carrito.largo { white-space: normal; width: max-content; max-width: calc(100vw - 24px); border-radius: 16px; line-height: 1.3; }
+    #toast-carrito.largo button { flex-shrink: 0; }
     #toast-carrito button { background: var(--color-wa); color: #fff; border: none; border-radius: 16px;
         padding: 6px 12px; font-weight: bold; font-size: 13px; cursor: pointer; }
     #toast-carrito button:hover { background: var(--color-wa-hover); }
@@ -2029,8 +2043,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <p class="instruccion">2. ¿Necesita algún arreglo?</p>
     <label class="panel-retoque">
-        <input type="checkbox" id="chk-retoque" onchange="recalcularSim()">
-        <div><h4>Agregar retoque digital (+ <span id="lbl-monto-retoque">$ 11.500</span>)</h4><p>Restauración, corregir luces o cambiar el fondo.</p></div>
+        <input type="checkbox" id="chk-retoque" onchange="cambioRetoqueTodas()">
+        <div><h4>Agregar retoque digital (+ <span id="lbl-monto-retoque">$ 11.500</span><span class="solo-revelado"> por foto</span>)</h4><p>Restauración, corregir luces o cambiar el fondo.<span class="solo-revelado"> ¿Solo para algunas? Tocá <b>✨</b> en esas fotos.</span></p></div>
     </label>
     <label class="panel-retoque oculto" id="panel-iman">
         <input type="checkbox" id="chk-iman" onchange="recalcularSim()">
@@ -2083,6 +2097,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="monto">Subtotal de este ítem: <strong id="precio-sim">$ 0</strong></div>
         <button class="btn-agregar" onclick="agregarFotoAlCarrito()">➕ Agregar al carrito</button>
     </div>
+    <!-- Lo arma pintarNotaOtraMedida(): el revelado ya agregado y cómo sumar
+         fotos de otra medida al MISMO pedido (Gaston, 26/11/2026, armó dos
+         pedidos porque creyó que no se podía). -->
+    <div id="nota-otra-medida" class="nota-otra-medida oculto"></div>
 </div>
 
 <!-- BARRA DEL TALLER (solo compu)
@@ -2295,6 +2313,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <h2>Tu carrito</h2>
     <div id="datos-cliente-mini" class="datos-cliente-mini"></div>
     <div id="lista-carrito"></div>
+    <button type="button" id="btn-otra-medida" class="btn-tool btn-otra-medida oculto" onclick="mostrar('p-categorias')">➕ Agregar fotos de otra medida al mismo pedido</button>
     <div class="total-carrito">Total: <span id="total-carrito">$ 0</span></div>
     <button id="btn-wa-final" class="btn-agregar" onclick="enviarPedido()">🟢 Enviar pedido por WhatsApp</button>
     <p id="aviso-registrando" class="aviso-registrando oculto">📶 Estamos subiendo tu pedido y tus fotos.
@@ -6450,11 +6469,20 @@ function precioConocidoFoto() {
         return base * copias + armado + extras + retoque + textos;
     }
     if (imanActivo()) base = precioImanMedida() || base;
-    const retoque = retoqueOn ? COSTO_RETOQUE * retoquesFacturables(copias, adjuntosSim.length, false) : 0;
+    /* Con fotos adjuntas el retoque va foto por foto (✨); sin fotos, manda la casilla. */
+    let retoque = 0;
+    if (adjuntosSim.length) {
+        const n = adjuntosSim.filter(f => f.retoque).length;
+        if (n) retoque = COSTO_RETOQUE * retoquesFacturables(n, n, false);
+    } else if (retoqueOn) {
+        retoque = COSTO_RETOQUE * retoquesFacturables(copias, 0, false);
+    }
     return base * copias + retoque + textos;
 }
 
 function recalcularSim() {
+    document.querySelectorAll("#p-simulador .solo-revelado").forEach(e => e.classList.toggle("oculto", !simEsRevelado()));
+    pintarNotaOtraMedida();
     const inCant = document.getElementById("in-cantidad");
     if (grupoActual && !grupoActual.esCollage) {
         if (adjuntosSim.length) { inCant.value = adjuntosSim.length; inCant.disabled = true; }
@@ -6561,33 +6589,41 @@ async function agregarFotoAlCarrito() {
             const vi = varianteIman(medidaSel());
             if (vi) { unit = vi.precio; sku = vi.sku; prodNombre = "Foto imán"; varianteNombre = nombreItem + " con imán (polaroid)"; }
         }
-        // Si ya hay un ítem con el mismo SKU y retoque, se agrupa.
-        const existente = carrito.find(it => it.tipo === "Revelado de foto" &&
-            it.sku === sku && it.retoque === retoque && it.iman === imanOn);
-        if (existente) {
-            existente.cant += cant;
-            existente.fotos = existente.fotos.concat(fotosItem);
-            existente.mods = modsFotoItem(existente);
-            existente.subtotal = existente.precioUnit * existente.cant + montoMods(existente.mods);
-            existente.desc = nombreItem + " × " + existente.cant;
-            existente.detalle = detalleFotoItem(existente);
-        } else {
-            const nuevo = {
-                id: Date.now() + Math.random(),
-                tipo: "Revelado de foto",
-                sku: sku, producto: prodNombre, variante: varianteNombre, esCollage: false,
-                medida: nombreItem, estilo: selFoto.estilo, retoque: retoque, iman: imanOn,
-                cant: cant, precioUnit: unit,
-                desc: nombreItem + " × " + cant,
-                detalle: "",
-                aCotizar: selFoto.especial,
-                fotos: fotosItem
-            };
-            nuevo.mods = modsFotoItem(nuevo);
-            nuevo.subtotal = nuevo.precioUnit * nuevo.cant + montoMods(nuevo.mods);
-            nuevo.detalle = detalleFotoItem(nuevo);
-            carrito.push(nuevo);
-        }
+        /* Con fotos: un renglón para las que llevan ✨ retoque y otro para las que
+           no (una copia por foto). Sin fotos: la casilla y la cantidad, como antes. */
+        const tandas = fotosItem.length
+            ? [false, true].map(r => ({ retoque: r, fotos: fotosItem.filter(f => !!f.retoque === r) }))
+                           .filter(t => t.fotos.length).map(t => ({ ...t, cant: t.fotos.length }))
+            : [{ retoque: retoque, fotos: [], cant: cant }];
+        tandas.forEach(t => {
+            // Si ya hay un ítem con el mismo SKU y retoque, se agrupa.
+            const existente = carrito.find(it => it.tipo === "Revelado de foto" &&
+                it.sku === sku && it.retoque === t.retoque && it.iman === imanOn);
+            if (existente) {
+                existente.cant += t.cant;
+                existente.fotos = existente.fotos.concat(t.fotos);
+                existente.mods = modsFotoItem(existente);
+                existente.subtotal = existente.precioUnit * existente.cant + montoMods(existente.mods);
+                existente.desc = nombreItem + " × " + existente.cant;
+                existente.detalle = detalleFotoItem(existente);
+            } else {
+                const nuevo = {
+                    id: Date.now() + Math.random(),
+                    tipo: "Revelado de foto",
+                    sku: sku, producto: prodNombre, variante: varianteNombre, esCollage: false,
+                    medida: nombreItem, estilo: selFoto.estilo, retoque: t.retoque, iman: imanOn,
+                    cant: t.cant, precioUnit: unit,
+                    desc: nombreItem + " × " + t.cant,
+                    detalle: "",
+                    aCotizar: selFoto.especial,
+                    fotos: t.fotos
+                };
+                nuevo.mods = modsFotoItem(nuevo);
+                nuevo.subtotal = nuevo.precioUnit * nuevo.cant + montoMods(nuevo.mods);
+                nuevo.detalle = detalleFotoItem(nuevo);
+                carrito.push(nuevo);
+            }
+        });
     }
 
     medir("agregar_al_carrito", {
@@ -6607,12 +6643,38 @@ async function agregarFotoAlCarrito() {
     renderThumbs("thumbs-sim", adjuntosSim, "sim");
     document.getElementById("in-cantidad").value = 1;
     document.getElementById("chk-retoque").checked = false;
+    document.getElementById("chk-retoque").indeterminate = false;
     document.getElementById("chk-iman").checked = false;
     if (esCollage) reiniciarCollage();
     recalcularSim();
     actualizarBadges();
-    avisoAgregado();
+    if (esCollage) avisoAgregado();
+    else avisoToast('<span>✅ Agregado. ¿Fotos de otra medida? Sumalas al mismo pedido.</span>' +
+                    '<button onclick="mostrar(\'p-carrito\')">🛒 Ver carrito</button>', 7);
     ofrecerEnmarcar(fotosRecienPedidas);
+}
+
+/* Debajo de «Agregar al carrito»: lo que ya hay de revelado y cómo sumar otra
+   medida al mismo pedido. */
+function pintarNotaOtraMedida() {
+    const nota = document.getElementById("nota-otra-medida");
+    if (!nota) return;
+    const rev = carrito.filter(it => it.tipo === "Revelado de foto");
+    if (!rev.length || !simEsRevelado()) { nota.classList.add("oculto"); return; }
+    const lista = rev.map(it => escHtml(it.desc) + (it.retoque ? " ✨ con retoque" : "")).join(" · ");
+    nota.innerHTML = '✅ <b>Ya está en tu pedido:</b> ' + lista + '.<br>' +
+        '¿Tenés fotos para <b>otra medida</b>? Elegila, adjuntá esas fotos y tocá «Agregar al carrito»: ' +
+        'se suman al <b>mismo pedido</b>.' +
+        '<div class="botones">' +
+        '<button type="button" class="btn-tool" onclick="irAElegirMedida()">📏 Otra medida de acá</button>' +
+        '<button type="button" class="btn-tool" onclick="mostrar(\'p-categorias\')">🖼 Otros tamaños</button>' +
+        '<button type="button" class="btn-tool" onclick="mostrar(\'p-carrito\')">🛒 Ver el pedido</button>' +
+        '</div>';
+    nota.classList.remove("oculto");
+}
+function irAElegirMedida() {
+    const b = document.getElementById("botones-medida");
+    if (b) b.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 /* --- Diseñador de collage --- */
@@ -8156,7 +8218,47 @@ function adjuntosPendientes() {
     return false;
 }
 
-function adjuntarSim(ev)  { leerAdjuntos(ev, adjuntosSim, "thumbs-sim", "sim", () => { recalcularSim(); autoPlantillaCollage(); }); }
+function adjuntarSim(ev) {
+    leerAdjuntos(ev, adjuntosSim, "thumbs-sim", "sim", () => {
+        /* Las que llegan con «retocar todas» marcado (y no a medias) vienen con retoque. */
+        const chk = document.getElementById("chk-retoque");
+        const todas = chk.checked && !chk.indeterminate;
+        adjuntosSim.forEach(f => { if (f.retoque === undefined) f.retoque = todas; });
+        sincronizarChkRetoque();
+        renderThumbs("thumbs-sim", adjuntosSim, "sim");
+        recalcularSim(); autoPlantillaCollage();
+    });
+}
+/* ── Retoque por foto (26/11/2026) ──
+   Antes era una sola casilla para toda la tanda: para retocar una foto sola había
+   que agregarla aparte, y un cliente terminó armando dos pedidos. Ahora cada foto
+   del revelado lleva su ✨ y la casilla grande es «retocar todas». Al agregar, las
+   que tienen retoque van a su propio renglón del carrito. En collage el retoque es
+   por diseño y sigue siendo la casilla sola. */
+function simEsRevelado() { return !(grupoActual && grupoActual.esCollage); }
+function sincronizarChkRetoque() {
+    const chk = document.getElementById("chk-retoque");
+    if (!simEsRevelado() || !adjuntosSim.length) { chk.indeterminate = false; return; }
+    const n = adjuntosSim.filter(f => f.retoque).length;
+    chk.checked = n === adjuntosSim.length;
+    chk.indeterminate = n > 0 && n < adjuntosSim.length;
+}
+function cambioRetoqueTodas() {
+    const chk = document.getElementById("chk-retoque");
+    chk.indeterminate = false;
+    if (simEsRevelado()) {
+        adjuntosSim.forEach(f => { f.retoque = chk.checked; });
+        renderThumbs("thumbs-sim", adjuntosSim, "sim");
+    }
+    recalcularSim();
+}
+function toggleRetoqueFoto(i) {
+    const f = adjuntosSim[i]; if (!f) return;
+    f.retoque = !f.retoque;
+    sincronizarChkRetoque();
+    renderThumbs("thumbs-sim", adjuntosSim, "sim");
+    recalcularSim();
+}
 function adjuntarSouv(ev) { leerAdjuntos(ev, adjuntosSouv, "thumbs-souv", "souv", null); }
 /* La promo lleva su propio tope: son 30 copias, más que el máximo por producto
    del resto de la tienda (ver agregarPromoAlCarrito). */
@@ -8205,8 +8307,14 @@ async function leerAdjuntos(ev, destino, contId, tipo, onDone, maxFotos) {
 }
 function renderThumbs(contId, arr, tipo) {
     let out = arr.map((f, i) =>
-        '<div class="thumb' + (tipo === "sim" && f.texto ? ' con-texto' : '') + '"><img src="' + f.url + '">' +
+        '<div class="thumb' + (tipo === "sim" && f.texto ? ' con-texto' : '') +
+            (tipo === "sim" && f.retoque && simEsRevelado() ? ' con-retoque' : '') + '"><img src="' + f.url + '">' +
         '<button onclick="quitarAdjunto(\'' + tipo + '\',' + i + ')">×</button>' +
+        (tipo === "sim" && simEsRevelado()
+            ? '<button class="btn-retoque-foto' + (f.retoque ? ' activo' : '') + '" title="' +
+              (f.retoque ? 'Sacar el retoque de esta foto' : 'Retocar esta foto (+' + formatear(COSTO_RETOQUE) + ')') +
+              '" aria-pressed="' + (f.retoque ? 'true' : 'false') + '" onclick="toggleRetoqueFoto(' + i + ')">✨</button>'
+            : '') +
         (tipo === "sim"
             /* El monto sale del catálogo, no escrito a mano: si en la hoja sube
                el texto impreso, este cartelito quedaba diciendo el precio viejo. */
@@ -8225,6 +8333,10 @@ function renderThumbs(contId, arr, tipo) {
             ? '📝 Foto ' + (i + 1) + ': <span style="font-family:' + FUENTES[f.fuenteIdx || 0].css + ';font-size:16px;">"' + escHtml(f.texto) + '"</span> <small>(' + FUENTES[f.fuenteIdx || 0].nombre + ')</small>'
             : null).filter(Boolean);
         if (conTexto.length) out += '<div class="nota-info" style="flex-basis:100%;margin:4px 0 0;">' + conTexto.join("<br>") + '</div>';
+        const nRet = simEsRevelado() ? arr.filter(f => f.retoque).length : 0;
+        if (nRet) out += '<div class="nota-info" style="flex-basis:100%;margin:4px 0 0;">✨ Retoque en ' +
+            (nRet === arr.length ? (nRet === 1 ? 'la foto' : 'las ' + nRet + ' fotos') : nRet + ' de ' + arr.length + ' fotos') +
+            ' (+' + formatear(nRet * COSTO_RETOQUE) + ')</div>';
     }
     document.getElementById(contId).innerHTML = out;
 }
@@ -8276,7 +8388,7 @@ function textoFotoQuitar() {
 }
 function cerrarModalTexto() { document.getElementById("modal-texto").classList.add("oculto"); textoFotoIdx = null; }
 function quitarAdjunto(tipo, i) {
-    if (tipo === "sim")  { adjuntosSim.splice(i, 1);  renderThumbs("thumbs-sim", adjuntosSim, "sim"); recalcularSim(); }
+    if (tipo === "sim")  { adjuntosSim.splice(i, 1);  sincronizarChkRetoque(); renderThumbs("thumbs-sim", adjuntosSim, "sim"); recalcularSim(); }
     if (tipo === "souv") { adjuntosSouv.splice(i, 1); renderThumbs("thumbs-souv", adjuntosSouv, "souv"); }
     if (tipo === "ficha") { adjuntosFicha.splice(i, 1); renderThumbs("thumbs-ficha", adjuntosFicha, "ficha"); recalcularFicha(); }
     if (tipo === "promo") { adjuntosPromo.splice(i, 1); renderThumbs("thumbs-promo", adjuntosPromo, "promo"); actualizarPromo(); }
@@ -8386,6 +8498,8 @@ function renderCarrito() {
         gateBotonWA(true);
     }
 
+    document.getElementById("btn-otra-medida").classList.toggle("oculto",
+        !carrito.some(it => it.tipo === "Revelado de foto"));
     document.getElementById("total-carrito").innerHTML =
         formatear(totalCarrito()) + (hayCotizar ? ' <small style="font-size:14px;color:#64748b;">+ medidas a cotizar</small>' : "");
 }
@@ -8423,7 +8537,7 @@ async function enviarPedido() {
             precio_unit: (it.precioUnit != null ? it.precioUnit : it.subtotal),
             modificadores: it.mods || [],
             monto_modificadores: montoMods(it.mods),
-            imagenes: (it.fotos || []).map((f, k) => ({ name: f.name || ("foto-" + (k + 1) + ".jpg"), url: f.url }))
+            imagenes: (it.fotos || []).map((f, k) => ({ name: nombreFotoPedido(it, f, k), url: f.url }))
         }))
     };
 
@@ -8518,6 +8632,15 @@ async function enviarPedido() {
     medir("purchase", medicionPedido);
 
     mostrarResultadoPedido(numero, carpeta, wa, estado, sinImagenes);
+}
+
+/* Nombre con que la foto llega a Drive y a la carpeta del servidor. Las que
+   llevan retoque empiezan con «RETOQUE-» para que el local las vea sin abrir
+   PEDIDO.txt. El diseño del collage no es una foto a retocar. */
+function nombreFotoPedido(it, f, k) {
+    const nombre = f.name || ("foto-" + (k + 1) + ".jpg");
+    const conRetoque = it.retoque || (it.mods || []).some(m => m.id === "retoque");
+    return conRetoque && !/^diseño-/.test(nombre) ? "RETOQUE-" + nombre : nombre;
 }
 
 /* --- Envío del pedido con reintentos --- */
@@ -8716,6 +8839,7 @@ function avisoToast(html, segundos) {
     let t = document.getElementById("toast-carrito");
     if (!t) { t = document.createElement("div"); t.id = "toast-carrito"; document.body.appendChild(t); }
     t.innerHTML = html;
+    t.classList.toggle("largo", t.textContent.length > 50);
     t.classList.add("visible");
     clearTimeout(t._timer);
     t._timer = setTimeout(() => t.classList.remove("visible"), (segundos || 4) * 1000);
