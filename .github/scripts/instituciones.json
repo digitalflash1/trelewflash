@@ -57,5 +57,13 @@
   {"id":"garbo-gitano","re":"Garbo\\s+Gitano","nombre":"Garbo Gitano (flamenco)","corto":"Garbo Gitano","tipo":"danza","instagram":null,"facebook":"https://www.facebook.com/FlamencoenTrelew"},
   {"id":"flashmob","re":"Flash\\s*mob","nombre":"Flashmob Trelew Danzas Urbanas","corto":"Flashmob Trelew","tipo":"danza","instagram":null,"facebook":"https://www.facebook.com/FlashmobTrelew"},
   {"id":"orquesta-barrio-inta","re":"Orquesta\\s+(del\\s+)?Barrio\\s+Inta","nombre":"Orquesta Barrio INTA","corto":"Orquesta Barrio INTA","tipo":"otro","instagram":null,"facebook":"https://www.facebook.com/orquestabarriointa"},
+  {"id":"kya-danzas","re":"\\bK[yi]a\\s+(Danzas|Gala)","nombre":"Academia Kya Danzas Clásicas","corto":"Kya Danzas","tipo":"danza","instagram":null,"facebook":"https://www.facebook.com/kya.danzasclasicas.9"},
+  {"id":"amor-sureno","re":"Amor\\s+Sure[ñn]o","nombre":"Ballet Folklórico Amor Sureño","corto":"Ballet Amor Sureño","tipo":"danza","instagram":null,"facebook":"https://www.facebook.com/profile.php?id=61581225822056"},
+  {"id":"nghenechen","re":"Nghenechen","nombre":"Ballet Nghenechen","corto":"Ballet Nghenechen","tipo":"danza","instagram":null,"facebook":"https://www.facebook.com/ballet.nghenechen"},
+  {"id":"ayun-mapu","re":"Ay[uú]n\\s*Map[uú]","nombre":"Ayun Mapu Danzas Folklóricas Argentinas","corto":"Ayun Mapu","tipo":"danza","instagram":null,"facebook":"https://www.facebook.com/profile.php?id=100080303264212"},
+  {"id":"el-michay","re":"El\\s+Michay","nombre":"Grupo Folklórico El Michay","corto":"El Michay","tipo":"danza","instagram":null,"facebook":"https://www.facebook.com/profile.php?id=100063628749182"},
+  {"id":"coppelia","re":"Coppelia","nombre":"Escuela de Danzas Clásicas \"Coppelia\"","corto":"Danzas Coppelia","tipo":"danza","instagram":null,"facebook":"https://www.facebook.com/profile.php?id=100063841740461"},
+  {"id":"newen","re":"\\bNewen\\b","nombre":"Danzas Folklóricas Newen","corto":"Danzas Newen","tipo":"danza","instagram":null,"facebook":"https://www.facebook.com/profile.php?id=100086417087746"},
+  {"id":"dabket-arabia","re":"Dabket","nombre":"Estudio de Danzas Árabes \"Dabket Arabia\"","corto":"Dabket Arabia","tipo":"danza","instagram":null,"facebook":"https://www.facebook.com/estudiodabketarabia"},
   {"id":"samira","re":"Samira","nombre":"Academia de Danzas Árabes \"Samira\"","corto":"Danzas Samira","tipo":"danza","instagram":null,"facebook":"https://www.facebook.com/EricaTolosaBellydance/"}
 ]
