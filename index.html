@@ -5149,8 +5149,11 @@ async function compartirSeccion(idPantalla) {
        WhatsApp. Si todavía no está armada, la resuelve 404.html. El #fotos
        hace que quien lo toca vaya derecho a las fotos; sin él, la página
        muestra el evento (es la versión que indexa Google). */
+    /* La lista de eventos va por eventos/, que tiene su vista previa propia
+       (collage de portadas); «?ver=eventos» mostraría la de la portada. */
     const url = deEvento ? new URL("e/" + eventoAbierto.id + "/#fotos", urlBase()).toString()
-                         : urlDeSeccion(idPantalla);
+              : idPantalla === "p-eventos" ? new URL("eventos/", urlBase()).toString()
+              : urlDeSeccion(idPantalla);
     const titulo = deEvento ? "Fotos de «" + eventoAbierto.titulo + "»"
                  : TITULO_SECCION[idPantalla] || "Trelewflash";
     const texto = (idPantalla === "p-eventos" || deEvento)

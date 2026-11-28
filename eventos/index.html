@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Link para compartir la galería de eventos (trelewflash.com.ar/eventos/).
+     Existe solo por la vista previa: WhatsApp y Facebook no leen el «?ver=eventos» y
+     mostrarían la de la portada. Acá van título e imagen propios (collage de portadas,
+     fuente en trelewflash-taller/carteles/og-eventos) y la página salta sola a la galería
+     conservando las utm_…. Sin meta refresh a propósito: Facebook lo sigue y tomaría la
+     vista previa de la portada. -->
+<title>Fotos de eventos · Trelew Flash</title>
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Fotos de actos, danzas y egresados de Trelew y la zona. Buscá tu evento, elegí tus fotos y pedilas por WhatsApp.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Trelew Flash">
+<meta property="og:locale" content="es_AR">
+<meta property="og:url" content="https://trelewflash.com.ar/eventos/">
+<meta property="og:title" content="Fotos de eventos · Trelew Flash">
+<meta property="og:description" content="Actos, danzas y egresados de Trelew y la zona. Buscá tu evento, elegí tus fotos y pedilas por WhatsApp.">
+<meta property="og:image" content="https://trelewflash.com.ar/assets/og-eventos.jpg?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Collage de fotos de eventos de Trelew Flash">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../assets/favicon.ico?v=2" sizes="any">
+<script>
+  (function () {
+    var u = new URL("../", location.href);
+    var q = new URLSearchParams(location.search);
+    q.set("ver", "eventos");
+    location.replace(u.pathname + "?" + q.toString() + location.hash);
+  })();
+</script>
+<style>body{margin:0;font-family:system-ui,sans-serif;background:#111;color:#fff;display:grid;place-items:center;min-height:100vh;text-align:center}a{color:#FFE81A;font-weight:800}</style>
+</head>
+<body>
+<p>Abriendo las fotos de eventos…<br><a href="../?ver=eventos">Tocá acá si no se abre</a></p>
+</body>
+</html>
