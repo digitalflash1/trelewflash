@@ -1,5 +1,6 @@
 # Una página por evento en e/<id>/: la vista previa al compartir y la página
-# que indexa Google (más e/index.html con todos los eventos).
+# que indexa Google (más e/index.html con todos los eventos), y una por
+# escuela o institución en fotos/<id>/ (más fotos/index.html).
 #
 # Facebook y WhatsApp no ejecutan el JavaScript de la tienda: leen las
 # etiquetas og: del HTML tal como llega. Como la tienda es una sola página,
@@ -28,6 +29,7 @@ on:
     paths:
       - ".github/workflows/paginas-eventos.yml"
       - ".github/scripts/paginas-eventos.ps1"
+      - ".github/scripts/instituciones.json"
 
 permissions:
   contents: write
@@ -59,7 +61,7 @@ jobs:
 
       - name: Subir si cambió algo
         run: |
-          git add -A e sitemap.xml
+          git add -A e fotos sitemap.xml
           if git diff --cached --quiet; then
             echo "Sin cambios"
             exit 0
